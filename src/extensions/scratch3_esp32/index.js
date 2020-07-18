@@ -5,6 +5,7 @@ const log = require('../../util/log');
 const nets = require('nets');
 const formatMessage = require('format-message');
 const base64url = require('base64url');
+const base64 = require('base64-js')
 
 
 /**
@@ -28,23 +29,65 @@ const blockIconURI = menuIconURI;
 const serverTimeoutMs = 10000; // 10 seconds (chosen arbitrarily).
 
 const blocks = [
-	{blockType: BlockType.COMMAND,  text: 'IPアドレス [ARG1]',						opcode: 'setIotIp',		arguments: {
+	{blockType: BlockType.COMMAND,  text: 'IPアドレス [ARG1]',				opcode: 'setIotIp',		arguments: {
 		ARG1: {	type: ArgumentType.STRING,					defaultValue: "192.168.1.xx" }
     }},
-	{blockType: BlockType.COMMAND,  text: "set LED [ARG1]",							opcode:"setLED",		arguments: {
-		ARG1: {	type: ArgumentType.NUMBER,	menu: 'onoff',	defaultValue:1,		type2:"B" },
+
+	{blockType: BlockType.COMMAND,  text: "set LED[ARG1] [ARG2]",			opcode:"setLEDn",		arguments: {
+		ARG1: {	type: ArgumentType.NUMBER,	menu: 'led',	defaultValue:1,		type2:"B" },
+		ARG2: {	type: ArgumentType.NUMBER,	menu: 'onoff',	defaultValue:1,		type2:"B" },
 	}},
 
-/*
-	{blockType: BlockType.COMMAND,  text:"set digital pin [ARG1] output as [ARG2]",	opcode:"setDigital",	arguments: {
-		ARG1: {	type: ArgumentType.NUMBER,					defaultValue:2,		type2:"B" },
-		ARG2: {	type: ArgumentType.NUMBER,	menu: 'on_off',	defaultValue:1,		type2:"B" },
+	{blockType: BlockType.COMMAND,  text: "play [ARG1] beat [ARG2]",		opcode:"BuzzerJ2",		arguments: {
+		ARG1: {	type: ArgumentType.NUMBER,	menu: 'noteJ2',	defaultValue:262,	type2:"S" },
+		ARG2: {	type: ArgumentType.NUMBER,	menu: 'beats',	defaultValue:500,	type2:"S" },
 	}},
-	{blockType: BlockType.REPORTER, text:"read digital pin [ARG1]",					opcode:"getDigital",	typeR:"B", arguments: {
-		ARG1: {	type: ArgumentType.NUMBER,					defaultValue:9,		type2:"B" },
+
+	{blockType: BlockType.REPORTER,  text: "Sensor[ARG1] average [ARG2] times",	opcode:"getAnalogAve",	arguments: {
+		ARG1: {	type: ArgumentType.NUMBER,	menu: 'sensor',	defaultValue:1,		type2:"B" },
+		ARG2: {	type: ArgumentType.NUMBER,					defaultValue:4,		type2:"S" },
 	}},
-*/
+
+//	{blockType: BlockType.REPORTER,  text: "Sensor1",						opcode:"getSensor1",	arguments: {}},
+
+	{blockType: BlockType.BOOLEAN,  text: "SW[ARG1]",						opcode:"getSW",			arguments: {
+		ARG1: {	type: ArgumentType.NUMBER,	menu: 'sw',		defaultValue:1,		type2:"B" },
+	}},
 ];
+
+const menus = {
+	noteJ2: { acceptReporters: true, items: [
+		{ text: formatMessage({id: 'esp32.note.c4',  default: 'ド4',}), value: 262 },
+		{ text: formatMessage({id: 'esp32.note.d4',  default: 'レ4',}), value: 294 },
+		{ text: formatMessage({id: 'esp32.note.e4',  default: 'ミ4',}), value: 330 },
+		{ text: formatMessage({id: 'esp32.note.f4',  default: 'ファ4',}), value: 349 },
+		{ text: formatMessage({id: 'esp32.note.g4',  default: 'ソ4',}), value: 392 },
+		{ text: formatMessage({id: 'esp32.note.a4',  default: 'ラ4',}), value: 440 },
+		{ text: formatMessage({id: 'esp32.note.b4',  default: 'シ4',}), value: 494 },
+		{ text: formatMessage({id: 'esp32.note.c5',  default: 'ド5',}), value: 523 },
+		{ text: formatMessage({id: 'esp32.note.d5',  default: 'レ5',}), value: 587 },
+		{ text: formatMessage({id: 'esp32.note.e5',  default: 'ミ5',}), value: 659 },
+		{ text: formatMessage({id: 'esp32.note.f5',  default: 'ファ5',}), value: 698 },
+		{ text: formatMessage({id: 'esp32.note.g5',  default: 'ソ5',}), value: 784 },
+		{ text: formatMessage({id: 'esp32.note.a5',  default: 'ラ5',}), value: 880 },
+		{ text: formatMessage({id: 'esp32.note.b5',  default: 'シ5',}), value: 988 },
+	]},
+	beats: { acceptReporters: true, items: [
+		{ text: formatMessage({id: 'esp32.beats.half',    default: 'half',}), value: 500  },
+		{ text: formatMessage({id: 'esp32.beats.quarter', default: 'quarter',}), value: 250  },
+		{ text: formatMessage({id: 'esp32.beats.eighth',  default: 'eighth',}), value: 125  },
+		{ text: formatMessage({id: 'esp32.beats.whole',   default: 'whole',}), value: 1000  },
+		{ text: formatMessage({id: 'esp32.beats.double',  default: 'double',}), value: 2000  },
+	]},
+	onoff: { acceptReporters: true, items: [
+		{ text: formatMessage({id: 'esp32.onoff.on',  default: 'On',}), value: 1 },
+		{ text: formatMessage({id: 'esp32.onoff.off', default: 'Off',}), value: 0 },
+	]},
+	led: { acceptReporters: true, items: ['1','2','3','4','5','6']},
+	sensor: { acceptReporters: true, items: ['1','2','3','4']},
+	sw: { acceptReporters: true, items: ['1','2','3']},
+};
+
 
 /**
  * Class for the ESP32 block in Scratch 3.0.
@@ -58,7 +101,8 @@ class Scratch3ESP32Blocks {
          */
         this.runtime = runtime;
         this._ipadrs = '192.168.1.x';
-        this._status = 'idle';
+//        this._status = 'idle';
+//        this._result = 0;
     }
 
     /**
@@ -71,10 +115,7 @@ class Scratch3ESP32Blocks {
             blockIconURI: blockIconURI,
             menuIconURI: menuIconURI,
             blocks: blocks,
-            menus: {
-			//	led_cont: {			acceptReporters: true,	items: ['ON', 'OFF']},
-				onoff: {		acceptReporters: true,	items:['1','0']},
-            }
+            menus: menus,
         };
     }
     
@@ -82,57 +123,106 @@ class Scratch3ESP32Blocks {
         this._ipadrs = Cast.toString(args.ARG1);
         log.log(this._ipadrs);
     }
-    setLED(args,util) {
-    	this.remote(util, arguments.callee.name, args);
-    }
+
+	setLEDn(args,util)		{ return this.getTest(arguments.callee.name, args); }
+	BuzzerJ2(args,util)		{ return this.getTest(arguments.callee.name, args); }
+	getAnalogAve(args,util)	{ return this.getTest(arguments.callee.name, args); }
+	getSW(args,util)		{ return this.getTest(arguments.callee.name, args); }
+
+//	const getSensor = JSON.parse(body);
+//	const getDistance = Cast.toNumber(getSensor.d);
+
 /*
-    ledControl (args,util) {
-        this.controlIot(util,`led?o=${args.ARG1}`);
-    }
-
-    controlAngle (args,util) {
-        this.controlIot(util,`s_angle?n=${args.ARG1}`);
-    }
-
-    updateDistance () {
-        this.controlIot(util,`update_d`);	// 3, recv
-        const getSensor = JSON.parse(body);
-        const getDistance = Cast.toNumber(getSensor.d);
-    }
-*/
-    getDistance ()		{ return this._sensors.distance; }
-
 	remote(util,opcode,args) {
-		if(this._status == 'waitResp') {
+		switch(this._status) {
+		case 'idle':
+			break;
+		case 'waitResp':
 			util.yield();
-			return;
-		} else if(this._status != 'idle') {
+			return 0;
+		case 'Completed':
+		case 'Failed':
+		default:
 			this._status = 'idle';
-			return;
+			return this._result;
 		}
 
 		for(index = 0; index < blocks.length; index++) {
 			if(blocks[index].opcode == opcode) break;
 		}
-		if(index === blocks.length) return;
+		if(index === blocks.length) return 0;
 
-						/*
-		params変換
-		var blockDefs:Array = obj1[1].split("%");
-		for(i = 0; i < param.length; i++) {
-			//  %d-数値+enum, %m-文字列+enumのときvaluesで置換
-			if(i+1 < blockDefs.length) {
-				var argType:String = blockDefs[i+1].charAt(0);
-				if(argType == "d" || argType == "m") {
-					if(typeof param[i]=="string" && ext.values[param[i]] != undefined)
-						param[i] = ext.values[param[i]];
-				}
-			}
-		}
-*/
 		var cmdUint8 = new Uint8Array(256);
 		var cmd = new DataView(cmdUint8.buffer);
-		var tmp = new Uint8Array([0xff, 0x55, 0x00, index+1]);
+		var tmp = new Uint8Array([0xff, 0x55, 0x00, index]);
+		for(ofs = 0; ofs < tmp.length; ofs++)
+			cmd.setUint8(ofs,tmp[ofs]);
+
+		var param = [args.ARG1, args.ARG2, args.ARG3, args.ARG4];
+		for(i = 1; ; i++) {
+			eval("var param = args.ARG"+i);
+			eval("var def = blocks[index].arguments.ARG"+i);
+		//	log.log(i,param, def);
+			if(typeof param === "undefined") break;
+			switch(def.type2) {
+			case "B": cmd.setUint8(ofs,param);        ofs+=1; break;
+			case "S": cmd.setInt16(ofs,param, true);  ofs+=2; break;
+			case "L": cmd.setInt32(ofs,param, true);  ofs+=4; break;
+			case "F": cmd.setFloat(ofs,param, true);  ofs+=4; break;
+			case "D": cmd.setDouble(ofs,param,true); ofs+=8; break;
+//			case "s": cmd.writeUTFBytes(param); cmd.writeByte(0); break;
+//			case "b":
+//				var n = param.length/2;
+//				cmd.writeByte(n);
+//				for(var j:int = 0; j < n; j++)
+//					cmd.writeByte(parseInt(param.substr(j*2, 2),16));
+//				break;
+			}
+		}
+		cmd.setUint8(2, ofs-3);
+	//	for(i=0;i<ofs;i++) log.log(cmd.getUint8(i).toString(16));
+		var _base64 = base64url.encode(cmdUint8.slice(0,ofs));
+
+		this._result = 0;
+        this._status = 'waitResp';
+        nets({ url: `http://${this._ipadrs}:80/cmd?d=${_base64}`, timeout: serverTimeoutMs },
+          (err, res, body) => {
+            if (err) {
+                this._status = 'Failed';
+                log.log(`error! ${err}/${res}`);
+            } else {
+                this._status = 'Completed';
+				var respUint8 = base64.toByteArray(String.fromCharCode.apply(null,body));
+			//	for(i=0;i<respUint8.length;i++) log.log(respUint8[i].toString(16));
+				if(respUint8[0] == 0xFF && respUint8[1] == 0x55 && respUint8[2] == respUint8.length-3 && respUint8.length >= 5) {
+					var resp = new DataView(respUint8.buffer);
+					switch(respUint8[3]) {
+					case 1: this._result = resp.getUint8(4); break;
+					case 2: this._result = resp.getInt16(4, true); break;
+					case 3: this._result = resp.getInt32(4, true); break;
+					case 4: this._result = resp.getFloat(4, true); break;
+					case 5: this._result = resp.getDouble(4, true); break;
+				//	case 6: break;		// string
+				//	case 7: break;		// bytes
+					}
+					log.log(this._result);
+        		}
+            }
+            return;
+        });
+        util.yield();
+		return;
+	}
+*/
+	getTest(opcode,args) {
+		for(index = 0; index < blocks.length; index++) {
+			if(blocks[index].opcode == opcode) break;
+		}
+		if(index === blocks.length) return 0;
+
+		var cmdUint8 = new Uint8Array(256);
+		var cmd = new DataView(cmdUint8.buffer);
+		var tmp = new Uint8Array([0xff, 0x55, 0x00, index]);
 		for(ofs = 0; ofs < tmp.length; ofs++)
 			cmd.setUint8(ofs,tmp[ofs]);
 
@@ -163,47 +253,41 @@ class Scratch3ESP32Blocks {
 	//	for(i=0;i<ofs;i++) log.log(cmd.getUint8(i).toString(16));
 		var _base64 = base64url.encode(cmdUint8.slice(0,ofs));
 
-        this._status = 'waitResp';
-        nets({ url: `http://${this._ipadrs}/cmd?d=${_base64}`, timeout: serverTimeoutMs },
-          (err, res, body) => {
-            if (err) {
-                this._status = 'Failed';
-                log.log(`error! ${err}/${res}`);
-            } else if (body.indexOf('OK') === -1) {
-                this._status = 'Failed';
-            } else {
-                this._status = 'Completed';
-            }
-            return;
+        const tempThis = this;
+        const netsPromise = new Promise(resolve => {
+            nets({
+                url: `http://${this._ipadrs}:80/cmd?d=${_base64}`,
+                timeout: serverTimeoutMs
+            }, (err, res, body) => {
+                if (err) {
+                    log.warn(`error fetching translate result! ${res}`);
+                    resolve('');
+                    return '';
+                }
+				var respUint8 = base64.toByteArray(String.fromCharCode.apply(null,body));
+			//	for(i=0;i<respUint8.length;i++) log.log(respUint8[i].toString(16));
+				var tmp = 0;
+				if(respUint8[0] == 0xFF && respUint8[1] == 0x55 && respUint8[2] == respUint8.length-3 && respUint8.length >= 5) {
+					var tmp2 = new DataView(respUint8.buffer);
+					switch(respUint8[3]) {
+					case 1: tmp = tmp2.getUint8(4); break;
+					case 2: tmp = tmp2.getInt16(4, true); break;
+					case 3: tmp = tmp2.getInt32(4, true); break;
+					case 4: tmp = tmp2.getFloat(4, true); break;
+					case 5: tmp = tmp2.getDouble(4, true); break;
+				//	case 6: break;		// string
+				//	case 7: break;		// bytes
+					}
+					log.log(tmp);
+				}
+                const resp = tmp;
+                resolve(resp);
+                return resp;
+            });
         });
-        util.yield();
+        netsPromise.then(result => result);
+        return netsPromise;
+    }
 
-		return;
-	}
-/*
-    controlIot(util,urlBase) {
-        if(this._status == 'idle') {
-	        log.log(`carControl:${urlBase}`);
-	        nets({ url: `http://${this._ipadrs}/${urlBase}`, timeout: serverTimeoutMs },
-	          (err, res, body) => {
-	            if (err) {
-	                this._status = 'Failed';
-	                log.log(`error! ${err}/${res}`);
-	            } else if (body.indexOf('OK') === -1) {
-	                this._status = 'Failed';
-	            } else {
-	                this._status = 'Completed';
-	            }
-	            return;
-	        });
-	        this._status = 'waitResp';
-            util.yield();
-        } else if(this._status == 'waitResp') {
-            util.yield();
-		} else {
-			this._status = 'idle';
-		}
-	}
-*/
 }
 module.exports = Scratch3ESP32Blocks;
