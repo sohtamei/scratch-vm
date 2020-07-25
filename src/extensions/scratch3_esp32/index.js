@@ -33,7 +33,7 @@ const blocks = [
 		ARG1: {	type: ArgumentType.STRING,					defaultValue: "192.168.1.xx" }
     }},
 
-	{blockType: BlockType.COMMAND,  text: "set LED[ARG1] [ARG2]",			opcode:"setLEDn",		arguments: {
+	{blockType: BlockType.COMMAND,  text: "set LED[ARG1] [ARG2]",			opcode:"setLED",		arguments: {
 		ARG1: {	type: ArgumentType.NUMBER,	menu: 'led',	defaultValue:1,		type2:"B" },
 		ARG2: {	type: ArgumentType.NUMBER,	menu: 'onoff',	defaultValue:1,		type2:"B" },
 	}},
@@ -48,10 +48,35 @@ const blocks = [
 		ARG2: {	type: ArgumentType.NUMBER,					defaultValue:4,		type2:"S" },
 	}},
 
-//	{blockType: BlockType.REPORTER,  text: "Sensor1",						opcode:"getSensor1",	arguments: {}},
-
 	{blockType: BlockType.BOOLEAN,  text: "SW[ARG1]",						opcode:"getSW",			arguments: {
 		ARG1: {	type: ArgumentType.NUMBER,	menu: 'sw',		defaultValue:1,		type2:"B" },
+	}},
+	'---',
+
+	{blockType: BlockType.COMMAND,  text: "[ARG1] at speed [ARG2]",			opcode:"setCar",		arguments: {
+		ARG1: {	type: ArgumentType.NUMBER,	menu: 'direction',	defaultValue:1,		type2:"B" },
+		ARG2: {	type: ArgumentType.NUMBER,						defaultValue:100,	type2:"B" },
+	}},
+
+	{blockType: BlockType.COMMAND,  text: "set motor [ARG1] speed [ARG2]",	opcode:"setMotor",		arguments: {
+		ARG1: {	type: ArgumentType.NUMBER,	menu: 'servoch',	defaultValue:5,		type2:"B" },
+		ARG2: {	type: ArgumentType.NUMBER,	menu: 'speed',		defaultValue:100,	type2:"S" },
+	}},
+
+	{blockType: BlockType.COMMAND,  text: "stop",							opcode:"stopCar",		arguments: {
+	}},
+
+	{blockType: BlockType.REPORTER,  text: "[ARG1]",						opcode:"enumDirection",	arguments: {
+		ARG1: {	type: ArgumentType.NUMBER,	menu: 'direction',	defaultValue:1,		type2:"B" },
+	}},
+
+	{blockType: BlockType.COMMAND,  text: "set servo [ARG1] [ARG2]",		opcode:"setServo",		arguments: {
+		ARG1: {	type: ArgumentType.NUMBER,	menu: 'servoch',	defaultValue:5,		type2:"B" },
+		ARG2: {	type: ArgumentType.NUMBER,	menu: 'angle',		defaultValue:90,	type2:"B" },
+	}},
+
+	{blockType: BlockType.COMMAND,  text: "stop servo [ARG1]",				opcode:"stopServo",		arguments: {
+		ARG1: {	type: ArgumentType.NUMBER,	menu: 'servoch',	defaultValue:5,		type2:"B" },
 	}},
 ];
 
@@ -73,11 +98,11 @@ const menus = {
 		{ text: formatMessage({id: 'esp32.note.b5',  default: 'シ5',}), value: 988 },
 	]},
 	beats: { acceptReporters: true, items: [
-		{ text: formatMessage({id: 'esp32.beats.half',    default: 'half',}), value: 500  },
-		{ text: formatMessage({id: 'esp32.beats.quarter', default: 'quarter',}), value: 250  },
-		{ text: formatMessage({id: 'esp32.beats.eighth',  default: 'eighth',}), value: 125  },
-		{ text: formatMessage({id: 'esp32.beats.whole',   default: 'whole',}), value: 1000  },
-		{ text: formatMessage({id: 'esp32.beats.double',  default: 'double',}), value: 2000  },
+		{ text: formatMessage({id: 'esp32.beats.half',    default: 'half',}), value: 500 },
+		{ text: formatMessage({id: 'esp32.beats.quarter', default: 'quarter',}), value: 250 },
+		{ text: formatMessage({id: 'esp32.beats.eighth',  default: 'eighth',}), value: 125 },
+		{ text: formatMessage({id: 'esp32.beats.whole',   default: 'whole',}), value: 1000 },
+		{ text: formatMessage({id: 'esp32.beats.double',  default: 'double',}), value: 2000 },
 	]},
 	onoff: { acceptReporters: true, items: [
 		{ text: formatMessage({id: 'esp32.onoff.on',  default: 'On',}), value: 1 },
@@ -86,6 +111,20 @@ const menus = {
 	led: { acceptReporters: true, items: ['1','2','3','4','5','6']},
 	sensor: { acceptReporters: true, items: ['1','2','3','4']},
 	sw: { acceptReporters: true, items: ['1','2','3']},
+
+	direction: { acceptReporters: true, items: [
+		{ text: formatMessage({id: 'esp32.direction.stop',			default: 'stop',}), value: 0 },
+		{ text: formatMessage({id: 'esp32.direction.runForward',	default: 'run forward',}), value: 1 },
+		{ text: formatMessage({id: 'esp32.direction.turnLeft',		default: 'turn left',}), value: 2 },
+		{ text: formatMessage({id: 'esp32.direction.turnRight',		default: 'turn right',}), value: 3 },
+		{ text: formatMessage({id: 'esp32.direction.runBackward',	default: 'run backward',}), value: 4 },
+		{ text: formatMessage({id: 'esp32.direction.rotateLeft',	default: 'rotate left',}), value: 5 },
+		{ text: formatMessage({id: 'esp32.direction.rotateRight',	default: 'rotate right',}), value: 6 },
+	]},
+
+	servoch: { acceptReporters: true, items: ['5','6','7']},
+	speed: { acceptReporters: true, items: ['-100','-50','0','50','100']},
+	angle: { acceptReporters: true, items: ['0','90','180']},
 };
 
 
@@ -124,10 +163,16 @@ class Scratch3ESP32Blocks {
         log.log(this._ipadrs);
     }
 
-	setLEDn(args,util)		{ return this.getTest(arguments.callee.name, args); }
+	setLED(args,util)		{ return this.getTest(arguments.callee.name, args); }
 	BuzzerJ2(args,util)		{ return this.getTest(arguments.callee.name, args); }
 	getAnalogAve(args,util)	{ return this.getTest(arguments.callee.name, args); }
 	getSW(args,util)		{ return this.getTest(arguments.callee.name, args); }
+	setCar(args)			{ return this.getTest(arguments.callee.name, args); }
+	setMotor(args)			{ return this.getTest(arguments.callee.name, args); }
+	stopCar(args)			{ return this.getTest(arguments.callee.name, args); }
+	enumDirection(args)		{ return args.ARG1; }
+	setServo(args)			{ return this.getTest(arguments.callee.name, args); }
+	stopServo(args)			{ return this.getTest(arguments.callee.name, args); }
 
 //	const getSensor = JSON.parse(body);
 //	const getDistance = Cast.toNumber(getSensor.d);
