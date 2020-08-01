@@ -139,15 +139,24 @@ class Scratch3ESP32Blocks {
          * @type {Runtime}
          */
         this.runtime = runtime;
-        this._ipadrs = '192.168.1.x';
-//        this._status = 'idle';
-//        this._result = 0;
+        this._ipadrs = '192.168.1.xx';
+		let cookies_get = document.cookie.split(';');
+		let esp32ip='';
+		for(let i=0;i<cookies_get.length;i++) {
+			let tmp = cookies_get[i].trim().split('=');
+			if(tmp[0]=='esp32ip') {
+				this._ipadrs=tmp[1];
+				log.log('esp32ip='+this._ipadrs);
+				break;
+			}
+		}
     }
 
     /**
      * @returns {object} metadata for this extension and its blocks.
      */
     getInfo () {
+		blocks[0].arguments.ARG1.defaultValue = this._ipadrs;
         return {
             id: 'esp32',
             name: 'ESP32',
@@ -160,6 +169,7 @@ class Scratch3ESP32Blocks {
     
     setIotIp (args) {
         this._ipadrs = Cast.toString(args.ARG1);
+        document.cookie = 'esp32ip=' + this._ipadrs + '; samesite=lax;';
         log.log(this._ipadrs);
     }
 
