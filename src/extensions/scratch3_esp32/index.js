@@ -29,7 +29,7 @@ const blockIconURI = menuIconURI;
 const serverTimeoutMs = 10000; // 10 seconds (chosen arbitrarily).
 
 const blocks = [
-	{blockType: BlockType.COMMAND,  text: 'IPアドレス [ARG1]',				opcode: 'setIotIp',		arguments: {
+	{blockType: BlockType.COMMAND,  text: 'IPアドレス設定 [ARG1]',			opcode: 'setIotIp',		arguments: {
 		ARG1: {	type: ArgumentType.STRING,					defaultValue: "192.168.1.xx" }
     }},
 
@@ -127,6 +127,10 @@ const menus = {
 	angle: { acceptReporters: true, items: ['0','90','180']},
 };
 
+let _resolve = null;
+let _error = null;
+let _sendBuf = null;
+let _alertFlag = false;
 
 /**
  * Class for the ESP32 block in Scratch 3.0.
@@ -140,8 +144,8 @@ class Scratch3ESP32Blocks {
          */
         this.runtime = runtime;
         this._ipadrs = '192.168.1.xx';
+        this._ws = null;
 		let cookies_get = document.cookie.split(';');
-		let esp32ip='';
 		for(let i=0;i<cookies_get.length;i++) {
 			let tmp = cookies_get[i].trim().split('=');
 			if(tmp[0]=='esp32ip') {
@@ -171,6 +175,7 @@ class Scratch3ESP32Blocks {
         this._ipadrs = Cast.toString(args.ARG1);
         document.cookie = 'esp32ip=' + this._ipadrs + '; samesite=lax;';
         log.log(this._ipadrs);
+        alert(this._ipadrs + 'を保存しました');
     }
 
 	setLED(args,util)		{ return this.getTest(arguments.callee.name, args); }
@@ -184,91 +189,39 @@ class Scratch3ESP32Blocks {
 	setServo(args)			{ return this.getTest(arguments.callee.name, args); }
 	stopServo(args)			{ return this.getTest(arguments.callee.name, args); }
 
-//	const getSensor = JSON.parse(body);
-//	const getDistance = Cast.toNumber(getSensor.d);
-
 /*
-	remote(util,opcode,args) {
-		switch(this._status) {
-		case 'idle':
-			break;
-		case 'waitResp':
-			util.yield();
-			return 0;
-		case 'Completed':
-		case 'Failed':
-		default:
-			this._status = 'idle';
-			return this._result;
+	onmessage(err, res, body) {
+		if (err) {
+			log.warn(`error fetching translate result! ${res}`);
+			_error('');
+			return '';
 		}
-
-		for(index = 0; index < blocks.length; index++) {
-			if(blocks[index].opcode == opcode) break;
-		}
-		if(index === blocks.length) return 0;
-
-		var cmdUint8 = new Uint8Array(256);
-		var cmd = new DataView(cmdUint8.buffer);
-		var tmp = new Uint8Array([0xff, 0x55, 0x00, index]);
-		for(ofs = 0; ofs < tmp.length; ofs++)
-			cmd.setUint8(ofs,tmp[ofs]);
-
-		var param = [args.ARG1, args.ARG2, args.ARG3, args.ARG4];
-		for(i = 1; ; i++) {
-			eval("var param = args.ARG"+i);
-			eval("var def = blocks[index].arguments.ARG"+i);
-		//	log.log(i,param, def);
-			if(typeof param === "undefined") break;
-			switch(def.type2) {
-			case "B": cmd.setUint8(ofs,param);        ofs+=1; break;
-			case "S": cmd.setInt16(ofs,param, true);  ofs+=2; break;
-			case "L": cmd.setInt32(ofs,param, true);  ofs+=4; break;
-			case "F": cmd.setFloat(ofs,param, true);  ofs+=4; break;
-			case "D": cmd.setDouble(ofs,param,true); ofs+=8; break;
-//			case "s": cmd.writeUTFBytes(param); cmd.writeByte(0); break;
-//			case "b":
-//				var n = param.length/2;
-//				cmd.writeByte(n);
-//				for(var j:int = 0; j < n; j++)
-//					cmd.writeByte(parseInt(param.substr(j*2, 2),16));
-//				break;
-			}
-		}
-		cmd.setUint8(2, ofs-3);
-	//	for(i=0;i<ofs;i++) log.log(cmd.getUint8(i).toString(16));
-		var _base64 = base64url.encode(cmdUint8.slice(0,ofs));
-
-		this._result = 0;
-        this._status = 'waitResp';
-        nets({ url: `http://${this._ipadrs}:80/cmd?d=${_base64}`, timeout: serverTimeoutMs },
-          (err, res, body) => {
-            if (err) {
-                this._status = 'Failed';
-                log.log(`error! ${err}/${res}`);
-            } else {
-                this._status = 'Completed';
-				var respUint8 = base64.toByteArray(String.fromCharCode.apply(null,body));
-			//	for(i=0;i<respUint8.length;i++) log.log(respUint8[i].toString(16));
-				if(respUint8[0] == 0xFF && respUint8[1] == 0x55 && respUint8[2] == respUint8.length-3 && respUint8.length >= 5) {
-					var resp = new DataView(respUint8.buffer);
-					switch(respUint8[3]) {
-					case 1: this._result = resp.getUint8(4); break;
-					case 2: this._result = resp.getInt16(4, true); break;
-					case 3: this._result = resp.getInt32(4, true); break;
-					case 4: this._result = resp.getFloat(4, true); break;
-					case 5: this._result = resp.getDouble(4, true); break;
-				//	case 6: break;		// string
-				//	case 7: break;		// bytes
-					}
-					log.log(this._result);
-        		}
-            }
-            return;
-        });
-        util.yield();
-		return;
-	}
+		var respUint8 = base64.toByteArray(String.fromCharCode.apply(null,body));
 */
+	onmessage(event) {
+		var respUint8 = new Uint8Array(event.data);
+		//for(i=0;i<respUint8.length;i++) log.log(respUint8[i].toString(16));	// debug
+		var tmp = 0;
+		if(respUint8[0] == 0xFF && respUint8[1] == 0x55 && respUint8[2] == respUint8.length-3 && respUint8.length >= 5) {
+			var tmp2 = new DataView(respUint8.buffer);
+			switch(respUint8[3]) {
+			case 1: tmp = tmp2.getUint8(4); break;
+			case 2: tmp = tmp2.getInt16(4, true); break;
+			case 3: tmp = tmp2.getInt32(4, true); break;
+			case 4: tmp = tmp2.getFloat(4, true); break;
+			case 5: tmp = tmp2.getDouble(4, true); break;
+		//	case 6: break;		// string
+		//	case 7: break;		// bytes
+			}
+			log.log(tmp);
+		}
+		const resp = tmp;
+		_resolve(resp);
+		_resolve = null; _error = null;
+		_alertFlag = false;
+		return resp;
+	}
+
 	getTest(opcode,args) {
 		for(index = 0; index < blocks.length; index++) {
 			if(blocks[index].opcode == opcode) break;
@@ -306,43 +259,67 @@ class Scratch3ESP32Blocks {
 		}
 		cmd.setUint8(2, ofs-3);
 	//	for(i=0;i<ofs;i++) log.log(cmd.getUint8(i).toString(16));
-		var _base64 = base64url.encode(cmdUint8.slice(0,ofs));
 
-        const tempThis = this;
-        const netsPromise = new Promise(resolve => {
-            nets({
-                url: `http://${this._ipadrs}:80/cmd?d=${_base64}`,
-                timeout: serverTimeoutMs
-            }, (err, res, body) => {
-                if (err) {
-                    log.warn(`error fetching translate result! ${res}`);
-                    resolve('');
-                    return '';
-                }
-				var respUint8 = base64.toByteArray(String.fromCharCode.apply(null,body));
-			//	for(i=0;i<respUint8.length;i++) log.log(respUint8[i].toString(16));
-				var tmp = 0;
-				if(respUint8[0] == 0xFF && respUint8[1] == 0x55 && respUint8[2] == respUint8.length-3 && respUint8.length >= 5) {
-					var tmp2 = new DataView(respUint8.buffer);
-					switch(respUint8[3]) {
-					case 1: tmp = tmp2.getUint8(4); break;
-					case 2: tmp = tmp2.getInt16(4, true); break;
-					case 3: tmp = tmp2.getInt32(4, true); break;
-					case 4: tmp = tmp2.getFloat(4, true); break;
-					case 5: tmp = tmp2.getDouble(4, true); break;
-				//	case 6: break;		// string
-				//	case 7: break;		// bytes
-					}
-					log.log(tmp);
+		const tempThis = this;
+		const netsPromise = new Promise(function(resolve, error) {
+			_resolve = resolve;
+			_error = error;
+			//log.log('send: ' + cmdUint8.slice(0,ofs));	// debug
+
+			if(tempThis._ws === null) {
+				if(tempThis._ipadrs == '192.168.1.xx') {
+					error('');
+					return;
 				}
-                const resp = tmp;
-                resolve(resp);
-                return resp;
-            });
-        });
-        netsPromise.then(result => result);
-        return netsPromise;
-    }
+				_sendBuf = cmdUint8.slice(0,ofs);
+
+				tempThis._ws = new WebSocket('ws://'+tempThis._ipadrs+':54323');
+				tempThis._ws.binaryType = 'arraybuffer';
+
+				tempThis._ws.onopen = function(e) {
+					log.log('open: ' + e);
+					tempThis._ws.send(_sendBuf);
+				}
+
+				tempThis._ws.onmessage = tempThis.onmessage;
+
+				tempThis._ws.onclose = function(event) {
+					if (event.wasClean) {
+						log.log(`close: Connection closed cleanly, code=${event.code} reason=${event.reason}`);
+					} else {
+						log.log('close: Connection died');
+					}
+					tempThis._ws = null;
+					if(_error !== null) _error('');
+				};
+
+				tempThis._ws.onerror = function(error) {
+					log.log('[error] '+error.message);
+					tempThis._ws.close();
+					tempThis._ws = null;
+					if(_error !== null) _error('');
+					if(!_alertFlag) alert('cannot connect to ' + tempThis._ipadrs);
+					_alertFlag = true;
+				};
+				return;
+			} else {
+				tempThis._ws.send(cmdUint8.slice(0,ofs));
+			}
+		});
+/*
+		var _base64 = base64url.encode(cmdUint8.slice(0,ofs));
+		const netsPromise = new Promise(function(resolve) {
+			_resolve = resolve;
+			nets({
+				url: `http://${tempThis._ipadrs}:80/cmd?d=${_base64}`,
+				timeout: serverTimeoutMs
+				}, tempThis.onmessage);
+		});
+*/
+		netsPromise.then(result => result);
+		netsPromise.catch(result => result);
+		return netsPromise;
+	}
 
 }
 module.exports = Scratch3ESP32Blocks;
