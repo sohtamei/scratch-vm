@@ -13,7 +13,10 @@ const builtinExtensions = {
     // but serves as a reference for loading core blocks as extensions.
     coreExample: () => require('../blocks/scratch3_core_example'),
     // These are the non-core built-in extensions.
-    esp32: () => require('../extensions/scratch3_esp32'),
+    TukuBoard: () => require('../extensions/scratch3_tukurutch/TukuBoard.js'),
+    M5CameraCar: () => require('../extensions/scratch3_tukurutch/M5CameraCar.js'),
+    M5Series: () => require('../extensions/scratch3_tukurutch/M5Series.js'),
+    Duke32AIO: () => require('../extensions/scratch3_tukurutch/Duke32AIO.js'),
     pen: () => require('../extensions/scratch3_pen'),
     wedo2: () => require('../extensions/scratch3_wedo2'),
     music: () => require('../extensions/scratch3_music'),

@@ -159,7 +159,7 @@ class Scratch3VideoSensingBlocks {
         if (stage) {
             return stage.videoTransparency;
         }
-        return 50;
+        return 0;//50;
     }
 
     set globalVideoTransparency (transparency) {
@@ -402,8 +402,8 @@ class Scratch3VideoSensingBlocks {
         // first added to a project, and is overwritten by a PROJECT_LOADED
         // event listener that later calls updateVideoDisplay
         if (this.firstInstall) {
-            this.globalVideoState = VideoState.ON;
-            this.globalVideoTransparency = 50;
+            this.globalVideoState = VideoState.OFF;//ON;
+            this.globalVideoTransparency = 0;//50;
             this.updateVideoDisplay();
             this.firstInstall = false;
         }

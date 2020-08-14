@@ -2,10 +2,7 @@ const ArgumentType = require('../../extension-support/argument-type');
 const BlockType = require('../../extension-support/block-type');
 const Cast = require('../../util/cast');
 const log = require('../../util/log');
-const nets = require('nets');
 const formatMessage = require('format-message');
-const base64url = require('base64url');
-const base64 = require('base64-js')
 
 
 /**
@@ -22,110 +19,13 @@ const menuIconURI = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFAAAABQCAYAA
 // eslint-disable-next-line max-len
 const blockIconURI = menuIconURI;
 
+const SupportCamera = false;
+
 /**
  * How long to wait in ms before timing out requests to server.
  * @type {int}
  */
-const serverTimeoutMs = 10000; // 10 seconds (chosen arbitrarily).
-
-const blocks = [
-	{blockType: BlockType.COMMAND,  text: 'IPアドレス設定 [ARG1]',			opcode: 'setIotIp',		arguments: {
-		ARG1: {	type: ArgumentType.STRING,					defaultValue: "192.168.1.xx" }
-    }},
-
-	{blockType: BlockType.COMMAND,  text: "set LED[ARG1] [ARG2]",			opcode:"setLED",		arguments: {
-		ARG1: {	type: ArgumentType.NUMBER,	menu: 'led',	defaultValue:1,		type2:"B" },
-		ARG2: {	type: ArgumentType.NUMBER,	menu: 'onoff',	defaultValue:1,		type2:"B" },
-	}},
-
-	{blockType: BlockType.COMMAND,  text: "play [ARG1] beat [ARG2]",		opcode:"BuzzerJ2",		arguments: {
-		ARG1: {	type: ArgumentType.NUMBER,	menu: 'noteJ2',	defaultValue:262,	type2:"S" },
-		ARG2: {	type: ArgumentType.NUMBER,	menu: 'beats',	defaultValue:500,	type2:"S" },
-	}},
-
-	{blockType: BlockType.REPORTER,  text: "Sensor[ARG1] average [ARG2] times",	opcode:"getAnalogAve",	arguments: {
-		ARG1: {	type: ArgumentType.NUMBER,	menu: 'sensor',	defaultValue:1,		type2:"B" },
-		ARG2: {	type: ArgumentType.NUMBER,					defaultValue:4,		type2:"S" },
-	}},
-
-	{blockType: BlockType.BOOLEAN,  text: "SW[ARG1]",						opcode:"getSW",			arguments: {
-		ARG1: {	type: ArgumentType.NUMBER,	menu: 'sw',		defaultValue:1,		type2:"B" },
-	}},
-	'---',
-
-	{blockType: BlockType.COMMAND,  text: "[ARG1] at speed [ARG2]",			opcode:"setCar",		arguments: {
-		ARG1: {	type: ArgumentType.NUMBER,	menu: 'direction',	defaultValue:1,		type2:"B" },
-		ARG2: {	type: ArgumentType.NUMBER,						defaultValue:100,	type2:"B" },
-	}},
-
-	{blockType: BlockType.COMMAND,  text: "set motor [ARG1] speed [ARG2]",	opcode:"setMotor",		arguments: {
-		ARG1: {	type: ArgumentType.NUMBER,	menu: 'servoch',	defaultValue:5,		type2:"B" },
-		ARG2: {	type: ArgumentType.NUMBER,	menu: 'speed',		defaultValue:100,	type2:"S" },
-	}},
-
-	{blockType: BlockType.COMMAND,  text: "stop",							opcode:"stopCar",		arguments: {
-	}},
-
-	{blockType: BlockType.REPORTER,  text: "[ARG1]",						opcode:"enumDirection",	arguments: {
-		ARG1: {	type: ArgumentType.NUMBER,	menu: 'direction',	defaultValue:1,		type2:"B" },
-	}},
-
-	{blockType: BlockType.COMMAND,  text: "set servo [ARG1] [ARG2]",		opcode:"setServo",		arguments: {
-		ARG1: {	type: ArgumentType.NUMBER,	menu: 'servoch',	defaultValue:5,		type2:"B" },
-		ARG2: {	type: ArgumentType.NUMBER,	menu: 'angle',		defaultValue:90,	type2:"B" },
-	}},
-
-	{blockType: BlockType.COMMAND,  text: "stop servo [ARG1]",				opcode:"stopServo",		arguments: {
-		ARG1: {	type: ArgumentType.NUMBER,	menu: 'servoch',	defaultValue:5,		type2:"B" },
-	}},
-];
-
-const menus = {
-	noteJ2: { acceptReporters: true, items: [
-		{ text: formatMessage({id: 'esp32.note.c4',  default: 'ド4',}), value: 262 },
-		{ text: formatMessage({id: 'esp32.note.d4',  default: 'レ4',}), value: 294 },
-		{ text: formatMessage({id: 'esp32.note.e4',  default: 'ミ4',}), value: 330 },
-		{ text: formatMessage({id: 'esp32.note.f4',  default: 'ファ4',}), value: 349 },
-		{ text: formatMessage({id: 'esp32.note.g4',  default: 'ソ4',}), value: 392 },
-		{ text: formatMessage({id: 'esp32.note.a4',  default: 'ラ4',}), value: 440 },
-		{ text: formatMessage({id: 'esp32.note.b4',  default: 'シ4',}), value: 494 },
-		{ text: formatMessage({id: 'esp32.note.c5',  default: 'ド5',}), value: 523 },
-		{ text: formatMessage({id: 'esp32.note.d5',  default: 'レ5',}), value: 587 },
-		{ text: formatMessage({id: 'esp32.note.e5',  default: 'ミ5',}), value: 659 },
-		{ text: formatMessage({id: 'esp32.note.f5',  default: 'ファ5',}), value: 698 },
-		{ text: formatMessage({id: 'esp32.note.g5',  default: 'ソ5',}), value: 784 },
-		{ text: formatMessage({id: 'esp32.note.a5',  default: 'ラ5',}), value: 880 },
-		{ text: formatMessage({id: 'esp32.note.b5',  default: 'シ5',}), value: 988 },
-	]},
-	beats: { acceptReporters: true, items: [
-		{ text: formatMessage({id: 'esp32.beats.half',    default: 'half',}), value: 500 },
-		{ text: formatMessage({id: 'esp32.beats.quarter', default: 'quarter',}), value: 250 },
-		{ text: formatMessage({id: 'esp32.beats.eighth',  default: 'eighth',}), value: 125 },
-		{ text: formatMessage({id: 'esp32.beats.whole',   default: 'whole',}), value: 1000 },
-		{ text: formatMessage({id: 'esp32.beats.double',  default: 'double',}), value: 2000 },
-	]},
-	onoff: { acceptReporters: true, items: [
-		{ text: formatMessage({id: 'esp32.onoff.on',  default: 'On',}), value: 1 },
-		{ text: formatMessage({id: 'esp32.onoff.off', default: 'Off',}), value: 0 },
-	]},
-	led: { acceptReporters: true, items: ['1','2','3','4','5','6']},
-	sensor: { acceptReporters: true, items: ['1','2','3','4']},
-	sw: { acceptReporters: true, items: ['1','2','3']},
-
-	direction: { acceptReporters: true, items: [
-		{ text: formatMessage({id: 'esp32.direction.stop',			default: 'stop',}), value: 0 },
-		{ text: formatMessage({id: 'esp32.direction.runForward',	default: 'run forward',}), value: 1 },
-		{ text: formatMessage({id: 'esp32.direction.turnLeft',		default: 'turn left',}), value: 2 },
-		{ text: formatMessage({id: 'esp32.direction.turnRight',		default: 'turn right',}), value: 3 },
-		{ text: formatMessage({id: 'esp32.direction.runBackward',	default: 'run backward',}), value: 4 },
-		{ text: formatMessage({id: 'esp32.direction.rotateLeft',	default: 'rotate left',}), value: 5 },
-		{ text: formatMessage({id: 'esp32.direction.rotateRight',	default: 'rotate right',}), value: 6 },
-	]},
-
-	servoch: { acceptReporters: true, items: ['5','6','7']},
-	speed: { acceptReporters: true, items: ['-100','-50','0','50','100']},
-	angle: { acceptReporters: true, items: ['0','90','180']},
-};
+//const serverTimeoutMs = 10000; // 10 seconds (chosen arbitrarily).
 
 let _resolve = null;
 let _error = null;
@@ -133,10 +33,10 @@ let _sendBuf = null;
 let _alertFlag = false;
 
 /**
- * Class for the ESP32 block in Scratch 3.0.
+ * Class for the TukuBoard block in Scratch 3.0.
  * @constructor
  */
-class Scratch3ESP32Blocks {
+class Scratch3TukuBoardBlocks {
     constructor (runtime) {
         /**
          * The runtime instantiating this block package.
@@ -148,46 +48,333 @@ class Scratch3ESP32Blocks {
 		let cookies_get = document.cookie.split(';');
 		for(let i=0;i<cookies_get.length;i++) {
 			let tmp = cookies_get[i].trim().split('=');
-			if(tmp[0]=='esp32ip') {
+			if(tmp[0]=='TukuBoard_ip') {
 				this._ipadrs=tmp[1];
-				log.log('esp32ip='+this._ipadrs);
+				log.log('TukuBoard_ip='+this._ipadrs);
 				break;
 			}
 		}
     }
 
+	get_blocks() {
+		this._blocks = [
+{blockType: BlockType.COMMAND, opcode: 'setIotIp', text: {
+	'en': 'setup IP address [ARG1]',
+	'ja': 'IPアドレス設定 [ARG1]',
+}[this._locale], arguments: {
+	ARG1: { type: ArgumentType.STRING, defaultValue: this._ipadrs},
+}},
+
+{blockType: BlockType.COMMAND, opcode: 'setLED', text: {
+    'en': 'set LED [ARG1] [ARG2]',
+    'ja': 'LED [ARG1] を [ARG2]',
+}[this._locale], arguments: {
+    ARG1: { type: ArgumentType.NUMBER, type2:'B', defaultValue:1, menu: 'led' },
+    ARG2: { type: ArgumentType.NUMBER, type2:'B', defaultValue:1, menu: 'onoff' },
+}},
+
+{blockType: BlockType.COMMAND, opcode: 'BuzzerJ2', text: {
+    'en': 'play tone [ARG1] beat [ARG2]',
+    'ja': '[ARG1] を [ARG2] 鳴らす',
+}[this._locale], arguments: {
+    ARG1: { type: ArgumentType.NUMBER, type2:'S', defaultValue:262, menu: 'noteJ2' },
+    ARG2: { type: ArgumentType.NUMBER, type2:'S', defaultValue:500, menu: 'beats' },
+}},
+
+{blockType: BlockType.REPORTER, opcode: 'getAnalogAve', text: {
+    'en': 'Sensor [ARG1] average [ARG2] times',
+    'ja': 'センサ [ARG1] の [ARG2] 回平均',
+}[this._locale], arguments: {
+    ARG1: { type: ArgumentType.NUMBER, type2:'B', defaultValue:1, menu: 'sensor' },
+    ARG2: { type: ArgumentType.NUMBER, type2:'S', defaultValue:4 },
+}},
+
+{blockType: BlockType.BOOLEAN, opcode: 'getSW', text: {
+    'en': 'SW [ARG1]',
+    'ja': 'スイッチ [ARG1]',
+}[this._locale], arguments: {
+    ARG1: { type: ArgumentType.NUMBER, type2:'B', defaultValue:1, menu: 'sw' },
+}},
+
+
+		];
+		return this._blocks;
+	}
+
+	get_menus() {
+	  return {
+beats: { acceptReporters: true, items: [
+{ text: {
+    'en': 'Half',
+    'ja': '2分音符',
+}[this._locale], value: 500 },
+{ text: {
+    'en': 'Quarter',
+    'ja': '4分音符',
+}[this._locale], value: 250 },
+{ text: {
+    'en': 'Eighth',
+    'ja': '8分音符',
+}[this._locale], value: 125 },
+{ text: {
+    'en': 'Whole',
+    'ja': '全音符',
+}[this._locale], value: 1000 },
+{ text: {
+    'en': 'Double',
+    'ja': '倍全音符',
+}[this._locale], value: 2000 },
+]},
+
+led: { acceptReporters: true, items: ['1','2','3','4','5','6',]},
+
+noteJ1: { acceptReporters: true, items: [
+{ text: {
+    'en': 'C2',
+    'ja': 'ド2',
+}[this._locale], value: 65 },
+{ text: {
+    'en': 'D2',
+    'ja': 'レ2',
+}[this._locale], value: 73 },
+{ text: {
+    'en': 'E2',
+    'ja': 'ミ2',
+}[this._locale], value: 82 },
+{ text: {
+    'en': 'F2',
+    'ja': 'ファ2',
+}[this._locale], value: 87 },
+{ text: {
+    'en': 'G2',
+    'ja': 'ソ2',
+}[this._locale], value: 98 },
+{ text: {
+    'en': 'A2',
+    'ja': 'ラ2',
+}[this._locale], value: 110 },
+{ text: {
+    'en': 'B2',
+    'ja': 'シ2',
+}[this._locale], value: 123 },
+{ text: {
+    'en': 'C3',
+    'ja': 'ド3',
+}[this._locale], value: 131 },
+{ text: {
+    'en': 'D3',
+    'ja': 'レ3',
+}[this._locale], value: 147 },
+{ text: {
+    'en': 'E3',
+    'ja': 'ミ3',
+}[this._locale], value: 165 },
+{ text: {
+    'en': 'F3',
+    'ja': 'ファ3',
+}[this._locale], value: 175 },
+{ text: {
+    'en': 'G3',
+    'ja': 'ソ3',
+}[this._locale], value: 196 },
+{ text: {
+    'en': 'A3',
+    'ja': 'ラ3',
+}[this._locale], value: 220 },
+{ text: {
+    'en': 'B3',
+    'ja': 'シ3',
+}[this._locale], value: 247 },
+]},
+
+noteJ2: { acceptReporters: true, items: [
+{ text: {
+    'en': 'C4',
+    'ja': 'ド4',
+}[this._locale], value: 262 },
+{ text: {
+    'en': 'D4',
+    'ja': 'レ4',
+}[this._locale], value: 294 },
+{ text: {
+    'en': 'E4',
+    'ja': 'ミ4',
+}[this._locale], value: 330 },
+{ text: {
+    'en': 'F4',
+    'ja': 'ファ4',
+}[this._locale], value: 349 },
+{ text: {
+    'en': 'G4',
+    'ja': 'ソ4',
+}[this._locale], value: 392 },
+{ text: {
+    'en': 'A4',
+    'ja': 'ラ4',
+}[this._locale], value: 440 },
+{ text: {
+    'en': 'B4',
+    'ja': 'シ4',
+}[this._locale], value: 494 },
+{ text: {
+    'en': 'C5',
+    'ja': 'ド5',
+}[this._locale], value: 523 },
+{ text: {
+    'en': 'D5',
+    'ja': 'レ5',
+}[this._locale], value: 587 },
+{ text: {
+    'en': 'E5',
+    'ja': 'ミ5',
+}[this._locale], value: 659 },
+{ text: {
+    'en': 'F5',
+    'ja': 'ファ5',
+}[this._locale], value: 698 },
+{ text: {
+    'en': 'G5',
+    'ja': 'ソ5',
+}[this._locale], value: 784 },
+{ text: {
+    'en': 'A5',
+    'ja': 'ラ5',
+}[this._locale], value: 880 },
+{ text: {
+    'en': 'B5',
+    'ja': 'シ5',
+}[this._locale], value: 988 },
+]},
+
+noteJ3: { acceptReporters: true, items: [
+{ text: {
+    'en': 'C6',
+    'ja': 'ド6',
+}[this._locale], value: 1047 },
+{ text: {
+    'en': 'D6',
+    'ja': 'レ6',
+}[this._locale], value: 1175 },
+{ text: {
+    'en': 'E6',
+    'ja': 'ミ6',
+}[this._locale], value: 1319 },
+{ text: {
+    'en': 'F6',
+    'ja': 'ファ6',
+}[this._locale], value: 1397 },
+{ text: {
+    'en': 'G6',
+    'ja': 'ソ6',
+}[this._locale], value: 1568 },
+{ text: {
+    'en': 'A6',
+    'ja': 'ラ6',
+}[this._locale], value: 1760 },
+{ text: {
+    'en': 'B6',
+    'ja': 'シ6',
+}[this._locale], value: 1976 },
+{ text: {
+    'en': 'C7',
+    'ja': 'ド7',
+}[this._locale], value: 2093 },
+{ text: {
+    'en': 'D7',
+    'ja': 'レ7',
+}[this._locale], value: 2349 },
+{ text: {
+    'en': 'E7',
+    'ja': 'ミ7',
+}[this._locale], value: 2637 },
+{ text: {
+    'en': 'F7',
+    'ja': 'ファ7',
+}[this._locale], value: 2794 },
+{ text: {
+    'en': 'G7',
+    'ja': 'ソ7',
+}[this._locale], value: 3136 },
+{ text: {
+    'en': 'A7',
+    'ja': 'ラ7',
+}[this._locale], value: 3520 },
+{ text: {
+    'en': 'B7',
+    'ja': 'シ7',
+}[this._locale], value: 3951 },
+{ text: {
+    'en': 'C8',
+    'ja': 'ド8',
+}[this._locale], value: 4186 },
+{ text: {
+    'en': 'D8',
+    'ja': 'レ8',
+}[this._locale], value: 4699 },
+]},
+
+onoff: { acceptReporters: true, items: [
+{ text: 'On', value: 1 },
+{ text: 'Off', value: 0 },
+]},
+
+sensor: { acceptReporters: true, items: ['1','2','3','4',]},
+
+sw: { acceptReporters: true, items: ['1','2','3',]},
+
+
+	  };
+	}
+
+setLED(args,util) { return this.getTest(arguments.callee.name, args); }
+BuzzerJ2(args,util) { return this.getTest(arguments.callee.name, args); }
+getAnalogAve(args,util) { return this.getTest(arguments.callee.name, args); }
+getSW(args,util) { return this.getTest(arguments.callee.name, args); }
+
+
     /**
      * @returns {object} metadata for this extension and its blocks.
      */
     getInfo () {
-		blocks[0].arguments.ARG1.defaultValue = this._ipadrs;
+        switch(formatMessage.setup().locale) {
+          case 'ja':
+          case 'ja-Hira':
+            this._locale = 'ja';
+            break;
+          default:
+            this._locale = 'en';
+            break;
+        }
+        log.log(this._locale);
+
+	//	blocks[0].arguments.ARG1.defaultValue = this._ipadrs;
         return {
-            id: 'esp32',
-            name: 'ESP32',
+            id: 'TukuBoard',
+            name: 'TukuBoard',
             blockIconURI: blockIconURI,
             menuIconURI: menuIconURI,
-            blocks: blocks,
-            menus: menus,
+            blocks: this.get_blocks(),
+            menus: this.get_menus(),
         };
     }
     
     setIotIp (args) {
         this._ipadrs = Cast.toString(args.ARG1);
-        document.cookie = 'esp32ip=' + this._ipadrs + '; samesite=lax;';
+        document.cookie = 'TukuBoard_ip=' + this._ipadrs + '; samesite=lax;';
+        if(SupportCamera) {
+          document.cookie = 'Camera_ip=' + this._ipadrs + '; samesite=lax;';
+          alert(this._ipadrs + {
+            'en': ' has been saved (for Robot & Camera).',
+            'ja': 'を保存しました(ロボット & カメラ)',
+          }[this._locale]);
+        } else {
+          alert(this._ipadrs + {
+            'en': ' has been saved.',
+            'ja': 'を保存しました',
+          }[this._locale]);
+        }
         log.log(this._ipadrs);
-        alert(this._ipadrs + 'を保存しました');
     }
-
-	setLED(args,util)		{ return this.getTest(arguments.callee.name, args); }
-	BuzzerJ2(args,util)		{ return this.getTest(arguments.callee.name, args); }
-	getAnalogAve(args,util)	{ return this.getTest(arguments.callee.name, args); }
-	getSW(args,util)		{ return this.getTest(arguments.callee.name, args); }
-	setCar(args)			{ return this.getTest(arguments.callee.name, args); }
-	setMotor(args)			{ return this.getTest(arguments.callee.name, args); }
-	stopCar(args)			{ return this.getTest(arguments.callee.name, args); }
-	enumDirection(args)		{ return args.ARG1; }
-	setServo(args)			{ return this.getTest(arguments.callee.name, args); }
-	stopServo(args)			{ return this.getTest(arguments.callee.name, args); }
 
 /*
 	onmessage(err, res, body) {
@@ -223,10 +410,10 @@ class Scratch3ESP32Blocks {
 	}
 
 	getTest(opcode,args) {
-		for(index = 0; index < blocks.length; index++) {
-			if(blocks[index].opcode == opcode) break;
+		for(index = 0; index < this._blocks.length; index++) {
+			if(this._blocks[index].opcode == opcode) break;
 		}
-		if(index === blocks.length) return 0;
+		if(index === this._blocks.length) return 0;
 
 		var cmdUint8 = new Uint8Array(256);
 		var cmd = new DataView(cmdUint8.buffer);
@@ -237,7 +424,7 @@ class Scratch3ESP32Blocks {
 		var param = [args.ARG1, args.ARG2, args.ARG3, args.ARG4];
 		for(i = 1; ; i++) {
 			eval("var param = args.ARG"+i);
-			eval("var def = blocks[index].arguments.ARG"+i);
+			eval("var def = this._blocks[index].arguments.ARG"+i);
 		//	log.log(i,param, def);
 			if(typeof param === "undefined") break;
 			switch(def.type2) {
@@ -267,10 +454,12 @@ class Scratch3ESP32Blocks {
 			//log.log('send: ' + cmdUint8.slice(0,ofs));	// debug
 
 			if(tempThis._ws === null) {
+			/*
 				if(tempThis._ipadrs == '192.168.1.xx') {
 					error('');
 					return;
 				}
+			*/
 				_sendBuf = cmdUint8.slice(0,ofs);
 
 				tempThis._ws = new WebSocket('ws://'+tempThis._ipadrs+':54323');
@@ -322,4 +511,4 @@ class Scratch3ESP32Blocks {
 	}
 
 }
-module.exports = Scratch3ESP32Blocks;
+module.exports = Scratch3TukuBoardBlocks;

@@ -137,7 +137,7 @@ class RenderedTarget extends Target {
          * This property is global to the project and stored in the stage.
          * @type {number}
          */
-        this.videoTransparency = 50;
+        this.videoTransparency = 0;//50;
 
         /**
          * The state of the video input (used by extensions with camera input).
@@ -152,7 +152,7 @@ class RenderedTarget extends Target {
          *
          * @type {string}
          */
-        this.videoState = RenderedTarget.VIDEO_STATE.ON;
+        this.videoState = RenderedTarget.VIDEO_STATE.OFF;//ON;
 
         /**
          * The language to use for speech synthesis, in the text2speech extension.
