@@ -17,6 +17,7 @@ const builtinExtensions = {
     M5CameraCar: () => require('../extensions/scratch3_tukurutch/M5CameraCar.js'),
     M5Series: () => require('../extensions/scratch3_tukurutch/M5Series.js'),
     Duke32AIO: () => require('../extensions/scratch3_tukurutch/Duke32AIO.js'),
+    QuadCrawlerEsp: () => require('../extensions/scratch3_tukurutch/QuadCrawlerEsp.js'),
     pen: () => require('../extensions/scratch3_pen'),
     wedo2: () => require('../extensions/scratch3_wedo2'),
     music: () => require('../extensions/scratch3_music'),
