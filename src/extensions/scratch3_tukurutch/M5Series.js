@@ -90,7 +90,7 @@ class Scratch3M5SeriesBlocks {
     'en': 'set digital pin [ARG1] output as [ARG2]',
     'ja': 'デジタルピン [ARG1] の出力を [ARG2] にする',
 }[this._locale], arguments: {
-    ARG1: { type: ArgumentType.NUMBER, type2:'B', defaultValue:0 },
+    ARG1: { type: ArgumentType.NUMBER, type2:'B', defaultValue:26 },
     ARG2: { type: ArgumentType.NUMBER, type2:'B', defaultValue:1, menu: 'digital' },
 }},
 
@@ -98,11 +98,14 @@ class Scratch3M5SeriesBlocks {
     'en': 'read digital pin [ARG1]',
     'ja': 'デジタルピン [ARG1]',
 }[this._locale], arguments: {
-    ARG1: { type: ArgumentType.NUMBER, type2:'B', defaultValue:0 },
+    ARG1: { type: ArgumentType.NUMBER, type2:'B', defaultValue:26 },
 }},
 
-{blockType: BlockType.REPORTER, opcode: 'getAdc1', text: 'read adc1 ch [ARG1] average [ARG2] times', arguments: {
-    ARG1: { type: ArgumentType.NUMBER, type2:'B', defaultValue:0 },
+{blockType: BlockType.REPORTER, opcode: 'getAnalog', text: {
+    'en': 'read analog pin [ARG1] average [ARG2] times',
+    'ja': 'アナログピン [ARG1] の [ARG2] 回平均',
+}[this._locale], arguments: {
+    ARG1: { type: ArgumentType.NUMBER, type2:'B', defaultValue:36 },
     ARG2: { type: ArgumentType.NUMBER, type2:'S', defaultValue:4 },
 }},
 
@@ -352,7 +355,7 @@ Beep(args,util) { return this.getTest(arguments.callee.name, args); }
 getSw(args,util) { return this.getTest(arguments.callee.name, args); }
 setDigital(args,util) { return this.getTest(arguments.callee.name, args); }
 getDigital(args,util) { return this.getTest(arguments.callee.name, args); }
-getAdc1(args,util) { return this.getTest(arguments.callee.name, args); }
+getAnalog(args,util) { return this.getTest(arguments.callee.name, args); }
 setText(args,util) { return this.getTest(arguments.callee.name, args); }
 setCursor(args,util) { return this.getTest(arguments.callee.name, args); }
 printText(args,util) { return this.getTest(arguments.callee.name, args); }
