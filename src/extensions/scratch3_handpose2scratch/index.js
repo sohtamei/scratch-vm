@@ -5,24 +5,18 @@ const formatMessage = require('format-message');
 require('@tensorflow/tfjs-core');
 require('@tensorflow/tfjs-converter');
 require('@tensorflow/tfjs-backend-webgl');
-const facemesh = require('@tensorflow-models/facemesh');
-const Video = require('../../io/video');
+const handpose = require('@tensorflow-models/handpose');
 
 const Message = {
   getX: {
-    'ja': '[PERSON_NUMBER] 人目の [KEYPOINT] 番目の部位のx座標',
-    'ja-Hira': '[PERSON_NUMBER] にんめの [KEYPOINT] ばんめのぶいのxざひょう',
-    'en': 'x of person no: [PERSON_NUMBER] , keypoint no: [KEYPOINT]'
+    'ja': '[LANDMARK] のx座標',
+    'ja-Hira': '[LANDMARK] のxざひょう',
+    'en': 'x of [LANDMARK]'
   },
   getY: {
-    'ja': '[PERSON_NUMBER] 人目の [KEYPOINT] 番目の部位のy座標',
-    'ja-Hira': '[PERSON_NUMBER] にんめの [KEYPOINT] ばんめのぶいのyざひょう',
-    'en': 'y of person no: [PERSON_NUMBER] , keypoint no: [KEYPOINT]'
-  },
-  peopleCount: {
-    'ja': '人数',
-    'ja-Hira': 'にんずう',
-    'en': 'people count'
+    'ja': '[LANDMARK] のy座標',
+    'ja-Hira': '[LANDMARK] のyざひょう',
+    'en': 'y of [LANDMARK]'
   },
   videoToggle: {
     'ja': 'ビデオを [VIDEO_STATE] にする',
@@ -52,31 +46,130 @@ const Message = {
   video_on_flipped: {
     'ja': '左右反転',
     'ja-Hira': 'さゆうはんてん',
-    'en': 'on flipped',
+    'en': 'on flipped'
   },
   please_wait: {
     'ja': '準備に時間がかかります。少しの間、操作ができなくなりますがお待ち下さい。',
     'ja-Hira': 'じゅんびにじかんがかかります。すこしのあいだ、そうさができなくなりますがおまちください。',
     'en': 'Setup takes a while. The browser will get stuck, but please wait.'
-  }
+  },
+  landmarks: [
+    {
+      'ja': '手首',
+      'ja-Hira': 'てくび',
+      'en': 'wrist'
+    },
+    {
+      'ja': '親指の根元',
+      'ja-Hira': 'おやゆびのねもと',
+      'en': 'the base of thumb'
+    },
+    {
+      'ja': '親指の第2関節',
+      'ja-Hira': 'おやゆびのだい2かんせつ',
+      'en': 'the 2nd joint of thumb'
+    },
+    {
+      'ja': '親指の第1関節',
+      'ja-Hira': 'おやゆびのだい1かんせつ',
+      'en': 'the 1st joint of thumb'
+    },
+    {
+      'ja': '親指の先端',
+      'ja-Hira': 'おやゆびのさき',
+      'en': 'thumb'
+    },
+    {
+      'ja': '人差し指の第3関節',
+      'ja-Hira': 'ひとさしゆびのだい3かんせつ',
+      'en': 'the 3rd joint of index finger'
+    },
+    {
+      'ja': '人差し指の第2関節',
+      'ja-Hira': 'ひとさしゆびのだい2かんせつ',
+      'en': 'the 2nd joint of index finger'
+    },
+    {
+      'ja': '人差し指の第1関節',
+      'ja-Hira': 'ひとさしゆびのだい1かんせつ',
+      'en': 'the 1st joint of index finger'
+    },
+    {
+      'ja': '人差し指の先端',
+      'ja-Hira': 'ひとさしゆびのせんたん',
+      'en': 'index finger'
+    },
+    {
+      'ja': '中指の第3関節',
+      'ja-Hira': 'なかゆびのだい3かんせつ',
+      'en': 'the 3rd joint of middle finger'
+    },
+    {
+      'ja': '中指の第2関節',
+      'ja-Hira': 'なかゆびのだい2かんせつ',
+      'en': 'the 2nd joint of middle finger'
+    },
+    {
+      'ja': '中指の第1関節',
+      'ja-Hira': 'なかゆびのだい1かんせつ',
+      'en': 'the 1st joint of middle finger'
+    },
+    {
+      'ja': '中指の先端',
+      'ja-Hira': 'なかゆびのせんたん',
+      'en': 'middle finger'
+    },
+    {
+      'ja': '薬指の第3関節',
+      'ja-Hira': 'くすりゆびのだい3かんせつ',
+      'en': 'the 3rd joint of ring finger'
+    },
+    {
+      'ja': '薬指の第2関節',
+      'ja-Hira': 'くすりゆびのだい2かんせつ',
+      'en': 'the 2nd joint of ring finger'
+    },
+    {
+      'ja': '薬指の第1関節',
+      'ja-Hira': 'くすりゆびのだい1かんせつ',
+      'en': 'the 1st joint of ring finger'
+    },
+    {
+      'ja': '薬指の先端',
+      'ja-Hira': 'くすりゆびのせんたん',
+      'en': 'ring finger'
+    },
+    {
+      'ja': '小指の第3関節',
+      'ja-Hira': 'こゆびのだい3かんせつ',
+      'en': 'the 3rd joint of little finger'
+    },
+    {
+      'ja': '小指の第2関節',
+      'ja-Hira': 'こゆびのだい2かんせつ',
+      'en': 'the 2nd joint of little finger'
+    },
+    {
+      'ja': '小指の第1関節',
+      'ja-Hira': 'こゆびのだい1かんせつ',
+      'en': 'the 1st joint of little finger'
+    },
+    {
+      'ja': '小指の先端',
+      'ja-Hira': 'こゆびのせんたん',
+      'en': 'little finger'
+    }
+  ]
 }
 const AvailableLocales = ['en', 'ja', 'ja-Hira'];
 
-class Scratch3Facemesh2ScratchBlocks {
-    get PERSON_NUMBER_MENU () {
-      let person_number_menu = []
-      for (let i = 1; i <= 10; i++) {
-        person_number_menu.push({text: String(i), value: String(i)})
+class Scratch3Handpose2ScratchBlocks {
+    get LANDMARK_MENU () {
+      landmark_menu = [];
+      for (let i = 1; i <= 21; i++) {
+        landmark_menu.push({text: `${Message.landmarks[i - 1][this._locale]} (${i})`, value: String(i)})
       }
-      return person_number_menu;
-    }
-
-    get KEYPOINT_MENU () {
-      let keypoint_menu = [];
-      for (let i = 1; i <= 468; i++) {
-        keypoint_menu.push({text: String(i), value: String(i)})
-      }
-      return keypoint_menu;
+      return landmark_menu;
     }
 
     get VIDEO_MENU () {
@@ -145,43 +238,31 @@ class Scratch3Facemesh2ScratchBlocks {
     constructor (runtime) {
         this.runtime = runtime;
 
-        this.faces = [];
-/*
+        this.landmarks = [];
+
         let video = document.createElement("video");
         video.width = 480;
         video.height = 360;
         video.autoplay = true;
         video.style.display = "none";
         this.video = video;
-*/
-        this.ratio = 1;
+        this.ratio = 0.75;
         this.interval = 200;
 
-        this._locale = this.setLocale();
-//      this.video.addEventListener('loadeddata', (event) => {
+        this.video.addEventListener('loadeddata', (event) => {
           alert(Message.please_wait[this._locale]);
-          facemesh.load().then(model => {
+          handpose.load().then(model => {
             this.model = model;
             this.timer = setInterval(() => {
-	          const frame = this.runtime.ioDevices.video.getFrame({
-	              format: Video.FORMAT_CANVAS,
-	              mirror: false,
-	              dimensions: Video.DIMENSIONS
-	          });
-	        if (frame) {
-              this.model.estimateFaces(frame/*this.video*/).then(faces => {
-                if (faces.length < this.faces.length) {
-                  this.faces.splice(faces.length);
-                }
-                faces.forEach((face, index) => {
-                  this.faces[index] = {keypoints: face.scaledMesh};
+              this.model.estimateHands(this.video).then(hands => {
+                hands.forEach(hand => {
+                  this.landmarks = hand.landmarks;
                 });
-              }, this.interval);
-            }
-            });
+              });
+            }, this.interval);
           });
-//      });
-/*
+        });
+
         let media = navigator.mediaDevices.getUserMedia({
           video: true,
           audio: false
@@ -190,7 +271,7 @@ class Scratch3Facemesh2ScratchBlocks {
         media.then((stream) => {
             this.video.srcObject = stream;
         });
-*/
+
         this.runtime.ioDevices.video.enableVideo();
     }
 
@@ -198,22 +279,17 @@ class Scratch3Facemesh2ScratchBlocks {
         this._locale = this.setLocale();
 
         return {
-            id: 'facemesh2scratch',
-            name: 'Facemesh2Scratch',
+            id: 'handpose2scratch',
+            name: 'Handpose2Scratch',
             blocks: [
                 {
                     opcode: 'getX',
                     blockType: BlockType.REPORTER,
                     text: Message.getX[this._locale],
                     arguments: {
-                        PERSON_NUMBER: {
+                        LANDMARK: {
                             type: ArgumentType.STRING,
-                            menu: 'personNumberMenu',
-                            defaultValue: '1'
-                        },
-                        KEYPOINT: {
-                            type: ArgumentType.STRING,
-                            menu: 'keypointMenu',
+                            menu: 'landmark',
                             defaultValue: '1'
                         }
                     }
@@ -223,22 +299,12 @@ class Scratch3Facemesh2ScratchBlocks {
                     blockType: BlockType.REPORTER,
                     text: Message.getY[this._locale],
                     arguments: {
-                        PERSON_NUMBER: {
+                        LANDMARK: {
                             type: ArgumentType.STRING,
-                            menu: 'personNumberMenu',
-                            defaultValue: '1'
-                        },
-                        KEYPOINT: {
-                            type: ArgumentType.STRING,
-                            menu: 'keypointMenu',
+                            menu: 'landmark',
                             defaultValue: '1'
                         }
                     }
-                },
-                {
-                    opcode: 'getPeopleCount',
-                    blockType: BlockType.REPORTER,
-                    text: Message.peopleCount[this._locale]
                 },
                 {
                     opcode: 'videoToggle',
@@ -260,7 +326,7 @@ class Scratch3Facemesh2ScratchBlocks {
                         RATIO: {
                             type: ArgumentType.STRING,
                             menu: 'ratioMenu',
-                            defaultValue: '1'
+                            defaultValue: '0.75'
                         }
                     }
                 },
@@ -278,13 +344,9 @@ class Scratch3Facemesh2ScratchBlocks {
                 }
             ],
             menus: {
-              personNumberMenu: {
+              landmark: {
                 acceptReporters: true,
-                items: this.PERSON_NUMBER_MENU
-              },
-              keypointMenu: {
-                acceptReporters: true,
-                items: this.KEYPOINT_MENU
+                items: this.LANDMARK_MENU
               },
               videoMenu: {
                 acceptReporters: true,
@@ -303,14 +365,12 @@ class Scratch3Facemesh2ScratchBlocks {
     }
 
     getX (args) {
-      let personNumber = parseInt(args.PERSON_NUMBER, 10) - 1;
-      let keypoint = parseInt(args.KEYPOINT, 10) - 1;
-
-      if (this.faces[personNumber].keypoints && this.faces[personNumber].keypoints[keypoint]) {
+      let landmark = parseInt(args.LANDMARK, 10) - 1;
+      if (this.landmarks[landmark]) {
         if (this.runtime.ioDevices.video.mirror === false) {
-          return -1 * (240 - this.faces[personNumber].keypoints[keypoint][0] * this.ratio);
+          return -1 * (240 - this.landmarks[landmark][0] * this.ratio);
         } else {
-          return 240 - this.faces[personNumber].keypoints[keypoint][0] * this.ratio;
+          return 240 - this.landmarks[landmark][0] * this.ratio;
         }
       } else {
         return "";
@@ -318,18 +378,12 @@ class Scratch3Facemesh2ScratchBlocks {
     }
 
     getY (args) {
-      let personNumber = parseInt(args.PERSON_NUMBER, 10) - 1;
-      let keypoint = parseInt(args.KEYPOINT, 10) - 1;
-
-      if (this.faces[personNumber].keypoints && this.faces[personNumber].keypoints[keypoint]) {
-        return 180 - this.faces[personNumber].keypoints[keypoint][1] * this.ratio;
+      let landmark = parseInt(args.LANDMARK, 10) - 1;
+      if (this.landmarks[landmark]) {
+        return 180 - this.landmarks[landmark][1] * this.ratio;
       } else {
         return "";
       }
-    }
-
-    getPeopleCount () {
-      return this.faces.length;
     }
 
     videoToggle (args) {
@@ -353,39 +407,12 @@ class Scratch3Facemesh2ScratchBlocks {
 
       this.interval = args.INTERVAL * 1000;
       this.timer = setInterval(() => {
-        const frame = this.runtime.ioDevices.video.getFrame({
-            format: Video.FORMAT_CANVAS,
-            mirror: false,
-            dimensions: Video.DIMENSIONS
-        });
-      if (frame) {
-        this.model.estimateFaces(frame/*this.video*/).then(faces => {
-          if (faces.length < this.faces.length) {
-            this.faces.splice(faces.length);
-          }
-          faces.forEach((face, index) => {
-            this.faces[index] = {keypoints: face.scaledMesh};
-          });
-        }, this.interval);
-      }
-      });
-    }
-
-    setKeypoints() {
-
-        this.faces = [];
-        const frame = this.runtime.ioDevices.video.getFrame({
-            format: Video.FORMAT_CANVAS,
-            mirror: false,
-            dimensions: Video.DIMENSIONS
-        });
-      if (frame) {
-        this.model.estimateFaces(frame/*this.video*/).then(faces => {
-          faces.forEach((face, index) => {
-            this.faces[index] = {keypoints: face.scaledMesh};
+        this.model.estimateHands(this.video).then(hands => {
+          hands.forEach(hand => {
+            this.landmarks = hand.landmarks;
           });
         });
-      }
+      }, this.interval);
     }
 
     setLocale() {
@@ -398,4 +425,4 @@ class Scratch3Facemesh2ScratchBlocks {
     }
 }
 
-module.exports = Scratch3Facemesh2ScratchBlocks;
+module.exports = Scratch3Handpose2ScratchBlocks;
