@@ -6,6 +6,7 @@ require('@tensorflow/tfjs-core');
 require('@tensorflow/tfjs-converter');
 require('@tensorflow/tfjs-backend-webgl');
 const handpose = require('@tensorflow-models/handpose');
+const Video = require('../../io/video');
 
 const Message = {
   getX: {
@@ -239,30 +240,39 @@ class Scratch3Handpose2ScratchBlocks {
         this.runtime = runtime;
 
         this.landmarks = [];
-
+/*
         let video = document.createElement("video");
         video.width = 480;
         video.height = 360;
         video.autoplay = true;
         video.style.display = "none";
         this.video = video;
-        this.ratio = 0.75;
+*/
+        this.ratio = 1;
         this.interval = 200;
 
-        this.video.addEventListener('loadeddata', (event) => {
+        this._locale = this.setLocale();
+//      this.video.addEventListener('loadeddata', (event) => {
           alert(Message.please_wait[this._locale]);
           handpose.load().then(model => {
             this.model = model;
             this.timer = setInterval(() => {
-              this.model.estimateHands(this.video).then(hands => {
+	          const frame = this.runtime.ioDevices.video.getFrame({
+	              format: Video.FORMAT_CANVAS,
+	              mirror: false,
+	              dimensions: Video.DIMENSIONS
+	          });
+	        if (frame) {
+              this.model.estimateHands(frame/*this.video*/).then(hands => {
                 hands.forEach(hand => {
                   this.landmarks = hand.landmarks;
                 });
               });
+            }
             }, this.interval);
           });
-        });
-
+//      });
+/*
         let media = navigator.mediaDevices.getUserMedia({
           video: true,
           audio: false
@@ -271,7 +281,7 @@ class Scratch3Handpose2ScratchBlocks {
         media.then((stream) => {
             this.video.srcObject = stream;
         });
-
+*/
         this.runtime.ioDevices.video.enableVideo();
     }
 
@@ -326,7 +336,7 @@ class Scratch3Handpose2ScratchBlocks {
                         RATIO: {
                             type: ArgumentType.STRING,
                             menu: 'ratioMenu',
-                            defaultValue: '0.75'
+                            defaultValue: '1'
                         }
                     }
                 },
@@ -407,11 +417,18 @@ class Scratch3Handpose2ScratchBlocks {
 
       this.interval = args.INTERVAL * 1000;
       this.timer = setInterval(() => {
-        this.model.estimateHands(this.video).then(hands => {
+        const frame = this.runtime.ioDevices.video.getFrame({
+            format: Video.FORMAT_CANVAS,
+            mirror: false,
+            dimensions: Video.DIMENSIONS
+        });
+      if (frame) {
+        this.model.estimateHands(frame/*this.video*/).then(hands => {
           hands.forEach(hand => {
             this.landmarks = hand.landmarks;
           });
         });
+      }
       }, this.interval);
     }
 
