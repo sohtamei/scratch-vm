@@ -6,6 +6,7 @@ require('@tensorflow/tfjs-core');
 require('@tensorflow/tfjs-converter');
 require('@tensorflow/tfjs-backend-webgl');
 const facemesh = require('@tensorflow-models/facemesh');
+const Video = require('../../io/video');
 
 const Message = {
   getX: {
@@ -145,22 +146,29 @@ class Scratch3Facemesh2ScratchBlocks {
         this.runtime = runtime;
 
         this.faces = [];
-
+/*
         let video = document.createElement("video");
         video.width = 480;
         video.height = 360;
         video.autoplay = true;
         video.style.display = "none";
         this.video = video;
+*/
         this.ratio = 0.75;
         this.interval = 200;
 
-        this.video.addEventListener('loadeddata', (event) => {
+        this._locale = this.setLocale();
+//      this.video.addEventListener('loadeddata', (event) => {
           alert(Message.please_wait[this._locale]);
           facemesh.load().then(model => {
             this.model = model;
             this.timer = setInterval(() => {
-              this.model.estimateFaces(this.video).then(faces => {
+	          const frame = this.runtime.ioDevices.video.getFrame({
+	              format: Video.FORMAT_CANVAS,
+	              dimensions: Video.DIMENSIONS
+	          });
+	        if (frame) {
+              this.model.estimateFaces(frame/*this.video*/).then(faces => {
                 if (faces.length < this.faces.length) {
                   this.faces.splice(faces.length);
                 }
@@ -168,10 +176,11 @@ class Scratch3Facemesh2ScratchBlocks {
                   this.faces[index] = {keypoints: face.scaledMesh};
                 });
               }, this.interval);
+            }
             });
           });
-        });
-
+//      });
+/*
         let media = navigator.mediaDevices.getUserMedia({
           video: true,
           audio: false
@@ -180,7 +189,7 @@ class Scratch3Facemesh2ScratchBlocks {
         media.then((stream) => {
             this.video.srcObject = stream;
         });
-
+*/
         this.runtime.ioDevices.video.enableVideo();
     }
 
@@ -343,7 +352,12 @@ class Scratch3Facemesh2ScratchBlocks {
 
       this.interval = args.INTERVAL * 1000;
       this.timer = setInterval(() => {
-        this.model.estimateFaces(this.video).then(faces => {
+        const frame = this.runtime.ioDevices.video.getFrame({
+            format: Video.FORMAT_CANVAS,
+            dimensions: Video.DIMENSIONS
+        });
+      if (frame) {
+        this.model.estimateFaces(frame/*this.video*/).then(faces => {
           if (faces.length < this.faces.length) {
             this.faces.splice(faces.length);
           }
@@ -351,18 +365,24 @@ class Scratch3Facemesh2ScratchBlocks {
             this.faces[index] = {keypoints: face.scaledMesh};
           });
         }, this.interval);
+      }
       });
     }
 
     setKeypoints() {
 
         this.faces = [];
-        this.model.estimateFaces(this.video).then(faces => {
+        const frame = this.runtime.ioDevices.video.getFrame({
+            format: Video.FORMAT_CANVAS,
+            dimensions: Video.DIMENSIONS
+        });
+      if (frame) {
+        this.model.estimateFaces(frame/*this.video*/).then(faces => {
           faces.forEach((face, index) => {
             this.faces[index] = {keypoints: face.scaledMesh};
           });
         });
-
+      }
     }
 
     setLocale() {
