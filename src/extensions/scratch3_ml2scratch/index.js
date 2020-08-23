@@ -4,6 +4,7 @@ const Cast = require('../../util/cast');
 const log = require('../../util/log');
 const ml5 = require('ml5');
 const formatMessage = require('format-message');
+const Video = require('../../io/video');
 
 const HAT_TIMEOUT = 100;
 
@@ -237,20 +238,20 @@ class Scratch3ML2ScratchBlocks {
     this.when_received_arr = Array(8).fill(false);
     this.label = null;
     this.locale = this.setLocale();
-
+/*
     this.video = document.createElement("video");
     this.video.width = 480;
     this.video.height = 360;
     this.video.autoplay = true;
     this.video.style.display = "none";
-
+*/
     this.blockClickedAt = null;
 
     this.counts = null;
     this.firstTraining = true;
 
     this.interval = 1000;
-
+/*
     let media = navigator.mediaDevices.getUserMedia({
       video: true,
       audio: false
@@ -259,10 +260,10 @@ class Scratch3ML2ScratchBlocks {
     media.then((stream) => {
       this.video.srcObject = stream;
     });
-
+*/
     this.canvas = document.querySelector('canvas');
 
-    this.input =  this.video;
+    this.input = null;//this.video;
 
     this.knnClassifier = ml5.KNNClassifier();
     this.featureExtractor = ml5.featureExtractor('MobileNet', () => {
@@ -272,7 +273,7 @@ class Scratch3ML2ScratchBlocks {
       }, this.interval);
     });
 
-    this.runtime.ioDevices.video.enableVideo();
+//  this.runtime.ioDevices.video.enableVideo();
   }
 
   getInfo() {
@@ -517,30 +518,43 @@ class Scratch3ML2ScratchBlocks {
     };
   }
 
+  getImage() {
+    if(this.input === this.canvas) {
+        return this.input;
+    } else {
+        const frame = this.runtime.ioDevices.video.getFrame({
+            format: Video.FORMAT_CANVAS,
+            mirror: false,
+            dimensions: Video.DIMENSIONS
+        });
+        return frame;
+    }
+  }
+
   addExample1() {
     this.firstTrainingWarning();
-    let features = this.featureExtractor.infer(this.input);
+    let features = this.featureExtractor.infer(this.getImage());
     this.knnClassifier.addExample(features, '1');
     this.updateCounts();
   }
 
   addExample2() {
     this.firstTrainingWarning();
-    let features = this.featureExtractor.infer(this.input);
+    let features = this.featureExtractor.infer(this.getImage());
     this.knnClassifier.addExample(features, '2');
     this.updateCounts();
   }
 
   addExample3() {
     this.firstTrainingWarning();
-    let features = this.featureExtractor.infer(this.input);
+    let features = this.featureExtractor.infer(this.getImage());
     this.knnClassifier.addExample(features, '3');
     this.updateCounts();
   }
 
   train(args) {
     this.firstTrainingWarning();
-    let features = this.featureExtractor.infer(this.input);
+    let features = this.featureExtractor.infer(this.getImage());
     this.knnClassifier.addExample(features, args.LABEL);
     this.updateCounts();
   }
@@ -754,7 +768,7 @@ class Scratch3ML2ScratchBlocks {
   setInput (args) {
     let input = args.INPUT;
     if (input === 'webcam') {
-      this.input = this.video;
+      this.input = null;//this.video;
     } else {
       this.input = this.canvas;
     }
@@ -792,7 +806,7 @@ class Scratch3ML2ScratchBlocks {
     let numLabels = this.knnClassifier.getNumLabels();
     if (numLabels == 0) return;
 
-    let features = this.featureExtractor.infer(this.input);
+    let features = this.featureExtractor.infer(this.getImage());
     this.knnClassifier.classify(features, (err, result) => {
       if (err) {
         console.error(err);

@@ -250,10 +250,10 @@ class Scratch3Handpose2ScratchBlocks {
 */
         this.ratio = 1;
         this.interval = 200;
+        this.firstTraining = true;
 
-        this._locale = this.setLocale();
 //      this.video.addEventListener('loadeddata', (event) => {
-          alert(Message.please_wait[this._locale]);
+//        alert(Message.please_wait[this._locale]);
           handpose.load().then(model => {
             this.model = model;
             this.timer = setInterval(() => {
@@ -263,6 +263,7 @@ class Scratch3Handpose2ScratchBlocks {
 	              dimensions: Video.DIMENSIONS
 	          });
 	        if (frame) {
+              this.firstTrainingWarning();
               this.model.estimateHands(frame/*this.video*/).then(hands => {
                 hands.forEach(hand => {
                   this.landmarks = hand.landmarks;
@@ -282,7 +283,7 @@ class Scratch3Handpose2ScratchBlocks {
             this.video.srcObject = stream;
         });
 */
-        this.runtime.ioDevices.video.enableVideo();
+//      this.runtime.ioDevices.video.enableVideo();
     }
 
     getInfo () {
@@ -324,7 +325,7 @@ class Scratch3Handpose2ScratchBlocks {
                         VIDEO_STATE: {
                             type: ArgumentType.STRING,
                             menu: 'videoMenu',
-                            defaultValue: 'off'
+                            defaultValue: 'on'
                         }
                     }
                 },
@@ -372,6 +373,13 @@ class Scratch3Handpose2ScratchBlocks {
               }
             }
         };
+    }
+
+    firstTrainingWarning() {
+      if (this.firstTraining) {
+        alert(Message.please_wait[this._locale]);
+        this.firstTraining = false;
+      }
     }
 
     getX (args) {
@@ -423,6 +431,7 @@ class Scratch3Handpose2ScratchBlocks {
             dimensions: Video.DIMENSIONS
         });
       if (frame) {
+        this.firstTrainingWarning();
         this.model.estimateHands(frame/*this.video*/).then(hands => {
           hands.forEach(hand => {
             this.landmarks = hand.landmarks;
