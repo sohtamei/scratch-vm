@@ -1,0 +1,88 @@
+﻿images/cube2_l.svg
+cube2_m.svg
+
+
+
+util.js
+watchdog.js
+blocks/cancelableBlock.js	未使用？
+blocks/coreCubeBlock.js
+toio/cancelablePromise.js
+toio/card.js
+toio/mat.js
+toio/simpleCard.js
+toio/intelligent/base.js
+
+
+C:\Users\n-tom\fd_work\toio\toio-visual-programming\src__\about.js(21): var toio_1 = __importDefault(require("./toio"));
+C:\Users\n-tom\fd_work\toio\toio-visual-programming\src__\about.js(23): var util_1 = __importDefault(require("./util"));
+C:\Users\n-tom\fd_work\toio\toio-visual-programming\src__\about.js(25): var package_json_1 = __importDefault(require("../package.json"));
+C:\Users\n-tom\fd_work\toio\toio-visual-programming\src__\blocksFactory.js(37): var toio_1 = __importDefault(require("./toio"));
+C:\Users\n-tom\fd_work\toio\toio-visual-programming\src__\blocksFactory.js(39): var coreCube_1 = __importDefault(require("./toio/coreCube"));
+C:\Users\n-tom\fd_work\toio\toio-visual-programming\src__\blocksFactory.js(41): var blocks_1 = __importDefault(require("./blocks"));
+C:\Users\n-tom\fd_work\toio\toio-visual-programming\src__\blocksFactory.js(43): var gui_1 = __importDefault(require("./gui"));
+C:\Users\n-tom\fd_work\toio\toio-visual-programming\src__\blocksFactory.js(45): var util_1 = __importDefault(require("./util"));
+C:\Users\n-tom\fd_work\toio\toio-visual-programming\src__\blocksFactory.js(47): var about_1 = require("./about");
+C:\Users\n-tom\fd_work\toio\toio-visual-programming\src__\blocksFactory.js(49): var translations_1 = __importDefault(require("./translations"));
+C:\Users\n-tom\fd_work\toio\toio-visual-programming\src__\index.js(35): var blocksFactory_1 = __importDefault(require("./blocksFactory"));
+C:\Users\n-tom\fd_work\toio\toio-visual-programming\src__\index.js(37): var toio_1 = __importDefault(require("./toio"));
+C:\Users\n-tom\fd_work\toio\toio-visual-programming\src__\index.js(39): var gui_1 = __importDefault(require("./gui"));
+C:\Users\n-tom\fd_work\toio\toio-visual-programming\src__\peripheral.js(23): var watchdog_1 = __importDefault(require("./watchdog"));
+C:\Users\n-tom\fd_work\toio\toio-visual-programming\src__\peripheral.js(25): var util_1 = __importDefault(require("./util"));
+C:\Users\n-tom\fd_work\toio\toio-visual-programming\src__\warning.js(19): var util_1 = __importDefault(require("./util"));
+
+C:\Users\n-tom\fd_work\toio\toio-visual-programming\src__\blocks\id.js(49): var coreCubeBlock_1 = __importDefault(require("./coreCubeBlock"));
+C:\Users\n-tom\fd_work\toio\toio-visual-programming\src__\blocks\index.js(35): var matRelative_1 = __importDefault(require("./matRelative"));
+C:\Users\n-tom\fd_work\toio\toio-visual-programming\src__\blocks\index.js(37): var matAbsolute_1 = __importDefault(require("./matAbsolute"));
+C:\Users\n-tom\fd_work\toio\toio-visual-programming\src__\blocks\index.js(39): var motor_1 = __importDefault(require("./motor"));
+C:\Users\n-tom\fd_work\toio\toio-visual-programming\src__\blocks\index.js(41): var id_1 = __importDefault(require("./id"));
+C:\Users\n-tom\fd_work\toio\toio-visual-programming\src__\blocks\index.js(43): var light_1 = __importDefault(require("./light"));
+C:\Users\n-tom\fd_work\toio\toio-visual-programming\src__\blocks\index.js(45): var sound_1 = __importDefault(require("./sound"));
+C:\Users\n-tom\fd_work\toio\toio-visual-programming\src__\blocks\index.js(47): var matGrid_1 = __importDefault(require("./matGrid"));
+C:\Users\n-tom\fd_work\toio\toio-visual-programming\src__\blocks\index.js(49): var mat_1 = __importDefault(require("./mat"));
+C:\Users\n-tom\fd_work\toio\toio-visual-programming\src__\blocks\light.js(53): var coreCubeBlock_1 = __importDefault(require("./coreCubeBlock"));
+C:\Users\n-tom\fd_work\toio\toio-visual-programming\src__\blocks\mat.js(65): var coreCubeBlock_1 = __importDefault(require("./coreCubeBlock"));
+C:\Users\n-tom\fd_work\toio\toio-visual-programming\src__\blocks\mat.js(67): var mat_1 = __importDefault(require("../toio/mat"));
+C:\Users\n-tom\fd_work\toio\toio-visual-programming\src__\blocks\mat.js(69): var card_1 = __importDefault(require("../toio/card"));
+C:\Users\n-tom\fd_work\toio\toio-visual-programming\src__\blocks\mat.js(71): var simpleCard_1 = __importDefault(require("../toio/simpleCard"));
+C:\Users\n-tom\fd_work\toio\toio-visual-programming\src__\blocks\mat.js(73): var translations_1 = __importDefault(require("../translations"));
+C:\Users\n-tom\fd_work\toio\toio-visual-programming\src__\blocks\matAbsolute.js(53): var coreCubeBlock_1 = __importDefault(require("./coreCubeBlock"));
+C:\Users\n-tom\fd_work\toio\toio-visual-programming\src__\blocks\matAbsolute.js(55): var mat_1 = __importDefault(require("../toio/mat"));
+C:\Users\n-tom\fd_work\toio\toio-visual-programming\src__\blocks\matGrid.js(53): var coreCubeBlock_1 = __importDefault(require("./coreCubeBlock"));
+C:\Users\n-tom\fd_work\toio\toio-visual-programming\src__\blocks\matGrid.js(55): var matAbsolute_1 = __importDefault(require("./matAbsolute"));
+C:\Users\n-tom\fd_work\toio\toio-visual-programming\src__\blocks\matGrid.js(57): var mat_1 = __importDefault(require("../toio/mat"));
+C:\Users\n-tom\fd_work\toio\toio-visual-programming\src__\blocks\matRelative.js(53): var coreCubeBlock_1 = __importDefault(require("./coreCubeBlock"));
+C:\Users\n-tom\fd_work\toio\toio-visual-programming\src__\blocks\motor.js(53): var coreCubeBlock_1 = __importDefault(require("./coreCubeBlock"));
+C:\Users\n-tom\fd_work\toio\toio-visual-programming\src__\blocks\sound.js(53): var coreCubeBlock_1 = __importDefault(require("./coreCubeBlock"));
+
+C:\Users\n-tom\fd_work\toio\toio-visual-programming\src__\gui\index.js(19): var toio_1 = __importDefault(require("../toio")); // Strings to distinguish Scratch's trademarks which need to be removed.
+C:\Users\n-tom\fd_work\toio\toio-visual-programming\src__\gui\index.js(44):   DEFAULT_PROJECT: require('./default-project').default,
+C:\Users\n-tom\fd_work\toio\toio-visual-programming\src__\scratch-vm_src_util\cast.js(1): const Color = require('../util/color');
+
+C:\Users\n-tom\fd_work\toio\toio-visual-programming\src__\toio\coreCube.js(15): var index_1 = __importDefault(require("./index"));
+C:\Users\n-tom\fd_work\toio\toio-visual-programming\src__\toio\coreCube.js(17): var peripheral_1 = __importDefault(require("../peripheral"));
+C:\Users\n-tom\fd_work\toio\toio-visual-programming\src__\toio\coreCube.js(19): var mat_1 = __importDefault(require("./mat"));
+C:\Users\n-tom\fd_work\toio\toio-visual-programming\src__\toio\coreCube.js(21): var intelligent_1 = __importDefault(require("./intelligent/"));
+C:\Users\n-tom\fd_work\toio\toio-visual-programming\src__\toio\coreCube.js(23): var targetPose_1 = __importDefault(require("./targetPose"));
+C:\Users\n-tom\fd_work\toio\toio-visual-programming\src__\toio\coreCube.js(25): var cancelablePromise_1 = __importDefault(require("./cancelablePromise"));
+C:\Users\n-tom\fd_work\toio\toio-visual-programming\src__\toio\coreCube.js(27): var warning_1 = require("../warning");
+C:\Users\n-tom\fd_work\toio\toio-visual-programming\src__\toio\coreCube.js(29): var util_1 = __importDefault(require("../util"));
+C:\Users\n-tom\fd_work\toio\toio-visual-programming\src__\toio\index.js(18):     LOGO: require('../images/extension_hero.png'),
+C:\Users\n-tom\fd_work\toio\toio-visual-programming\src__\toio\index.js(19):     CORECUBE_L: require('../images/cube_l.svg'),
+C:\Users\n-tom\fd_work\toio\toio-visual-programming\src__\toio\index.js(20):     CORECUBE_M: require('../images/cube_m.svg'),
+C:\Users\n-tom\fd_work\toio\toio-visual-programming\src__\toio\index.js(21):     CORECUBE_S: require('../images/cube_s.svg'),
+C:\Users\n-tom\fd_work\toio\toio-visual-programming\src__\toio\index.js(22):     LOGO2: require('../images/extension_hero2.png'),
+C:\Users\n-tom\fd_work\toio\toio-visual-programming\src__\toio\index.js(23):     CORECUBE2_L: require('../images/cube2_l.svg'),
+C:\Users\n-tom\fd_work\toio\toio-visual-programming\src__\toio\index.js(24):     CORECUBE2_M: require('../images/cube2_m.svg'),
+C:\Users\n-tom\fd_work\toio\toio-visual-programming\src__\toio\index.js(25):     CORECUBE2_S: require('../images/cube2_s.svg')
+C:\Users\n-tom\fd_work\toio\toio-visual-programming\src__\toio\targetPose.js(19): var mat_1 = __importDefault(require("./mat"));
+C:\Users\n-tom\fd_work\toio\toio-visual-programming\src__\toio\intelligent\coreCube.js(45): var base_1 = __importDefault(require("./base"));
+C:\Users\n-tom\fd_work\toio\toio-visual-programming\src__\toio\intelligent\coreCube.js(47): var coreCube_1 = __importDefault(require("../coreCube"));
+C:\Users\n-tom\fd_work\toio\toio-visual-programming\src__\toio\intelligent\index.js(19): var coreCube_1 = __importDefault(require("./coreCube"));
+C:\Users\n-tom\fd_work\toio\toio-visual-programming\src__\toio\intelligent\index.js(21): var pc_1 = __importDefault(require("./pc"));
+C:\Users\n-tom\fd_work\toio\toio-visual-programming\src__\toio\intelligent\pc.js(45): var base_1 = __importDefault(require("./base"));
+
+C:\Users\n-tom\fd_work\toio\toio-visual-programming\src__\translations\index.js(13):   en: require('./en.json'),
+C:\Users\n-tom\fd_work\toio\toio-visual-programming\src__\translations\index.js(14):   ja: require('./ja.json'),
+C:\Users\n-tom\fd_work\toio\toio-visual-programming\src__\translations\index.js(15):   'ja-Hira': require('./ja-Hira.json'),
+C:\Users\n-tom\fd_work\toio\toio-visual-programming\src__\translations\index.js(16):   'zh-cn': require('./zh-CN.json')
