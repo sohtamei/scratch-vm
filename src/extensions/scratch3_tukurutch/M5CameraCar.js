@@ -66,19 +66,39 @@ class Scratch3M5CameraCarBlocks {
 }},
 
 {blockType: BlockType.COMMAND, opcode: 'setCar', text: {
-    'en': '[ARG1] at speed [ARG2]',
-    'ja': '[ARG1] 向きに [ARG2] の速さで動かす',
+    'en': '[ARG1] at speed [ARG2] calib [ARG3] duration [ARG4]',
+    'ja': '[ARG1] 向きに [ARG2] の速さで動かす(補正 [ARG3] , [ARG4] ms)',
 }[this._locale], arguments: {
     ARG1: { type: ArgumentType.NUMBER, type2:'B', defaultValue:1, menu: 'direction' },
-    ARG2: { type: ArgumentType.NUMBER, type2:'B', defaultValue:100 },
+    ARG2: { type: ArgumentType.NUMBER, type2:'S', defaultValue:4, menu: 'speed' },
+    ARG3: { type: ArgumentType.NUMBER, type2:'S', defaultValue:0 },
+    ARG4: { type: ArgumentType.NUMBER, type2:'S', defaultValue:0 },
 }},
 
 {blockType: BlockType.COMMAND, opcode: 'setMotor', text: {
-    'en': 'set motor [ARG1] speed [ARG2]',
-    'ja': 'モーター [ARG1] の速さを [ARG2] にする',
+    'en': 'set motor left [ARG1] right [ARG2] calib [ARG3] duration [ARG4]',
+    'ja': '左 [ARG1] 右 [ARG2] で動かす(補正 [ARG3] , [ARG4] ms)',
+}[this._locale], arguments: {
+    ARG1: { type: ArgumentType.NUMBER, type2:'S', defaultValue:4, menu: 'speed' },
+    ARG2: { type: ArgumentType.NUMBER, type2:'S', defaultValue:4, menu: 'speed' },
+    ARG3: { type: ArgumentType.NUMBER, type2:'S', defaultValue:0 },
+    ARG4: { type: ArgumentType.NUMBER, type2:'S', defaultValue:0 },
+}},
+
+{blockType: BlockType.COMMAND, opcode: 'setServo', text: {
+    'en': 'set servo [ARG1] [ARG2]',
+    'ja': 'サーボ [ARG1] の角度を [ARG2] にする',
 }[this._locale], arguments: {
     ARG1: { type: ArgumentType.NUMBER, type2:'B', defaultValue:0, menu: 'servoch' },
-    ARG2: { type: ArgumentType.NUMBER, type2:'S', defaultValue:100, menu: 'speed' },
+    ARG2: { type: ArgumentType.NUMBER, type2:'B', defaultValue:90 },
+}},
+
+{blockType: BlockType.COMMAND, opcode: 'setPwm', text: {
+    'en': 'set motor [ARG1] pwm [ARG2]',
+    'ja': 'サーボ [ARG1] にPWM [ARG2] を設定',
+}[this._locale], arguments: {
+    ARG1: { type: ArgumentType.NUMBER, type2:'B', defaultValue:0, menu: 'servoch' },
+    ARG2: { type: ArgumentType.NUMBER, type2:'S', defaultValue:307 },
 }},
 
 {blockType: BlockType.COMMAND, opcode: 'stopCar', text: {
@@ -91,19 +111,25 @@ class Scratch3M5CameraCarBlocks {
     ARG1: { type: ArgumentType.NUMBER, type2:'B', defaultValue:1, menu: 'direction' },
 }},
 
-{blockType: BlockType.COMMAND, opcode: 'setServo', text: {
-    'en': 'set servo [ARG1] [ARG2]',
-    'ja': 'サーボ [ARG1] の角度を [ARG2] にする',
-}[this._locale], arguments: {
-    ARG1: { type: ArgumentType.NUMBER, type2:'B', defaultValue:0, menu: 'servoch' },
-    ARG2: { type: ArgumentType.NUMBER, type2:'B', defaultValue:90, menu: 'angle' },
-}},
-
 {blockType: BlockType.COMMAND, opcode: 'setLED', text: {
     'en': 'set LED [ARG1]',
     'ja': 'LED [ARG1]',
 }[this._locale], arguments: {
     ARG1: { type: ArgumentType.NUMBER, type2:'B', defaultValue:1, menu: 'onoff' },
+}},
+
+{blockType: BlockType.REPORTER, opcode: 'downloadCal', text: {
+    'en': 'download calibration [ARG1] [ARG2]',
+    'ja': '補正データダウンロード ID=[ARG1] データ[ARG2]',
+}[this._locale], arguments: {
+    ARG1: { type: ArgumentType.NUMBER, type2:'S', defaultValue:1 },
+    ARG2: { type: ArgumentType.NUMBER, type2:'S', defaultValue:0 },
+}},
+
+{blockType: BlockType.REPORTER, opcode: 'getCal', text: {
+    'en': 'get cal',
+    'ja': '補正データ表示',
+}[this._locale], arguments: {
 }},
 
 
@@ -113,8 +139,6 @@ class Scratch3M5CameraCarBlocks {
 
 	get_menus() {
 	  return {
-angle: { acceptReporters: true, items: ['0','90','180',]},
-
 direction: { acceptReporters: true, items: [
 { text: {
     'en': 'stop',
@@ -157,7 +181,7 @@ onoff: { acceptReporters: true, items: [
 
 servoch: { acceptReporters: true, items: ['0','1',]},
 
-speed: { acceptReporters: true, items: ['100','50','0','-50','-100',]},
+speed: { acceptReporters: true, items: ['4','2','1','0','-1','-2','-4',]},
 
 
 	  };
@@ -165,10 +189,13 @@ speed: { acceptReporters: true, items: ['100','50','0','-50','-100',]},
 
 setCar(args,util) { return this.getTest(arguments.callee.name, args); }
 setMotor(args,util) { return this.getTest(arguments.callee.name, args); }
+setServo(args,util) { return this.getTest(arguments.callee.name, args); }
+setPwm(args,util) { return this.getTest(arguments.callee.name, args); }
 stopCar(args,util) { return this.getTest(arguments.callee.name, args); }
 enumDirection(args) { return args.ARG1; }
-setServo(args,util) { return this.getTest(arguments.callee.name, args); }
 setLED(args,util) { return this.getTest(arguments.callee.name, args); }
+downloadCal(args,util) { return this.getTest(arguments.callee.name, args); }
+getCal(args,util) { return this.getTest(arguments.callee.name, args); }
 
 
     /**

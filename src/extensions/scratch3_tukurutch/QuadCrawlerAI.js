@@ -33,10 +33,10 @@ let _sendBuf = null;
 let _alertFlag = false;
 
 /**
- * Class for the QuadCrawlerEsp block in Scratch 3.0.
+ * Class for the QuadCrawlerAI block in Scratch 3.0.
  * @constructor
  */
-class Scratch3QuadCrawlerEspBlocks {
+class Scratch3QuadCrawlerAIBlocks {
     constructor (runtime) {
         /**
          * The runtime instantiating this block package.
@@ -48,9 +48,9 @@ class Scratch3QuadCrawlerEspBlocks {
 		let cookies_get = document.cookie.split(';');
 		for(let i=0;i<cookies_get.length;i++) {
 			let tmp = cookies_get[i].trim().split('=');
-			if(tmp[0]=='QuadCrawlerEsp_ip') {
+			if(tmp[0]=='QuadCrawlerAI_ip') {
 				this._ipadrs=tmp[1];
-				console.log('QuadCrawlerEsp_ip='+this._ipadrs);
+				console.log('QuadCrawlerAI_ip='+this._ipadrs);
 				break;
 			}
 		}
@@ -74,35 +74,35 @@ class Scratch3QuadCrawlerEspBlocks {
 }},
 
 {blockType: BlockType.COMMAND, opcode: 'setPoseRF', text: {
-    'en': 'FrontR [ARG1] [ARG2]',
-    'ja': '右前足 [ARG1] [ARG2]',
+    'en': 'FrontR up/down [ARG1] fw/back [ARG2]',
+    'ja': '右前脚 上下 [ARG1] 前後 [ARG2]',
 }[this._locale], arguments: {
-    ARG1: { type: ArgumentType.NUMBER, type2:'B', defaultValue:1, menu: 'knee' },
-    ARG2: { type: ArgumentType.NUMBER, type2:'B', defaultValue:1, menu: 'crotch' },
-}},
-
-{blockType: BlockType.COMMAND, opcode: 'setPoseRR', text: {
-    'en': 'RearR  [ARG1] [ARG2]',
-    'ja': '右後足 [ARG1] [ARG2]',
-}[this._locale], arguments: {
-    ARG1: { type: ArgumentType.NUMBER, type2:'B', defaultValue:1, menu: 'knee' },
-    ARG2: { type: ArgumentType.NUMBER, type2:'B', defaultValue:1, menu: 'crotch' },
+    ARG1: { type: ArgumentType.NUMBER, type2:'S', defaultValue:0, menu: 'knee' },
+    ARG2: { type: ArgumentType.NUMBER, type2:'S', defaultValue:0, menu: 'crotchF' },
 }},
 
 {blockType: BlockType.COMMAND, opcode: 'setPoseLF', text: {
-    'en': 'FrontL [ARG1] [ARG2]',
-    'ja': '左前足 [ARG1] [ARG2]',
+    'en': 'FrontL up/down [ARG1] fw/back [ARG2]',
+    'ja': '左前脚 上下 [ARG1] 前後 [ARG2]',
 }[this._locale], arguments: {
-    ARG1: { type: ArgumentType.NUMBER, type2:'B', defaultValue:1, menu: 'knee' },
-    ARG2: { type: ArgumentType.NUMBER, type2:'B', defaultValue:1, menu: 'crotch' },
+    ARG1: { type: ArgumentType.NUMBER, type2:'S', defaultValue:0, menu: 'knee' },
+    ARG2: { type: ArgumentType.NUMBER, type2:'S', defaultValue:0, menu: 'crotchF' },
+}},
+
+{blockType: BlockType.COMMAND, opcode: 'setPoseRR', text: {
+    'en': 'RearR  up/down [ARG1] fw/back [ARG2]',
+    'ja': '右後脚 上下 [ARG1] 前後 [ARG2]',
+}[this._locale], arguments: {
+    ARG1: { type: ArgumentType.NUMBER, type2:'S', defaultValue:0, menu: 'knee' },
+    ARG2: { type: ArgumentType.NUMBER, type2:'S', defaultValue:0, menu: 'crotchR' },
 }},
 
 {blockType: BlockType.COMMAND, opcode: 'setPoseLR', text: {
-    'en': 'RearL  [ARG1] [ARG2]',
-    'ja': '左後足 [ARG1] [ARG2]',
+    'en': 'RearL  up/down [ARG1] fw/back [ARG2]',
+    'ja': '左後脚 上下 [ARG1] 前後 [ARG2]',
 }[this._locale], arguments: {
-    ARG1: { type: ArgumentType.NUMBER, type2:'B', defaultValue:1, menu: 'knee' },
-    ARG2: { type: ArgumentType.NUMBER, type2:'B', defaultValue:1, menu: 'crotch' },
+    ARG1: { type: ArgumentType.NUMBER, type2:'S', defaultValue:0, menu: 'knee' },
+    ARG2: { type: ArgumentType.NUMBER, type2:'S', defaultValue:0, menu: 'crotchR' },
 }},
 
 {blockType: BlockType.COMMAND, opcode: 'setStop', text: {
@@ -111,11 +111,20 @@ class Scratch3QuadCrawlerEspBlocks {
 }[this._locale], arguments: {
 }},
 
-{blockType: BlockType.COMMAND, opcode: 'setLED', text: {
-    'en': 'set LED [ARG1]',
-    'ja': 'LEDを [ARG1]',
+{blockType: BlockType.REPORTER, opcode: 'calibKnee', text: {
+    'en': 'calib up/down [ARG1] [ARG2]',
+    'ja': '上下微調整 [ARG1] [ARG2]',
 }[this._locale], arguments: {
-    ARG1: { type: ArgumentType.NUMBER, type2:'B', defaultValue:1, menu: 'onoff' },
+    ARG1: { type: ArgumentType.NUMBER, type2:'B', defaultValue:0, menu: 'leg' },
+    ARG2: { type: ArgumentType.NUMBER, type2:'B', defaultValue:2, menu: 'calibK' },
+}},
+
+{blockType: BlockType.REPORTER, opcode: 'calibCrotch', text: {
+    'en': 'calib fw/back [ARG1] [ARG2]',
+    'ja': '前後微調整 [ARG1] [ARG2]',
+}[this._locale], arguments: {
+    ARG1: { type: ArgumentType.NUMBER, type2:'B', defaultValue:0, menu: 'leg' },
+    ARG2: { type: ArgumentType.NUMBER, type2:'B', defaultValue:2, menu: 'calibC' },
 }},
 
 {blockType: BlockType.COMMAND, opcode: 'setColorWipe', text: 'LED [ARG1]', arguments: {
@@ -150,6 +159,13 @@ class Scratch3QuadCrawlerEspBlocks {
 '---',
 '---',
 '---',
+{blockType: BlockType.COMMAND, opcode: 'setLED', text: {
+    'en': 'set LED [ARG1]',
+    'ja': 'LEDを [ARG1]',
+}[this._locale], arguments: {
+    ARG1: { type: ArgumentType.NUMBER, type2:'B', defaultValue:1, menu: 'onoff' },
+}},
+
 {blockType: BlockType.REPORTER, opcode: 'enumIrcode', text: '[ARG1] .', arguments: {
     ARG1: { type: ArgumentType.NUMBER, type2:'B', defaultValue:69, menu: 'ircode' },
 }},
@@ -160,14 +176,6 @@ class Scratch3QuadCrawlerEspBlocks {
 
 {blockType: BlockType.REPORTER, opcode: 'enumColor', text: '[ARG1] .', arguments: {
     ARG1: { type: ArgumentType.NUMBER, type2:'B', defaultValue:1, menu: 'color' },
-}},
-
-{blockType: BlockType.REPORTER, opcode: 'enumWalkcmd', text: '[ARG1] .', arguments: {
-    ARG1: { type: ArgumentType.NUMBER, type2:'B', defaultValue:1, menu: 'walkcmd' },
-}},
-
-{blockType: BlockType.REPORTER, opcode: 'enumKnee', text: '[ARG1] .', arguments: {
-    ARG1: { type: ArgumentType.NUMBER, type2:'B', defaultValue:1, menu: 'knee' },
 }},
 
 
@@ -198,6 +206,52 @@ beats: { acceptReporters: true, items: [
     'en': 'Double',
     'ja': '倍全音符',
 }[this._locale], value: 2000 },
+]},
+
+calibC: { acceptReporters: true, items: [
+{ text: {
+    'en': 'forward_C',
+    'ja': '前＋',
+}[this._locale], value: 1 },
+{ text: {
+    'en': 'back_C',
+    'ja': '後＋',
+}[this._locale], value: 0 },
+{ text: {
+    'en': 'get',
+    'ja': '現在値',
+}[this._locale], value: 2 },
+{ text: {
+    'en': 'reset',
+    'ja': 'リセット',
+}[this._locale], value: 3 },
+{ text: {
+    'en': 'reset_all',
+    'ja': '全リセット',
+}[this._locale], value: 4 },
+]},
+
+calibK: { acceptReporters: true, items: [
+{ text: {
+    'en': 'up_K',
+    'ja': '上＋',
+}[this._locale], value: 1 },
+{ text: {
+    'en': 'down_K',
+    'ja': '下＋',
+}[this._locale], value: 0 },
+{ text: {
+    'en': 'get',
+    'ja': '現在値',
+}[this._locale], value: 2 },
+{ text: {
+    'en': 'reset',
+    'ja': 'リセット',
+}[this._locale], value: 3 },
+{ text: {
+    'en': 'reset_all',
+    'ja': '全リセット',
+}[this._locale], value: 4 },
 ]},
 
 color: { acceptReporters: true, items: [
@@ -231,20 +285,9 @@ color: { acceptReporters: true, items: [
 }[this._locale], value: 6 },
 ]},
 
-crotch: { acceptReporters: true, items: [
-{ text: {
-    'en': 'Neutral',
-    'ja': '中立',
-}[this._locale], value: 1 },
-{ text: {
-    'en': 'rear',
-    'ja': '後',
-}[this._locale], value: 2 },
-{ text: {
-    'en': 'front',
-    'ja': '前',
-}[this._locale], value: 3 },
-]},
+crotchF: { acceptReporters: true, items: ['-55','0','60',]},
+
+crotchR: { acceptReporters: true, items: ['-90','0','45',]},
 
 ircode: { acceptReporters: true, items: [
 { text: 'POWER', value: 69 },
@@ -286,23 +329,25 @@ ircodeA: { acceptReporters: true, items: [
 { text: 'A←↓', value: 119 },
 ]},
 
-knee: { acceptReporters: true, items: [
+knee: { acceptReporters: true, items: ['-25','0','60','100',]},
+
+leg: { acceptReporters: true, items: [
 { text: {
-    'en': 'Neutral',
-    'ja': '中立',
-}[this._locale], value: 1 },
+    'en': 'FrontR',
+    'ja': '右前脚',
+}[this._locale], value: 0 },
 { text: {
-    'en': 'up',
-    'ja': '上',
+    'en': 'FrontL',
+    'ja': '左前脚',
 }[this._locale], value: 2 },
 { text: {
-    'en': 'down',
-    'ja': '下',
-}[this._locale], value: 3 },
+    'en': 'RearR',
+    'ja': '右後脚',
+}[this._locale], value: 1 },
 { text: {
-    'en': 'max',
-    'ja': '下最大',
-}[this._locale], value: 4 },
+    'en': 'RearL',
+    'ja': '左後脚',
+}[this._locale], value: 3 },
 ]},
 
 noteJ1: { acceptReporters: true, items: [
@@ -518,8 +563,6 @@ speed: { acceptReporters: true, items: [
 }[this._locale], value: 100 },
 ]},
 
-sw: { acceptReporters: true, items: ['1',]},
-
 walkcmd: { acceptReporters: true, items: [
 { text: {
     'en': 'stop',
@@ -585,6 +628,10 @@ walkcmd: { acceptReporters: true, items: [
     'en': 'all_up_down',
     'ja': 'スクワット',
 }[this._locale], value: 15 },
+{ text: {
+    'en': 'neutral',
+    'ja': '原点調整',
+}[this._locale], value: 16 },
 ]},
 
 
@@ -593,20 +640,20 @@ walkcmd: { acceptReporters: true, items: [
 
 setWalk(args,util) { return this.getTest(arguments.callee.name, args); }
 setPoseRF(args,util) { return this.getTest(arguments.callee.name, args); }
-setPoseRR(args,util) { return this.getTest(arguments.callee.name, args); }
 setPoseLF(args,util) { return this.getTest(arguments.callee.name, args); }
+setPoseRR(args,util) { return this.getTest(arguments.callee.name, args); }
 setPoseLR(args,util) { return this.getTest(arguments.callee.name, args); }
 setStop(args,util) { return this.getTest(arguments.callee.name, args); }
-setLED(args,util) { return this.getTest(arguments.callee.name, args); }
+calibKnee(args,util) { return this.getTest(arguments.callee.name, args); }
+calibCrotch(args,util) { return this.getTest(arguments.callee.name, args); }
 setColorWipe(args,util) { return this.getTest(arguments.callee.name, args); }
 setRainbow(args,util) { return this.getTest(arguments.callee.name, args); }
 BuzzerJ2(args,util) { return this.getTest(arguments.callee.name, args); }
 getSonner(args,util) { return this.getTest(arguments.callee.name, args); }
+setLED(args,util) { return this.getTest(arguments.callee.name, args); }
 enumIrcode(args) { return args.ARG1; }
 enumIrcodeA(args) { return args.ARG1; }
 enumColor(args) { return args.ARG1; }
-enumWalkcmd(args) { return args.ARG1; }
-enumKnee(args) { return args.ARG1; }
 
 
     /**
@@ -625,8 +672,8 @@ enumKnee(args) { return args.ARG1; }
 
 	//	blocks[0].arguments.ARG1.defaultValue = this._ipadrs;
         return {
-            id: 'QuadCrawlerEsp',
-            name: 'QuadCrawlerEsp',
+            id: 'QuadCrawlerAI',
+            name: 'QuadCrawlerAI',
             blockIconURI: blockIconURI,
             menuIconURI: menuIconURI,
             blocks: this.get_blocks(),
@@ -636,7 +683,7 @@ enumKnee(args) { return args.ARG1; }
     
     setIotIp (args) {
         this._ipadrs = Cast.toString(args.ARG1);
-        document.cookie = 'QuadCrawlerEsp_ip=' + this._ipadrs + '; samesite=lax;';
+        document.cookie = 'QuadCrawlerAI_ip=' + this._ipadrs + '; samesite=lax;';
         if(SupportCamera) {
           document.cookie = 'Camera_ip=' + this._ipadrs + '; samesite=lax;';
           alert(this._ipadrs + {
@@ -776,4 +823,4 @@ enumKnee(args) { return args.ARG1; }
 	}
 
 }
-module.exports = Scratch3QuadCrawlerEspBlocks;
+module.exports = Scratch3QuadCrawlerAIBlocks;
