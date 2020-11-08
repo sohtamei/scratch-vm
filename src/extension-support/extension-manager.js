@@ -21,6 +21,7 @@ const builtinExtensions = Object.assign({
     ml2scratch: () => require('../extensions/scratch3_ml2scratch'),
     facemesh2scratch: () => require('../extensions/scratch3_facemesh2scratch'),
     handpose2scratch: () => require('../extensions/scratch3_handpose2scratch'),
+    mesh: () => require('../extensions/scratch3_mesh'),
     ikimono: () => require('../extensions/ikimono_extension'),
     konashi: () => require('../extensions/konashi_extension'),
     pen: () => require('../extensions/scratch3_pen'),
