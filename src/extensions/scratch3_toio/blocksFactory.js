@@ -40,7 +40,7 @@ var coreCube_1 = __importDefault(require("./toio/coreCube"));
 
 var blocks_1 = __importDefault(require("./blocks"));
 
-//var gui_1 = __importDefault(require("./gui"));
+var gui_1 = __importDefault(require("./gui"));
 
 var util_1 = __importDefault(require("./util"));
 
@@ -85,7 +85,7 @@ var ToioBlocksFactory = function ToioBlocksFactory(id, name, colors, options) {
           window.GoogleAnalytics.pageview("/" + id);
         }
       }
-/*
+
       Object.defineProperty(ToioBlocks, "guiInfo", {
         get: function get() {
           return __assign(__assign(__assign({}, gui_1.default.INFO), {
@@ -97,7 +97,6 @@ var ToioBlocksFactory = function ToioBlocksFactory(id, name, colors, options) {
         enumerable: true,
         configurable: true
       });
-*/
       /**
        * Return information of toio extension to scratch-vm.
        *

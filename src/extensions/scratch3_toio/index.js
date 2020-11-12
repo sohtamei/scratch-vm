@@ -36,7 +36,7 @@ var blocksFactory_1 = __importDefault(require("./blocksFactory"));
 
 var toio_1 = __importDefault(require("./toio"));
 
-//var gui_1 = __importDefault(require("./gui"));
+var gui_1 = __importDefault(require("./gui"));
 /**
  * This is an array of toio extension's information which will be used for
  * building extensions to be integrated with scratch-gui and -vm.
@@ -90,6 +90,6 @@ module.exports = {
   }).map(function (ext) {
     return ext.id;
   }),
-//  gui: gui_1.default
+  Gui: gui_1.default
 };
 

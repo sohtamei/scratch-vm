@@ -16,7 +16,7 @@ toio/intelligent/base.js
 
 C:\Users\n-tom\fd_work\toio\toio-visual-programming\src__\about.js(21): var toio_1 = __importDefault(require("./toio"));
 C:\Users\n-tom\fd_work\toio\toio-visual-programming\src__\about.js(23): var util_1 = __importDefault(require("./util"));
-C:\Users\n-tom\fd_work\toio\toio-visual-programming\src__\about.js(25): var package_json_1 = __importDefault(require("../package.json"));
+C:\Users\n-tom\fd_work\toio\toio-visual-programming\src__\about.js(25): var package_json_1 = __importDefault(require("../package.json")); ★
 C:\Users\n-tom\fd_work\toio\toio-visual-programming\src__\blocksFactory.js(37): var toio_1 = __importDefault(require("./toio"));
 C:\Users\n-tom\fd_work\toio\toio-visual-programming\src__\blocksFactory.js(39): var coreCube_1 = __importDefault(require("./toio/coreCube"));
 C:\Users\n-tom\fd_work\toio\toio-visual-programming\src__\blocksFactory.js(41): var blocks_1 = __importDefault(require("./blocks"));
@@ -27,6 +27,7 @@ C:\Users\n-tom\fd_work\toio\toio-visual-programming\src__\blocksFactory.js(49): 
 C:\Users\n-tom\fd_work\toio\toio-visual-programming\src__\index.js(35): var blocksFactory_1 = __importDefault(require("./blocksFactory"));
 C:\Users\n-tom\fd_work\toio\toio-visual-programming\src__\index.js(37): var toio_1 = __importDefault(require("./toio"));
 C:\Users\n-tom\fd_work\toio\toio-visual-programming\src__\index.js(39): var gui_1 = __importDefault(require("./gui"));
+C:\Users\n-tom\fd_work\toio\toio-visual-programming\src__\peripheral.js(19): var BLE = require("scratch-vm/src/io/ble");
 C:\Users\n-tom\fd_work\toio\toio-visual-programming\src__\peripheral.js(23): var watchdog_1 = __importDefault(require("./watchdog"));
 C:\Users\n-tom\fd_work\toio\toio-visual-programming\src__\peripheral.js(25): var util_1 = __importDefault(require("./util"));
 C:\Users\n-tom\fd_work\toio\toio-visual-programming\src__\warning.js(19): var util_1 = __importDefault(require("./util"));
@@ -57,16 +58,15 @@ C:\Users\n-tom\fd_work\toio\toio-visual-programming\src__\blocks\sound.js(53): v
 
 C:\Users\n-tom\fd_work\toio\toio-visual-programming\src__\gui\index.js(19): var toio_1 = __importDefault(require("../toio")); // Strings to distinguish Scratch's trademarks which need to be removed.
 C:\Users\n-tom\fd_work\toio\toio-visual-programming\src__\gui\index.js(44):   DEFAULT_PROJECT: require('./default-project').default,
-C:\Users\n-tom\fd_work\toio\toio-visual-programming\src__\scratch-vm_src_util\cast.js(1): const Color = require('../util/color');
-
-C:\Users\n-tom\fd_work\toio\toio-visual-programming\src__\toio\coreCube.js(15): var index_1 = __importDefault(require("./index"));
-C:\Users\n-tom\fd_work\toio\toio-visual-programming\src__\toio\coreCube.js(17): var peripheral_1 = __importDefault(require("../peripheral"));
-C:\Users\n-tom\fd_work\toio\toio-visual-programming\src__\toio\coreCube.js(19): var mat_1 = __importDefault(require("./mat"));
-C:\Users\n-tom\fd_work\toio\toio-visual-programming\src__\toio\coreCube.js(21): var intelligent_1 = __importDefault(require("./intelligent/"));
-C:\Users\n-tom\fd_work\toio\toio-visual-programming\src__\toio\coreCube.js(23): var targetPose_1 = __importDefault(require("./targetPose"));
-C:\Users\n-tom\fd_work\toio\toio-visual-programming\src__\toio\coreCube.js(25): var cancelablePromise_1 = __importDefault(require("./cancelablePromise"));
-C:\Users\n-tom\fd_work\toio\toio-visual-programming\src__\toio\coreCube.js(27): var warning_1 = require("../warning");
-C:\Users\n-tom\fd_work\toio\toio-visual-programming\src__\toio\coreCube.js(29): var util_1 = __importDefault(require("../util"));
+C:\Users\n-tom\fd_work\toio\toio-visual-programming\src__\toio\cancelablePromise.js(13): var PCancelable = require("p-cancelable"); ★
+C:\Users\n-tom\fd_work\toio\toio-visual-programming\src__\toio\coreCube.js(222): var index_1 = __importDefault(require("./index"));
+C:\Users\n-tom\fd_work\toio\toio-visual-programming\src__\toio\coreCube.js(224): var peripheral_1 = __importDefault(require("../peripheral"));
+C:\Users\n-tom\fd_work\toio\toio-visual-programming\src__\toio\coreCube.js(226): var mat_1 = __importDefault(require("./mat"));
+C:\Users\n-tom\fd_work\toio\toio-visual-programming\src__\toio\coreCube.js(228): var intelligent_1 = __importDefault(require("./intelligent/"));
+C:\Users\n-tom\fd_work\toio\toio-visual-programming\src__\toio\coreCube.js(230): var targetPose_1 = __importDefault(require("./targetPose"));
+C:\Users\n-tom\fd_work\toio\toio-visual-programming\src__\toio\coreCube.js(232): var cancelablePromise_1 = __importDefault(require("./cancelablePromise"));
+C:\Users\n-tom\fd_work\toio\toio-visual-programming\src__\toio\coreCube.js(234): var warning_1 = require("../warning");
+C:\Users\n-tom\fd_work\toio\toio-visual-programming\src__\toio\coreCube.js(236): var util_1 = __importDefault(require("../util"));
 C:\Users\n-tom\fd_work\toio\toio-visual-programming\src__\toio\index.js(18):     LOGO: require('../images/extension_hero.png'),
 C:\Users\n-tom\fd_work\toio\toio-visual-programming\src__\toio\index.js(19):     CORECUBE_L: require('../images/cube_l.svg'),
 C:\Users\n-tom\fd_work\toio\toio-visual-programming\src__\toio\index.js(20):     CORECUBE_M: require('../images/cube_m.svg'),
