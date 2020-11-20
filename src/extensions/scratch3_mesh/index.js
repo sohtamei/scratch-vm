@@ -1,24 +1,13 @@
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
-
-function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
-
 /**
  * Copyright (c) 2020 Yusaku Nishiwaki
  * Released under the Apache-2.0 license
  * LICENSE: http://www.apache.org/licenses/LICENSE-2.0
  */
 var ArgumentType = require("../../extension-support/argument-type");
-
 var BlockType = require("../../extension-support/block-type");
-
 //var log = require("../../util/log");
-
 var formatMessage = require("format-message");
-
 var Cast = require("../../util/cast");
-
 var Mesh = require("./mesh.js");
 
 /**
@@ -39,411 +28,388 @@ var AvailableLocales = ['en', 'ja', 'ja-Hira']; // 多言語化に使用するjs
 // 使用例としては、Message.motor_right[this.setLocale()]
 
 var Message = {
-  categoryName: {
-    'ja': 'Sony MESH test',
-    'ja-Hira': 'Sony MESH test',
-    'en': 'Sony MESH test'
-  },
-  ConState: {
-    none: {
-      'ja': '左のチェックボックスを押してね',
-      'ja-Hira': 'ひだりのしかくをおしてね',
-      'en': 'please click the left checkbox'
-    },
-    not_found: {
-      'ja': '接続できませんでした',
-      'ja-Hira': 'つなげられませんでした',
-      'en': 'could not connect'
-    },
-    try: {
-      'ja': '接続中...',
-      'ja-Hira': 'つないでいます...',
-      'en': 'connecting...'
-    },
-    connected: {
-      'ja': '接続しました',
-      'ja-Hira': 'つなぎました',
-      'en': 'connected'
-    },
-  },
-  LedConnect: {
-    'ja': '［LED］接続する',
-    'ja-Hira': '［LED］つなぐ',
-    'en': '［LED］connect'
-  },
-  LedOn: {
-    'ja': '［LED］ R=[R] G=[G] B=[B] にする',
-    'ja-Hira': '［LED］ R=[R] G=[G] B=[B] にする',
-    'en': '［LED］ set to R=[R] G=[G] B=[B]'
-  },
-  LedOff: {
-    'ja': '［LED］ 消す',
-    'ja-Hira': '［LED］ 消す',
-    'en': '［LED］ turn off'
-  },
-  ButtonConnect: {
-    'ja': '［ボタン］接続する',
-    'ja-Hira': '［ボタン］つなぐ',
-    'en': '［Button］connect'
-  },
-  ButtonPressed: {
-    'ja': '［ボタン］ 押されたとき',
-    'ja-Hira': '［ボタン］ 押されたとき',
-    'en': '［Button］ Pressed'
-  },
-  MotionConnect: {
-    'ja': '［動き］接続する',
-    'ja-Hira': '［動き］つなぐ',
-    'en': '［Motion］connect'
-  },
-  MotionDetect: {
-    'ja': '［動き］[DIR] の向きのとき',
-    'ja-Hira': '［動き］[DIR] の向きのとき',
-    'en': '［Motion］Direction'
-  },
-  GpioConnect: {
-    'ja': '［GPIO］接続する',
-    'ja-Hira': '［GPIO］つなぐ',
-    'en': '［GPIO］connect'
-  },
-  GpioPowerOut: {
-    'ja': '［GPIO］電源出力 [out]',
-    'ja-Hira': '［GPIO］電源出力 [out]',
-    'en': '［GPIO］Power Drive [out]'
-  },
-  connection_alert: {
-    'ja': '接続に失敗しました。再接続するにはチェックボックスを一度外して、初めから接続をしてください。',
-    'ja-Hira': 'つなぐことができませんでした。もういちどつなぎたいばあい、チェックボックスをはずして、はじめからやりなおしてください。',
-    'en': 'disconnected. release the checkbox of connect block. then re-connect the device.'
-  },
-  help: {
-    'ja': '[link] についてヘルプを開く',
-    'ja-Hira': '[link] についてヘルプをひらく',
-    'en': 'open help for [link]'
-  },
-  help_links: {
-    general: {
-      'ja': '全般',
-      'ja-Hira': 'ぜんぱん',
-      'en': 'general'
-    },
-    connect: {
-      'ja': 'つながらないとき',
-      'ja-Hira': 'つながらないとき',
-      'en': 'cannot connect'
-    },
-    blocks: {
-      'ja': '各ブロック',
-      'ja-Hira': 'ブロック',
-      'en': 'blocks'
-    }
-  }
+	categoryName: {
+		'ja': 'Sony MESH test',
+		'ja-Hira': 'Sony MESH test',
+		'en': 'Sony MESH test'
+	},
+	ConState: {
+		none: {
+			'ja': '左のチェックボックスを押してね',
+			'ja-Hira': 'ひだりのしかくをおしてね',
+			'en': 'please click the left checkbox'
+		},
+		not_found: {
+			'ja': '接続できませんでした',
+			'ja-Hira': 'つなげられませんでした',
+			'en': 'could not connect'
+		},
+		try: {
+			'ja': '接続中...',
+			'ja-Hira': 'つないでいます...',
+			'en': 'connecting...'
+		},
+		connected: {
+			'ja': '接続しました',
+			'ja-Hira': 'つなぎました',
+			'en': 'connected'
+		},
+	},
+	LedConnect: {
+		'ja': '［LED］接続する',
+		'ja-Hira': '［LED］つなぐ',
+		'en': '［LED］connect'
+	},
+	LedOn: {
+		'ja': '［LED］ R=[R] G=[G] B=[B] にする',
+		'ja-Hira': '［LED］ R=[R] G=[G] B=[B] にする',
+		'en': '［LED］ set to R=[R] G=[G] B=[B]'
+	},
+	LedOff: {
+		'ja': '［LED］ 消す',
+		'ja-Hira': '［LED］ 消す',
+		'en': '［LED］ turn off'
+	},
+	ButtonConnect: {
+		'ja': '［ボタン］接続する',
+		'ja-Hira': '［ボタン］つなぐ',
+		'en': '［Button］connect'
+	},
+	ButtonPressed: {
+		'ja': '［ボタン］ 押されたとき',
+		'ja-Hira': '［ボタン］ 押されたとき',
+		'en': '［Button］ Pressed'
+	},
+	MotionConnect: {
+		'ja': '［動き］接続する',
+		'ja-Hira': '［動き］つなぐ',
+		'en': '［Motion］connect'
+	},
+	MotionDetect: {
+		'ja': '［動き］[DIR] の向きのとき',
+		'ja-Hira': '［動き］[DIR] の向きのとき',
+		'en': '［Motion］Direction'
+	},
+	GpioConnect: {
+		'ja': '［GPIO］接続する',
+		'ja-Hira': '［GPIO］つなぐ',
+		'en': '［GPIO］connect'
+	},
+	GpioPowerOut: {
+		'ja': '［GPIO］電源出力 [out]',
+		'ja-Hira': '［GPIO］電源出力 [out]',
+		'en': '［GPIO］Power Drive [out]'
+	},
+	connection_alert: {
+		'ja': '接続に失敗しました。再接続するにはチェックボックスを一度外して、初めから接続をしてください。',
+		'ja-Hira': 'つなぐことができませんでした。もういちどつなぎたいばあい、チェックボックスをはずして、はじめからやりなおしてください。',
+		'en': 'disconnected. release the checkbox of connect block. then re-connect the device.'
+	},
+	help: {
+		'ja': '[link] についてヘルプを開く',
+		'ja-Hira': '[link] についてヘルプをひらく',
+		'en': 'open help for [link]'
+	},
+	help_links: {
+		general: {
+			'ja': '全般',
+			'ja-Hira': 'ぜんぱん',
+			'en': 'general'
+		},
+		connect: {
+			'ja': 'つながらないとき',
+			'ja-Hira': 'つながらないとき',
+			'en': 'cannot connect'
+		},
+		blocks: {
+			'ja': '各ブロック',
+			'ja-Hira': 'ブロック',
+			'en': 'blocks'
+		}
+	}
 }; // 現在の接続状況を示した enum 
 
 var ConState = {
-  NONE : 1,
-  ERROR : 2,
-  TRY : 3,
-  CONNECTED : 4,
+	NONE : 1,
+	ERROR : 2,
+	TRY : 3,
+	CONNECTED : 4,
 };
 
 var tag = {
-  LED:0,
-  BUTTON:1,
-  MOTION:2,
-  GPIO:3,
-  THERMAL:4,
+	LED:0,
+	BUTTON:1,
+	MOTION:2,
+	GPIO:3,
+	THERMAL:4,
 };
 
-var MeshBlocks = /*#__PURE__*/function () {
-  function MeshBlocks(runtime) {
-    _classCallCheck(this, MeshBlocks);
+class MeshBlocks {
+	constructor (runtime) {
+		this._runtime = runtime;
 
-    this._runtime = runtime;
+		this._conDev = [null,null,null,null,null,null,null];
+		this._conState = [ConState.NONE,ConState.NONE,ConState.NONE,ConState.NONE,ConState.NONE,ConState.NONE,ConState.NONE];
 
-    this._conDev = [null,null,null,null,null,null,null];
-    this._conState = [ConState.NONE,ConState.NONE,ConState.NONE,ConState.NONE,ConState.NONE,ConState.NONE,ConState.NONE];
+		this._alreadyAlert = false; // alertがすでに表示されているかのフラグ
+		this._intervalId = window.setInterval(this._updateConState, 200, this); // 接続状況を常に確認する interval 関数
 
-    this._alreadyAlert = false; // alertがすでに表示されているかのフラグ
-    this._intervalId = window.setInterval(this._updateConState, 200, this); // 接続状況を常に確認する interval 関数
+		this._ButtonPressed = false;
+		this._MotionDetect = 0;
+		this._mesh = new Mesh();
+	}
 
-    this._ButtonPressed = false;
-    this._MotionDetect = 0;
-  }
+	getInfo() {
+		return {
+			id: 'mesh',
+			name: Message.categoryName[this.setLocale()],
+			menuIconURI: menuIconURI,
+			blockIconURI: blockIconURI,
+			color1: '#BED537',        // ブロックのメイン色
+			color2: '#A7BC30',        // ブロックの影の色
 
-  _createClass(MeshBlocks, [{
-    key: "getInfo",
-    value: function getInfo() {
-      return {
-        id: 'mesh',
-        name: Message.categoryName[this.setLocale()],
-        menuIconURI: menuIconURI,
-        blockIconURI: blockIconURI,
-        color1: '#BED537',        // ブロックのメイン色
-        color2: '#A7BC30',        // ブロックの影の色
+			blocks: [
+			// LED TAG
+			{
+				opcode: 'LedConnect',
+				blockType: BlockType.REPORTER,
+				text: Message.LedConnect[this.setLocale()]
+			}, {
+				opcode: 'LedOn',
+				blockType: BlockType.COMMAND,
+				text: Message.LedOn[this.setLocale()],
+				arguments: {
+					R: { type: ArgumentType.NUMBER, defaultValue: 100 },
+					G: { type: ArgumentType.NUMBER, defaultValue: 100 },
+					B: { type: ArgumentType.NUMBER, defaultValue: 100 }
+				}
+			}, {
+				opcode: 'LedOff',
+				blockType: BlockType.COMMAND,
+				text: Message.LedOff[this.setLocale()],
 
-        blocks: [
-        // LED TAG
-        {
-          opcode: 'LedConnect',
-          blockType: BlockType.REPORTER,
-          text: Message.LedConnect[this.setLocale()]
-        }, {
-          opcode: 'LedOn',
-          blockType: BlockType.COMMAND,
-          text: Message.LedOn[this.setLocale()],
-          arguments: {
-            R: { type: ArgumentType.NUMBER, defaultValue: 100 },
-            G: { type: ArgumentType.NUMBER, defaultValue: 100 },
-            B: { type: ArgumentType.NUMBER, defaultValue: 100 }
-          }
-        }, {
-          opcode: 'LedOff',
-          blockType: BlockType.COMMAND,
-          text: Message.LedOff[this.setLocale()],
+			// Button TAG
+			}, '---', {
+				opcode: 'ButtonConnect',
+				blockType: BlockType.REPORTER,
+				text: Message.ButtonConnect[this.setLocale()]
+			}, {
+				opcode: 'ButtonPressed',
+				blockType: BlockType.HAT,
+				text: Message.ButtonPressed[this.setLocale()],
 
-        // Button TAG
-        }, '---', {
-          opcode: 'ButtonConnect',
-          blockType: BlockType.REPORTER,
-          text: Message.ButtonConnect[this.setLocale()]
-        }, {
-          opcode: 'ButtonPressed',
-          blockType: BlockType.HAT,
-          text: Message.ButtonPressed[this.setLocale()],
+			// Motion TAG
+			}, '---', {
+				opcode: 'MotionConnect',
+				blockType: BlockType.REPORTER,
+				text: Message.MotionConnect[this.setLocale()]
+			}, {
+				opcode: 'MotionDetect',
+				blockType: BlockType.HAT,
+				text: Message.MotionDetect[this.setLocale()],
+				arguments: {
+					DIR: { type: ArgumentType.NUMBER, defaultValue: 1 }  // 01 右, 02 下, 03 表, 04 裏, 05 上, 06 左
+				}
 
-        // Motion TAG
-        }, '---', {
-          opcode: 'MotionConnect',
-          blockType: BlockType.REPORTER,
-          text: Message.MotionConnect[this.setLocale()]
-        }, {
-          opcode: 'MotionDetect',
-          blockType: BlockType.HAT,
-          text: Message.MotionDetect[this.setLocale()],
-          arguments: {
-            DIR: { type: ArgumentType.NUMBER, defaultValue: 1 }  // 01 右, 02 下, 03 表, 04 裏, 05 上, 06 左
-          }
+			// GPIO TAG
+			}, '---', {
+				opcode: 'GpioConnect',
+				blockType: BlockType.REPORTER,
+				text: Message.GpioConnect[this.setLocale()]
+			}, {
+				opcode: 'GpioPowerOut',
+				blockType: BlockType.COMMAND,
+				text: Message.GpioPowerOut[this.setLocale()],
+				arguments: {
+					out: { type: ArgumentType.NUMBER, defaultValue: 1 }
+				}
 
-        // GPIO TAG
-        }, '---', {
-          opcode: 'GpioConnect',
-          blockType: BlockType.REPORTER,
-          text: Message.GpioConnect[this.setLocale()]
-        }, {
-          opcode: 'GpioPowerOut',
-          blockType: BlockType.COMMAND,
-          text: Message.GpioPowerOut[this.setLocale()],
-          arguments: {
-            out: { type: ArgumentType.NUMBER, defaultValue: 1 }
-          }
+			}],
 
-        }],
+			menus: {
+			}
+		};
+	}
 
-        menus: {
-        }
-      };
-    }
-  }, {
-    key: "_updateConState",
-    value: function _updateConState(that) {
-      var _that = that;
+	_updateConState(that) {
+		var _that = that;
 
-      that.NotifyCB = function (name, buf) {
-        switch(name.substr(8, 2)) {
-        case 'LE':
-          break;
-        case 'BU':
-          if(buf.getUint8(0) == 0x1) {
-            _that._ButtonPressed = buf.getUint8(2);  // 1:短押し、2:長押し、3:2回押し
-            console.log("ButtonPressed "+_that._ButtonPressed);
-          }
-          break;
-        case 'AC':
-          if(buf.getUint8(0) == 0x1 && buf.getUint8(1) == 0x3) {
-            _that._MotionDetect = buf.getUint8(2);  // 01 右, 02 下, 03 表, 04 裏, 05 上, 06 左
-            console.log("MotionDetect "+_that._MotionDetect);
-          }
-          break;
-        case 'GP':
-          break;
-        }
-        return 'ERROR';
-      }
+		that.NotifyCB = function (name, buf) {
+			switch(name.substr(8, 2)) {
+			case 'LE':
+				break;
+			case 'BU':
+				if(buf.getUint8(0) == 0x1) {
+					_that._ButtonPressed = buf.getUint8(2);  // 1:短押し、2:長押し、3:2回押し
+					console.log("ButtonPressed "+_that._ButtonPressed);
+				}
+				break;
+			case 'AC':
+				if(buf.getUint8(0) == 0x1 && buf.getUint8(1) == 0x3) {
+					_that._MotionDetect = buf.getUint8(2);  // 01 右, 02 下, 03 表, 04 裏, 05 上, 06 左
+					console.log("MotionDetect "+_that._MotionDetect);
+				}
+				break;
+			case 'GP':
+				break;
+			}
+			return 'ERROR';
+		}
 
-      var BlockId = ['mesh_LedConnect', 'mesh_ButtonConnect', 'mesh_MotionConnect', 'mesh_GpioConnect', 'mesh_ButtonConnect', 'mesh_ButtonConnect', 'mesh_ButtonConnect'];
-      var filter = ['MESH-100LE', 'MESH-100BU', 'MESH-100AC', 'MESH-100GP', 'MESH-100LE', 'MESH-100LE', 'MESH-100LE'];
-      //var notifyCB = [null, that.ButtonNotifyCB, null, null, null, null, null];  1つしかcallbackが登録できないらいためcallback側で判別
+		var BlockId = ['mesh_LedConnect', 'mesh_ButtonConnect', 'mesh_MotionConnect', 'mesh_GpioConnect', 'mesh_ButtonConnect', 'mesh_ButtonConnect', 'mesh_ButtonConnect'];
+		var filter = ['MESH-100LE', 'MESH-100BU', 'MESH-100AC', 'MESH-100GP', 'MESH-100LE', 'MESH-100LE', 'MESH-100LE'];
+		//var notifyCB = [null, that.ButtonNotifyCB, null, null, null, null, null];  1つしかcallbackが登録できないらいためcallback側で判別
 
-      var i = 0;
-      for(i = 0; i < 4; i++) {
-        var targetBlock = Blockly.getMainWorkspace().getBlockById(BlockId[i]);
-        if (!targetBlock) continue;
-  
-        var clicked = targetBlock.flyoutCheckbox.clicked;
-  
-        switch(that._conState[i]) {
-        case ConState.NONE:
-          that._alreadyAlert = false;
-          if(clicked) {
-            that._conState[i] = ConState.TRY;
-  
-            if (that._conDev[i]) that._conDev[i].disconnect();
-            var ii = i;
-            Mesh.funcs.find(true, filter[i], that.NotifyCB).then(
-              function (k) {
-                if (!k || !k.isConnected()) {
-                  throw 'connection error';
-                } else {
-                  that._conDev[ii] = k;
-                  that._conState[ii] = ConState.CONNECTED;
-                }
-              }
-            ).catch(function (error) {
-              console.log(error);
-              if (!that._alreadyAlert) {
-                alert(Message.connection_alert[that.setLocale()]);
-                that._alreadyAlert = true;
-              }
-              that._conDev[ii] = null;
-              that._conState[ii] = ConState.ERROR;
-            });
-          }
-          break;
-  
-        case ConState.CONNECTED:
-          if (!clicked) {
-            that._conState[i] = ConState.NONE;
-            that._conDev[i].disconnect();
-            that._conDev[i] = null;
-  
-          } else if (!that._conDev[i] || !that._conDev[i].isConnected()) {
-            if (!that._alreadyAlert) {
-              alert(Message.connection_alert[that.setLocale()]);
-              that._alreadyAlert = true;
-            }
-            that._conState[i] = ConState.ERROR;
-          }
-          break;
-  
-        case ConState.ERROR:
-        case ConState.TRY:
-          if (!clicked)
-            that._conState[i] = ConState.NONE;
-          break;
-        }
-      }
-    }
+		var i = 0;
+		for(i = 0; i < 4; i++) {
+			var targetBlock = Blockly.getMainWorkspace().getBlockById(BlockId[i]);
+			if (!targetBlock) continue;
 
-  }, {
-    key: "LedConnect",
-    value: function LedConnect() {
-      switch(this._conState[tag.LED]) {
-      case ConState.NONE:       return Message.ConState.none[this.setLocale()];
-      case ConState.ERROR:      return Message.ConState.not_found[this.setLocale()];
-      case ConState.TRY:        return Message.ConState.try[this.setLocale()];
-      case ConState.CONNECTED:  return Message.ConState.connected[this.setLocale()];
-      }
-      return 'ERROR';
-    }
-  }, {
-    key: "LedOn",
-    value: function LedOn(args) {
-      if (!this._conDev[tag.LED] || !this._conDev[tag.LED].isConnected()) return;
-      var data = [0x01,0x00,Number(args.R),0x00,Number(args.G),0x00,Number(args.B),0x30,0x75,0x30,0x75,0x00,0x00,0x01,0x97];
-      var sum = 0;
-      for(i = 0; i < data.length-1; i++)
-        sum += data[i];
-      data[data.length-1] = sum & 0xFF;
-      this._conDev[tag.LED].writeWoResp(data);
-    }
-  }, {
-    key: "LedOff",
-    value: function LedOff(args) {
-      if (!this._conDev[tag.LED] || !this._conDev[tag.LED].isConnected()) return;
-      this._conDev[tag.LED].writeWoResp([0x01,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x01,0x02]);
-    }
+			var clicked = targetBlock.flyoutCheckbox.clicked;
 
-  }, {
-    key: "ButtonConnect",
-    value: function ButtonConnect() {
-      switch(this._conState[tag.BUTTON]) {
-      case ConState.NONE:       return Message.ConState.none[this.setLocale()];
-      case ConState.ERROR:      return Message.ConState.not_found[this.setLocale()];
-      case ConState.TRY:        return Message.ConState.try[this.setLocale()];
-      case ConState.CONNECTED:  return Message.ConState.connected[this.setLocale()];
-      }
-      return 'ERROR';
-    }
-  }, {
-    key: "ButtonPressed",
-    value: function ButtonPressed(args) {
-      var pressed = this._ButtonPressed;
-      this._ButtonPressed = false;
-      return pressed;
-    }
+			switch(that._conState[i]) {
+			case ConState.NONE:
+				that._alreadyAlert = false;
+				if(clicked) {
+					that._conState[i] = ConState.TRY;
 
-  }, {
-    key: "MotionConnect",
-    value: function MotionConnect() {
-      switch(this._conState[tag.MOTION]) {
-      case ConState.NONE:       return Message.ConState.none[this.setLocale()];
-      case ConState.ERROR:      return Message.ConState.not_found[this.setLocale()];
-      case ConState.TRY:        return Message.ConState.try[this.setLocale()];
-      case ConState.CONNECTED:  return Message.ConState.connected[this.setLocale()];
-      }
-      return 'ERROR';
-    }
-  }, {
-    key: "MotionDetect",
-    value: function MotionDetect(args) {
-      var ret = false;
-      if(this._MotionDetect == Number(args.DIR)) {
-        this._MotionDetect = 0;
-        ret = true;
-      }
-      return ret;
-    }
+					if (that._conDev[i]) that._conDev[i].disconnect();
+					var ii = i;
+					that._mesh.find(filter[i], that.NotifyCB).then(
+						function (k) {
+							if (!k || !k.isConnected()) {
+								throw 'connection error';
+							} else {
+								that._conDev[ii] = k;
+								that._conState[ii] = ConState.CONNECTED;
+							}
+						}
+					).catch(function (error) {
+						console.log(error);
+						if (!that._alreadyAlert) {
+							alert(Message.connection_alert[that.setLocale()]);
+							that._alreadyAlert = true;
+						}
+						that._conDev[ii] = null;
+						that._conState[ii] = ConState.ERROR;
+					});
+				}
+				break;
 
-  }, {
-    key: "GpioConnect",
-    value: function GpioConnect() {
-      switch(this._conState[tag.GPIO]) {
-      case ConState.NONE:       return Message.ConState.none[this.setLocale()];
-      case ConState.ERROR:      return Message.ConState.not_found[this.setLocale()];
-      case ConState.TRY:        return Message.ConState.try[this.setLocale()];
-      case ConState.CONNECTED:  return Message.ConState.connected[this.setLocale()];
-      }
-      return 'ERROR';
-    }
-  }, {
-    key: "GpioPowerOut",
-    value: function GpioPowerOut(args) {
-      if (!this._conDev[tag.GPIO] || !this._conDev[tag.GPIO].isConnected()) return;
+			case ConState.CONNECTED:
+				if (!clicked) {
+					that._conState[i] = ConState.NONE;
+					that._conDev[i].disconnect();
+					that._conDev[i] = null;
 
-      var data;
-      if(Number(args.out) == 1) {
-        data = [0x01,0x00,0x00,0x00,0x01,0x00,0x00,0x00,0x01,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x03];
-      } else {
-        data = [0x01,0x00,0x00,0x00,0x01,0x00,0x00,0x00,0x02,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x04];
-      }
-      this._conDev[tag.GPIO].writeWoResp(data);
-    }
+				} else if (!that._conDev[i] || !that._conDev[i].isConnected()) {
+					if (!that._alreadyAlert) {
+						alert(Message.connection_alert[that.setLocale()]);
+						that._alreadyAlert = true;
+					}
+					that._conState[i] = ConState.ERROR;
+				}
+				break;
 
-  }, {
-    key: "setLocale",
-    value: function setLocale() {
-      var locale = formatMessage.setup().locale;
+			case ConState.ERROR:
+			case ConState.TRY:
+				if (!clicked)
+					that._conState[i] = ConState.NONE;
+				break;
+			}
+		}
+	}
 
-      if (AvailableLocales.includes(locale)) {
-        return locale;
-      } else {
-        return 'en';
-      }
-    }
-  }]);
+	LedConnect() {
+		switch(this._conState[tag.LED]) {
+		case ConState.NONE:       return Message.ConState.none[this.setLocale()];
+		case ConState.ERROR:      return Message.ConState.not_found[this.setLocale()];
+		case ConState.TRY:        return Message.ConState.try[this.setLocale()];
+		case ConState.CONNECTED:  return Message.ConState.connected[this.setLocale()];
+		}
+		return 'ERROR';
+	}
 
-  return MeshBlocks;
-}();
+	LedOn(args) {
+		if (!this._conDev[tag.LED] || !this._conDev[tag.LED].isConnected()) return;
+		var data = [0x01,0x00,Number(args.R),0x00,Number(args.G),0x00,Number(args.B),0x30,0x75,0x30,0x75,0x00,0x00,0x01,0x97];
+		var sum = 0;
+		for(i = 0; i < data.length-1; i++)
+			sum += data[i];
+		data[data.length-1] = sum & 0xFF;
+		this._conDev[tag.LED].writeWoResp(data);
+	}
 
+	LedOff(args) {
+		if (!this._conDev[tag.LED] || !this._conDev[tag.LED].isConnected()) return;
+		this._conDev[tag.LED].writeWoResp([0x01,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x01,0x02]);
+	}
+
+	ButtonConnect() {
+		switch(this._conState[tag.BUTTON]) {
+		case ConState.NONE:       return Message.ConState.none[this.setLocale()];
+		case ConState.ERROR:      return Message.ConState.not_found[this.setLocale()];
+		case ConState.TRY:        return Message.ConState.try[this.setLocale()];
+		case ConState.CONNECTED:  return Message.ConState.connected[this.setLocale()];
+		}
+		return 'ERROR';
+	}
+
+	ButtonPressed(args) {
+		var pressed = this._ButtonPressed;
+		this._ButtonPressed = false;
+		return pressed;
+	}
+
+	MotionConnect() {
+		switch(this._conState[tag.MOTION]) {
+		case ConState.NONE:       return Message.ConState.none[this.setLocale()];
+		case ConState.ERROR:      return Message.ConState.not_found[this.setLocale()];
+		case ConState.TRY:        return Message.ConState.try[this.setLocale()];
+		case ConState.CONNECTED:  return Message.ConState.connected[this.setLocale()];
+		}
+		return 'ERROR';
+	}
+
+	MotionDetect(args) {
+		var ret = false;
+		if(this._MotionDetect == Number(args.DIR)) {
+			this._MotionDetect = 0;
+			ret = true;
+		}
+		return ret;
+	}
+
+	GpioConnect() {
+		switch(this._conState[tag.GPIO]) {
+		case ConState.NONE:       return Message.ConState.none[this.setLocale()];
+		case ConState.ERROR:      return Message.ConState.not_found[this.setLocale()];
+		case ConState.TRY:        return Message.ConState.try[this.setLocale()];
+		case ConState.CONNECTED:  return Message.ConState.connected[this.setLocale()];
+		}
+		return 'ERROR';
+	}
+
+	GpioPowerOut(args) {
+		if (!this._conDev[tag.GPIO] || !this._conDev[tag.GPIO].isConnected()) return;
+
+		var data;
+		if(Number(args.out) == 1) {
+			data = [0x01,0x00,0x00,0x00,0x01,0x00,0x00,0x00,0x01,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x03];
+		} else {
+			data = [0x01,0x00,0x00,0x00,0x01,0x00,0x00,0x00,0x02,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x04];
+		}
+		this._conDev[tag.GPIO].writeWoResp(data);
+	}
+
+	setLocale() {
+		var locale = formatMessage.setup().locale;
+
+		if (AvailableLocales.includes(locale)) {
+			return locale;
+		} else {
+			return 'en';
+		}
+	}
+}
 module.exports = MeshBlocks;
