@@ -46,7 +46,7 @@ class MeshButton {
 	getInfo () {
 		return {
 			id: MeshButton.EXTENSION_ID,
-			name: 'MeshButton',
+			name: 'Button TAG',
 			menuIconURI: menuIconURI,
 			blockIconURI: blockIconURI,
 			showStatusButton: true,

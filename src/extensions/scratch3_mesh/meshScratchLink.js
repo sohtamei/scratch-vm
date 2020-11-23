@@ -77,6 +77,8 @@ class MeshScratchLink {
 		return this.send(BLECommand.CMD_DISPLAY_TEXT, output);
 	}
 
+	// for runtime.js --------------
+
 	scan () {
 		if (this._ble) {
 			this._ble.disconnect();
@@ -103,19 +105,21 @@ class MeshScratchLink {
 		this.reset();
 	}
 
-	reset () {
-		if (this._timeoutID) {
-			window.clearTimeout(this._timeoutID);
-			this._timeoutID = null;
-		}
-	}
-
 	isConnected () {
 		let connected = false;
 		if (this._ble) {
 			connected = this._ble.isConnected();
 		}
 		return connected;
+	}
+
+	// internal -------------
+
+	reset () {
+		if (this._timeoutID) {
+			window.clearTimeout(this._timeoutID);
+			this._timeoutID = null;
+		}
 	}
 
 	send (command, message) {

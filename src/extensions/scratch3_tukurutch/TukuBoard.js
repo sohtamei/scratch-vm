@@ -359,9 +359,9 @@ getSW(args,util) { return this.getTest(arguments.callee.name, args); }
     
     setIotIp (args) {
         this._ipadrs = Cast.toString(args.ARG1);
-        document.cookie = 'TukuBoard_ip=' + this._ipadrs + '; samesite=lax;';
+        document.cookie = 'TukuBoard_ip=' + this._ipadrs + '; samesite=lax; expires=Tue, 31-Dec-2037 00:00:00 GMT;';
         if(SupportCamera) {
-          document.cookie = 'Camera_ip=' + this._ipadrs + '; samesite=lax;';
+          document.cookie = 'Camera_ip=' + this._ipadrs + '; samesite=lax; expires=Tue, 31-Dec-2037 00:00:00 GMT;';
           alert(this._ipadrs + {
             'en': ' has been saved (for Robot & Camera).',
             'ja': 'を保存しました(ロボット & カメラ)',

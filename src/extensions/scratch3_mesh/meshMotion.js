@@ -46,7 +46,7 @@ class MeshMotion {
 	getInfo () {
 		return {
 			id: MeshMotion.EXTENSION_ID,
-			name: 'MeshMotion',
+			name: 'Motion TAG',
 			menuIconURI: menuIconURI,
 			blockIconURI: blockIconURI,
 			showStatusButton: true,
