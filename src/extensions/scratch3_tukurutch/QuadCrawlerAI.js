@@ -178,6 +178,10 @@ class Scratch3QuadCrawlerAIBlocks {
     ARG1: { type: ArgumentType.NUMBER, type2:'B', defaultValue:1, menu: 'color' },
 }},
 
+{blockType: BlockType.REPORTER, opcode: 'enumWalkcmd', text: '[ARG1] .', arguments: {
+    ARG1: { type: ArgumentType.NUMBER, type2:'B', defaultValue:1, menu: 'walkcmd' },
+}},
+
 
 		];
 		return this._blocks;
@@ -654,6 +658,7 @@ setLED(args,util) { return this.getTest(arguments.callee.name, args); }
 enumIrcode(args) { return args.ARG1; }
 enumIrcodeA(args) { return args.ARG1; }
 enumColor(args) { return args.ARG1; }
+enumWalkcmd(args) { return args.ARG1; }
 
 
     /**
