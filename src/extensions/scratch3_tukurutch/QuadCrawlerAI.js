@@ -152,26 +152,29 @@ class Scratch3QuadCrawlerAIBlocks {
 }[this._locale], arguments: {
 }},
 
-'---',
-'---',
-'---',
-'---',
-'---',
-'---',
+{blockType: BlockType.REPORTER, opcode: 'getVbat', text: 'get VBAT', arguments: {
+}},
+
+{blockType: BlockType.COMMAND, opcode: 'setDigital', text: 'set digital pin [ARG1] output as [ARG2]', arguments: {
+    ARG1: { type: ArgumentType.NUMBER, type2:'B', defaultValue:0 },
+    ARG2: { type: ArgumentType.NUMBER, type2:'B', defaultValue:1, menu: 'digital' },
+}},
+
+{blockType: BlockType.BOOLEAN, opcode: 'getDigital', text: 'read digital pin [ARG1]', arguments: {
+    ARG1: { type: ArgumentType.NUMBER, type2:'B', defaultValue:0 },
+}},
+
+{blockType: BlockType.COMMAND, opcode: 'setPWM', text: 'set PWM ch [ARG1] data [ARG2]', arguments: {
+    ARG1: { type: ArgumentType.NUMBER, type2:'B', defaultValue:8 },
+    ARG2: { type: ArgumentType.NUMBER, type2:'S', defaultValue:320 },
+}},
+
 '---',
 {blockType: BlockType.COMMAND, opcode: 'setLED', text: {
     'en': 'set LED [ARG1]',
     'ja': 'LEDを [ARG1]',
 }[this._locale], arguments: {
     ARG1: { type: ArgumentType.NUMBER, type2:'B', defaultValue:1, menu: 'onoff' },
-}},
-
-{blockType: BlockType.REPORTER, opcode: 'enumIrcode', text: '[ARG1] .', arguments: {
-    ARG1: { type: ArgumentType.NUMBER, type2:'B', defaultValue:69, menu: 'ircode' },
-}},
-
-{blockType: BlockType.REPORTER, opcode: 'enumIrcodeA', text: '[ARG1] .', arguments: {
-    ARG1: { type: ArgumentType.NUMBER, type2:'B', defaultValue:113, menu: 'ircodeA' },
 }},
 
 {blockType: BlockType.REPORTER, opcode: 'enumColor', text: '[ARG1] .', arguments: {
@@ -289,48 +292,13 @@ color: { acceptReporters: true, items: [
 }[this._locale], value: 6 },
 ]},
 
-crotchF: { acceptReporters: true, items: ['-55','0','60',]},
+crotchF: { acceptReporters: true, items: ['-70','0','60',]},
 
 crotchR: { acceptReporters: true, items: ['-90','0','45',]},
 
-ircode: { acceptReporters: true, items: [
-{ text: 'POWER', value: 69 },
-{ text: 'MENU', value: 71 },
-{ text: 'TEST', value: 68 },
-{ text: 'RETURN', value: 67 },
-{ text: 'R0', value: 22 },
-{ text: 'C', value: 13 },
-{ text: '↑', value: 64 },
-{ text: '↓', value: 25 },
-{ text: '←', value: 7 },
-{ text: '→', value: 9 },
-{ text: 'CENTER', value: 21 },
-{ text: 'R1', value: 12 },
-{ text: 'R2', value: 24 },
-{ text: 'R3', value: 94 },
-{ text: 'R4', value: 8 },
-{ text: 'R5', value: 28 },
-{ text: 'R6', value: 90 },
-{ text: 'R7', value: 66 },
-{ text: 'R8', value: 82 },
-{ text: 'R9', value: 74 },
-{ text: 'B', value: 70 },
-]},
-
-ircodeA: { acceptReporters: true, items: [
-{ text: 'A CENTER', value: 97 },
-{ text: 'A U', value: 98 },
-{ text: 'A R', value: 99 },
-{ text: 'A L', value: 100 },
-{ text: 'A D', value: 101 },
-{ text: 'A↑→', value: 112 },
-{ text: 'A↑', value: 113 },
-{ text: 'A←↑', value: 114 },
-{ text: 'A→', value: 115 },
-{ text: 'A←', value: 116 },
-{ text: 'A↓→', value: 117 },
-{ text: 'A↓', value: 118 },
-{ text: 'A←↓', value: 119 },
+digital: { acceptReporters: true, items: [
+{ text: 'HIGH', value: 1 },
+{ text: 'LOW', value: 0 },
 ]},
 
 knee: { acceptReporters: true, items: ['-25','0','60','100',]},
@@ -654,9 +622,11 @@ setColorWipe(args,util) { return this.getTest(arguments.callee.name, args); }
 setRainbow(args,util) { return this.getTest(arguments.callee.name, args); }
 BuzzerJ2(args,util) { return this.getTest(arguments.callee.name, args); }
 getSonner(args,util) { return this.getTest(arguments.callee.name, args); }
+getVbat(args,util) { return this.getTest(arguments.callee.name, args); }
+setDigital(args,util) { return this.getTest(arguments.callee.name, args); }
+getDigital(args,util) { return this.getTest(arguments.callee.name, args); }
+setPWM(args,util) { return this.getTest(arguments.callee.name, args); }
 setLED(args,util) { return this.getTest(arguments.callee.name, args); }
-enumIrcode(args) { return args.ARG1; }
-enumIrcodeA(args) { return args.ARG1; }
 enumColor(args) { return args.ARG1; }
 enumWalkcmd(args) { return args.ARG1; }
 
