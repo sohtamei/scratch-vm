@@ -444,58 +444,54 @@ getSW(args,util) { return this.getTest(arguments.callee.name, args); }
 		cmd.setUint8(2, ofs-3);
 	//	for(i=0;i<ofs;i++) console.log(cmd.getUint8(i).toString(16));
 
-		const tempThis = this;
-		const netsPromise = new Promise(function(resolve, error) {
+		const _this = this;
+		return new Promise(function(resolve, error) {
 			_resolve = resolve;
 			_error = error;
 			//console.log('send: ' + cmdUint8.slice(0,ofs));	// debug
 
-			if(tempThis._ws === null) {
-			/*
-				if(tempThis._ipadrs == '192.168.1.xx') {
-					error('');
-					return;
-				}
-			*/
-				_sendBuf = cmdUint8.slice(0,ofs);
-
-				tempThis._ws = new WebSocket('ws://'+tempThis._ipadrs+':54323');
-				tempThis._ws.binaryType = 'arraybuffer';
-
-				tempThis._ws.onopen = function(e) {
-					console.log('open: ' + e);
-					tempThis._ws.send(_sendBuf);
-				}
-
-				tempThis._ws.onmessage = tempThis.onmessage;
-
-				tempThis._ws.onclose = function(event) {
-					if (event.wasClean) {
-						console.log(`close: Connection closed cleanly, code=${event.code} reason=${event.reason}`);
-					} else {
-						console.log('close: Connection died');
-					}
-					tempThis._ws = null;
-					if(_error !== null) _error('');
-				};
-
-				tempThis._ws.onerror = function(error) {
-					console.log('[error] '+error.message);
-					tempThis._ws.close();
-					tempThis._ws = null;
-					if(_error !== null) _error('');
-					if(!_alertFlag) alert('cannot connect to ' + tempThis._ipadrs);
-					_alertFlag = true;
-				};
+			if(_this._ws !== null) {
+				_this._ws.send(cmdUint8.slice(0,ofs));
 				return;
-			} else {
-				tempThis._ws.send(cmdUint8.slice(0,ofs));
 			}
-		});
+		/*
+			if(_this._ipadrs == '192.168.1.xx') {
+				error('');
+				return;
+			}
+		*/
+			_sendBuf = cmdUint8.slice(0,ofs);
 
-		netsPromise.then(result => result);
-		netsPromise.catch(result => result);
-		return netsPromise;
+			_this._ws = new WebSocket('ws://'+_this._ipadrs+':54323');
+			_this._ws.binaryType = 'arraybuffer';
+
+			_this._ws.onopen = function(e) {
+				console.log('open: ' + e);
+				_this._ws.send(_sendBuf);
+			}
+
+			_this._ws.onmessage = _this.onmessage;
+
+			_this._ws.onclose = function(event) {
+				if (event.wasClean) {
+					console.log(`close: Connection closed cleanly, code=${event.code} reason=${event.reason}`);
+				} else {
+					console.log('close: Connection died');
+				}
+				_this._ws = null;
+				if(_error !== null) _error('');
+			};
+
+			_this._ws.onerror = function(error) {
+				console.log('[error] '+error.message);
+				_this._ws.close();
+				_this._ws = null;
+				if(_error !== null) _error('');
+				if(!_alertFlag) alert('cannot connect to ' + _this._ipadrs);
+				_alertFlag = true;
+			};
+			return;
+		});
 	}
 
 }
