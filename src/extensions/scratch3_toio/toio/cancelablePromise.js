@@ -10,7 +10,7 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-var PCancelable = require("p-cancelable");
+var PCancelable = require("../p-cancelable");
 /**
  * This serves promise which can be canceled.
  */
