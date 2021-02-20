@@ -22,7 +22,7 @@ var toio_1 = __importDefault(require("./toio"));
 
 var util_1 = __importDefault(require("./util"));
 
-var package_json_1 = __importDefault(require("./package.json"));
+//var package_json_1 = __importDefault(require("./package.json"));
 /**
  * Inject a link to navigate to the 'About Visual Programming' page in the official site.
  */
@@ -47,7 +47,8 @@ function injectLink() {
   link.setAttribute('style', 'padding: 0 0.75rem; float: right;' + 'color: #ffffff; text-decoration: none; font-weight: bold;');
   link.innerHTML = formatMessage('toio.about');
   link.href = toio_1.default.URL;
-  link.title = package_json_1.default ? "v" + package_json_1.default.version : 'unknown version';
+//link.title = package_json_1.default ? "v" + package_json_1.default.version : 'unknown version';
+  link.title = "v2.1.3";
   toioArea.appendChild(link);
 }
 
