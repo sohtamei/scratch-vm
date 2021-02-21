@@ -40,10 +40,10 @@ class Scratch3Blocks {
     
 	get_blocks() {
 		this.flashList = [
-{name:'M5StickC', type:'esp32', baudrate:115200},
-{name:'M5StickCPlus', type:'esp32', baudrate:115200},
+{name:'M5StickC', type:'esp32', baudrate:230400},
+{name:'M5StickCPlus', type:'esp32', baudrate:230400},
 {name:'M5Stack', type:'esp32', baudrate:230400},
-{name:'M5Atom', type:'esp32', baudrate:115200},
+{name:'M5Atom', type:'esp32', baudrate:230400},
 		];
 
 		this._blocks = [

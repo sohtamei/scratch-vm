@@ -13,19 +13,6 @@ const IconURI = require('./tukurutch-small.png');
  */
 class Scratch3Blocks {
     constructor (runtime) {
-
-	fetch('static/favicon.ico').then(response => response.blob()).then(blob => {
-		console.log(blob);
-		var reader = new FileReader();
-		reader.onload = function(e){
-			console.log(reader.result);
-			var buf = new Uint8Array(reader.result);
-			console.log(buf);
-		};
-	//	reader.readAsText(blob);
-		reader.readAsArrayBuffer(blob);
-	})
-
         if(typeof SupportCamera === "undefined") SupportCamera = false;
         this.comlib = new comlib(extName, SupportCamera);
     }
