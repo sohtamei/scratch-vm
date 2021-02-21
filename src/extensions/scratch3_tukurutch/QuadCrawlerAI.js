@@ -1,7 +1,5 @@
 const extName = 'QuadCrawlerAI';
 const SupportCamera = true;
-const _part0 = require('!arraybuffer-loader!./QuadCrawlerAI.part.bin');
-const _image0 = require('!arraybuffer-loader!./QuadCrawlerAI.image.bin');
 
 const ArgumentType = require('../../extension-support/argument-type');
 const BlockType = require('../../extension-support/block-type');
@@ -43,7 +41,7 @@ class Scratch3Blocks {
     
 	get_blocks() {
 		this.flashList = [
-{name:'QuadCrawlerAI', type:'esp32', baudrate:230400, part:_part0, image:_image0},
+{name:'QuadCrawlerAI', type:'esp32', baudrate:230400},
 		];
 
 		this._blocks = [

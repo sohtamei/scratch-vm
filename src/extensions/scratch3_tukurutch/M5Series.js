@@ -1,12 +1,4 @@
 const extName = 'M5Series';
-const _part0 = require('!arraybuffer-loader!./M5StickC.part.bin');
-const _image0 = require('!arraybuffer-loader!./M5StickC.image.bin');
-const _part1 = require('!arraybuffer-loader!./M5StickCPlus.part.bin');
-const _image1 = require('!arraybuffer-loader!./M5StickCPlus.image.bin');
-const _part2 = require('!arraybuffer-loader!./M5Stack.part.bin');
-const _image2 = require('!arraybuffer-loader!./M5Stack.image.bin');
-const _part3 = require('!arraybuffer-loader!./M5Atom.part.bin');
-const _image3 = require('!arraybuffer-loader!./M5Atom.image.bin');
 
 const ArgumentType = require('../../extension-support/argument-type');
 const BlockType = require('../../extension-support/block-type');
@@ -48,10 +40,10 @@ class Scratch3Blocks {
     
 	get_blocks() {
 		this.flashList = [
-{name:'M5StickC', type:'esp32', baudrate:115200, part:_part0, image:_image0},
-{name:'M5StickCPlus', type:'esp32', baudrate:115200, part:_part1, image:_image1},
-{name:'M5Stack', type:'esp32', baudrate:230400, part:_part2, image:_image2},
-{name:'M5Atom', type:'esp32', baudrate:115200, part:_part3, image:_image3},
+{name:'M5StickC', type:'esp32', baudrate:115200},
+{name:'M5StickCPlus', type:'esp32', baudrate:115200},
+{name:'M5Stack', type:'esp32', baudrate:230400},
+{name:'M5Atom', type:'esp32', baudrate:115200},
 		];
 
 		this._blocks = [

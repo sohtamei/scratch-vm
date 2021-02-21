@@ -1,6 +1,4 @@
 const extName = 'TukuBoard';
-const _part0 = require('!arraybuffer-loader!./TukuBoard1.0.part.bin');
-const _image0 = require('!arraybuffer-loader!./TukuBoard1.0.image.bin');
 
 const ArgumentType = require('../../extension-support/argument-type');
 const BlockType = require('../../extension-support/block-type');
@@ -15,6 +13,19 @@ const IconURI = require('./tukurutch-small.png');
  */
 class Scratch3Blocks {
     constructor (runtime) {
+
+	fetch('static/favicon.ico').then(response => response.blob()).then(blob => {
+		console.log(blob);
+		var reader = new FileReader();
+		reader.onload = function(e){
+			console.log(reader.result);
+			var buf = new Uint8Array(reader.result);
+			console.log(buf);
+		};
+	//	reader.readAsText(blob);
+		reader.readAsArrayBuffer(blob);
+	})
+
         if(typeof SupportCamera === "undefined") SupportCamera = false;
         this.comlib = new comlib(extName, SupportCamera);
     }
@@ -42,7 +53,7 @@ class Scratch3Blocks {
     
 	get_blocks() {
 		this.flashList = [
-{name:'TukuBoard1.0', type:'esp32', baudrate:230400, part:_part0, image:_image0},
+{name:'TukuBoard1.0', type:'esp32', baudrate:230400},
 		];
 
 		this._blocks = [

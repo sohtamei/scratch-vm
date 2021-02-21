@@ -341,6 +341,7 @@ class comlib {
 
 	// WLANアップデート ----------------------------------------------------------------------------
 
+	//{name:'TukuBoard1.0', type:'esp32', baudrate:230400, part:_part0, image:_image0},
 	burnWlan(flashBin) {
 		if(this.espBurnBusy) return;
 		this.espBurnBusy = true;
@@ -359,6 +360,8 @@ class comlib {
 			this.port.close();
 			this.port = null;
 		}
+		let flashBinPart = null;
+		let flashBinImage = null;
 
 		return navigator.serial.requestPort({}).then(function(result) {
 			_this.port = result;
@@ -380,6 +383,31 @@ class comlib {
 		}).then(function(){
 			_this.statusMessage.innerText = UpdateMsg+'0%';
 
+			return fetch('static/extensions/'+flashBin.name+'.part.bin').then(response => response.blob()).then(blob => {
+				return new Promise(function(resolve) {
+					let reader = new FileReader();
+					reader.onload = function(e){
+						flashBinPart = reader.result;
+						resolve();
+					};
+					reader.readAsArrayBuffer(blob);
+				});
+			});
+		}).then(function(){
+			_this.statusMessage.innerText = UpdateMsg+'1%';
+
+			return fetch('static/extensions/'+flashBin.name+'.image.bin').then(response => response.blob()).then(blob => {
+				return new Promise(function(resolve) {
+					let reader = new FileReader();
+					reader.onload = function(e){
+						flashBinImage = reader.result;
+						resolve();
+					};
+					reader.readAsArrayBuffer(blob);
+				});
+			});
+		}).then(function(){
+			_this.statusMessage.innerText = UpdateMsg+'2%';
 			// DTR=1 RTS=0 IO0=1 EN=0
 			return _this.port.setSignals({ dataTerminalReady: false, requestToSend: true });
 		}).then(function(){
@@ -549,12 +577,12 @@ class comlib {
 		}).then(function(rcvParam) {
 //console.log(rcvParam);
 			// 0x8000  partitions.bin
-			let data = new Uint8Array(flashBin.part);
+			let data = new Uint8Array(flashBinPart);
 			return _this._espFlash(data, 0x8000, data.length, 13, 13);
 		}).then(function(rcvParam) {
 //console.log(rcvParam);
 			// 0x10000  esp32.bin
-			let data = new Uint8Array(flashBin.image);
+			let data = new Uint8Array(flashBinImage);
 			return _this._espFlash(data, 0x10000, data.length, 15, 100)
 		}).then(function(rcvParam) {
 //console.log(rcvParam);
