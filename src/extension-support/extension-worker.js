@@ -15,6 +15,7 @@ class ExtensionWorker {
             dispatch.call('extensions', 'allocateWorker').then(x => {
                 const [id, extension] = x;
                 this.workerId = id;
+                this.extensionURL = extension;
 
                 try {
                     importScripts(extension);
@@ -37,7 +38,7 @@ class ExtensionWorker {
         this.extensions.push(extensionObject);
         const serviceName = `extension.${this.workerId}.${extensionId}`;
         const promise = dispatch.setService(serviceName, extensionObject)
-            .then(() => dispatch.call('extensions', 'registerExtensionService', serviceName));
+            .then(() => dispatch.call('extensions', 'registerExtensionService', serviceName, this.extensionURL));
         if (this.initialRegistrations) {
             this.initialRegistrations.push(promise);
         }

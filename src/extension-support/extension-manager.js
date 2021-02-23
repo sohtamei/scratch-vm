@@ -18,6 +18,7 @@ const builtinExtensions = Object.assign({
     M5CameraCar: () => require('../extensions/scratch3_tukurutch/M5CameraCar.js'),
     M5Series: () => require('../extensions/scratch3_tukurutch/M5Series.js'),
     QuadCrawlerAI: () => require('../extensions/scratch3_tukurutch/QuadCrawlerAI.js'),
+//    test: () => require('../extensions/scratch3_tukurutch/test.js'),
 
     ml2scratch: () => require('../extensions/scratch3_ml2scratch'),
     facemesh2scratch: () => require('../extensions/scratch3_facemesh2scratch'),
@@ -215,9 +216,11 @@ class ExtensionManager {
     /**
      * Collect extension metadata from the specified service and begin the extension registration process.
      * @param {string} serviceName - the name of the service hosting the extension.
+     * @param {string} extensionURL - the URL of the extension
      */
-    registerExtensionService (serviceName) {
+    registerExtensionService (serviceName, extensionURL) {
         dispatch.call(serviceName, 'getInfo').then(info => {
+            info.extensionURL = extensionURL;
             this._registerExtensionInfo(serviceName, info);
         });
     }
@@ -286,6 +289,9 @@ class ExtensionManager {
         extensionInfo = Object.assign({}, extensionInfo);
         if (!/^[a-z0-9]+$/i.test(extensionInfo.id)) {
             throw new Error('Invalid extension id');
+        }
+        if (extensionInfo.extensionURL) {
+          this._loadedExtensions.set(extensionInfo.id, serviceName);
         }
         extensionInfo.name = extensionInfo.name || extensionInfo.id;
         extensionInfo.blocks = extensionInfo.blocks || [];
