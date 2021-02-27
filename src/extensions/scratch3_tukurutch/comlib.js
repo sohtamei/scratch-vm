@@ -9,10 +9,6 @@ const StubCodeBin = require('!arraybuffer-loader!./STUB_CODE.bin');
 const BootloaderBin = require('!arraybuffer-loader!./bootloader_qio_80m.bin');
 const BootApp0Bin = require('!arraybuffer-loader!./boot_app0.bin');
 
-/**
- * Class for blocks in Scratch 3.0.
- * @constructor
- */
 class comlib {
     constructor(extName, SupportCamera) {
 		this.extName = extName;
@@ -92,30 +88,60 @@ class comlib {
 		}
     }
 
-	sendRecv(index, argsDef, args) {
+/*
+  {'B','B'},		// 0x81:wire_begin     (SDA, SCL)
+  {'B','b'},		// 0x82:wire_write     (adrs, [DATA])          ret:0-OK
+  {'B','b','B'},	// 0x83:wire_writeRead (adrs, [DATA], readNum) ret:[DATA]-OK, NULL-ERROR
+  {'B','B'},		// 0x84:wire_read      (adrs, readNum)         ret:[DATA]-OK, NULL-ERROR
+*/
+	wire_begin(sda, scl) {
+		const _defs = {ARG1:{type2:'B'},ARG2:{type2:'B'}};
+		const _args = {ARG1:sda, ARG2:scl};
+		return this.sendRecv(0x81,_defs,_args);
+	}
+
+	wire_write(adrs, data) {		// ret:0-OK
+		const _defs = {ARG1:{type2:'B'},ARG2:{type2:'b'}};
+		const _args = {ARG1:adrs, ARG2:data};
+		return this.sendRecv(0x82,_defs,_args);
+	}
+
+	wire_writeRead(adrs, data, readNum) {	// ret:[DATA]-OK
+		const _defs = {ARG1:{type2:'B'},ARG2:{type2:'b'},ARG3:{type2:'b'}};
+		const _args = {ARG1:adrs, ARG2:data, ARG3:readNum};
+		return this.sendRecv(0x83,_defs,_args);
+	}
+
+	wire_read(adrs, readNum) {			// ret:[DATA]-OK
+		const _defs = {ARG1:{type2:'B'},ARG2:{type2:'B'}};
+		const _args = {ARG1:adrs, ARG2:readNum};
+		return this.sendRecv(0x84,_defs,_args);
+	}
+
+	sendRecv(cmd, argsDef, args) {
 		this.statusMessage.innerText = ' ';
 
 		let data = new Uint8Array(256);
 		let dv = new DataView(data.buffer);
-		let tmp = new Uint8Array([0xff, 0x55, 0x00, index]);
+		let tmp = new Uint8Array([0xff, 0x55, 0x00, cmd]);
 		let ofs = 0;
 		for(ofs = 0; ofs < tmp.length; ofs++)
 			data[ofs] = tmp[ofs];
 
+		let j = 0;
 		for(let i = 1; ; i++) {
 			eval("var param = args.ARG"+i);
 			eval("var def = argsDef.ARG"+i);
 		//	console.log(i,param, def);
-			if(typeof param === "undefined") break;
+			if(typeof param === 'undefined') break;
 			switch(def.type2) {
-			case "B": dv.setUint8(ofs,param);        ofs+=1; break;
-			case "S": dv.setInt16(ofs,param, true);  ofs+=2; break;
-			case "L": dv.setInt32(ofs,param, true);  ofs+=4; break;
-			case "F": dv.setFloat32(ofs,param, true);ofs+=4; break;
-			case "D": dv.setFloat64(ofs,param,true); ofs+=8; break;
+			case 'B': dv.setUint8(ofs,param);        ofs+=1; break;
+			case 'S': dv.setInt16(ofs,param, true);  ofs+=2; break;
+			case 'L': dv.setInt32(ofs,param, true);  ofs+=4; break;
+			case 'F': dv.setFloat32(ofs,param, true);ofs+=4; break;
+			case 'D': dv.setFloat64(ofs,param,true); ofs+=8; break;
 
-			case "s":
-				let j = 0;
+			case 's':
 				if(param !== 'undefined') {
 					let charList = param.split('');
 					for(j = 0; j < charList.length; j++)
@@ -124,14 +150,14 @@ class comlib {
 				data[ofs+j] = 0;
 				ofs += j+1;
 				break;
-/*
-			case "b":
-				let n = param.length/2;
-				dv.writeByte(n);
-				for(let j:int = 0; j < n; j++)
-					dv.writeByte(parseInt(param.substr(j*2, 2),16));
+
+			case 'b':
+				if(typeof param !== 'object') break;
+				data[ofs] = param.length; ofs++;
+				for(j = 0; j < param.length; j++)
+					data[ofs+j] = param[j];
+				ofs += j;
 				break;
-*/
 			}
 		}
 		data[2] = ofs-3;
@@ -146,7 +172,7 @@ class comlib {
 		const _this = this;
 		return Promise.resolve().then(function(){
 			if(_this.port == null)
-				return _this._openPort();
+				return _this._openUart();
 			return;
 		}).then(function(){
 			if(_this.port.writable == null) {
@@ -162,7 +188,6 @@ class comlib {
 			let count = 0;
 			let size = 3;
 			let buf = new Uint8Array(256);
-
 			return new Promise(function(resolve) {
 				loop();
 				function loop(){
@@ -201,7 +226,7 @@ class comlib {
 								case 4: tmp = tmp2.getFloat32(4, true); break;
 								case 5: tmp = tmp2.getFloat64(4, true); break;
 								case 6: tmp = String.fromCharCode.apply(null, buf.subarray(4)); break;
-							//	case 7: break;		// bytes
+								case 7: tmp = buf.slice(5,5+buf[4]); break;
 								}
 							}
 							resolve(tmp);
@@ -218,7 +243,7 @@ class comlib {
 		})
 	}
 
-	_openPort() {
+	_openUart() {
 		const _this = this;
 		return navigator.serial.requestPort({}).then(function(result) {
 			_this.port = result;

@@ -3,6 +3,8 @@ const log = require('../util/log');
 const maybeFormatMessage = require('../util/maybe-format-message');
 
 const BlockType = require('./block-type');
+const ArgumentType = require('./argument-type');
+const formatMessage = require('format-message');
 
 // These extensions are currently built into the VM repository but should not be loaded at startup.
 // TODO: move these out into a separate repository?
@@ -18,7 +20,7 @@ const builtinExtensions = Object.assign({
     M5CameraCar: () => require('../extensions/scratch3_tukurutch/M5CameraCar.js'),
     M5Series: () => require('../extensions/scratch3_tukurutch/M5Series.js'),
     QuadCrawlerAI: () => require('../extensions/scratch3_tukurutch/QuadCrawlerAI.js'),
-//    test: () => require('../extensions/scratch3_tukurutch/test.js'),
+    M5RoverC: () => require('../extensions/scratch3_tukurutch/M5RoverC.js'),
 
     ml2scratch: () => require('../extensions/scratch3_ml2scratch'),
     facemesh2scratch: () => require('../extensions/scratch3_facemesh2scratch'),
@@ -155,21 +157,36 @@ class ExtensionManager {
      * @returns {Promise} resolved once the extension is loaded and initialized or rejected on failure
      */
     loadExtensionURL (extensionURL) {
-        if (builtinExtensions.hasOwnProperty(extensionURL)) {
+        //let _extensionURL = extensionURL.replace(/[\/\.<"&]/g, '_');
+        const _this = this;
+        return new Promise((resolve, reject) => {
+            if (builtinExtensions.hasOwnProperty(extensionURL)) {
+                resolve();
+                return;
+            }
+
+            return fetch(extensionURL/*, {mode: 'cors'}*/).then(response => response.text()).then(text => {
+                eval(text);   // var ext = class { ..
+                builtinExtensions[extensionURL] = function() { return ext };
+                resolve();
+			}).catch(function(err) {
+				reject(err);
+			})
+		}).then(function(){
             /** @TODO dupe handling for non-builtin extensions. See commit 670e51d33580e8a2e852b3b038bb3afc282f81b9 */
-            if (this.isExtensionLoaded(extensionURL)) {
+            if (_this.isExtensionLoaded(extensionURL)) {
                 const message = `Rejecting attempt to load a second extension with ID ${extensionURL}`;
                 log.warn(message);
-                return Promise.resolve();
+                return;
             }
 
             const extension = builtinExtensions[extensionURL]();
-            const extensionInstance = new extension(this.runtime);
-            const serviceName = this._registerInternalExtension(extensionInstance);
-            this._loadedExtensions.set(extensionURL, serviceName);
-            return Promise.resolve();
-        }
-
+            const extensionInstance = new extension(_this.runtime);
+            const serviceName = _this._registerInternalExtension(extensionInstance);
+            _this._loadedExtensions.set(extensionURL, serviceName);
+            return;
+        })
+/*
         return new Promise((resolve, reject) => {
             // If we `require` this at the global level it breaks non-webpack targets, including tests
             const ExtensionWorker = require('worker-loader?name=extension-worker.js!./extension-worker');
@@ -177,6 +194,7 @@ class ExtensionManager {
             this.pendingExtensions.push({extensionURL, resolve, reject});
             dispatch.addWorker(new ExtensionWorker());
         });
+*/
     }
 
     /**
@@ -216,11 +234,9 @@ class ExtensionManager {
     /**
      * Collect extension metadata from the specified service and begin the extension registration process.
      * @param {string} serviceName - the name of the service hosting the extension.
-     * @param {string} extensionURL - the URL of the extension
      */
-    registerExtensionService (serviceName, extensionURL) {
+    registerExtensionService (serviceName) {
         dispatch.call(serviceName, 'getInfo').then(info => {
-            info.extensionURL = extensionURL;
             this._registerExtensionInfo(serviceName, info);
         });
     }
@@ -289,9 +305,6 @@ class ExtensionManager {
         extensionInfo = Object.assign({}, extensionInfo);
         if (!/^[a-z0-9]+$/i.test(extensionInfo.id)) {
             throw new Error('Invalid extension id');
-        }
-        if (extensionInfo.extensionURL) {
-          this._loadedExtensions.set(extensionInfo.id, serviceName);
         }
         extensionInfo.name = extensionInfo.name || extensionInfo.id;
         extensionInfo.blocks = extensionInfo.blocks || [];

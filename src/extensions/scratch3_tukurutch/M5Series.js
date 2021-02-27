@@ -15,6 +15,7 @@ class Scratch3Blocks {
     constructor (runtime) {
         if(typeof SupportCamera === "undefined") SupportCamera = false;
         this.comlib = new comlib(extName, SupportCamera);
+        runtime.dev = this;
     }
 
     getInfo () {
@@ -154,7 +155,7 @@ class Scratch3Blocks {
     ARG1: { type: ArgumentType.NUMBER, type2:'B', defaultValue:1, menu: 'direction' },
 }},
 
-{blockType: BlockType.COMMAND, opcode: 'setServo', text: 'set servo [ARG1] [ARG2]', arguments: {
+{blockType: BlockType.COMMAND, opcode: 'setServo', text: 'set servo [ARG1] [ARG2]', filter: ['xxx'], arguments: {
     ARG1: { type: ArgumentType.NUMBER, type2:'B', defaultValue:0, menu: 'servoch' },
     ARG2: { type: ArgumentType.NUMBER, type2:'B', defaultValue:90, menu: 'angle' },
 }},
