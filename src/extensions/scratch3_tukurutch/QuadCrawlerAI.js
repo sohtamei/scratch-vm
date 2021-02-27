@@ -16,6 +16,7 @@ class Scratch3Blocks {
     constructor (runtime) {
         if(typeof SupportCamera === "undefined") SupportCamera = false;
         this.comlib = new comlib(extName, SupportCamera);
+        runtime.dev = this;
     }
 
     getInfo () {
