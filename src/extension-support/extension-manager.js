@@ -165,7 +165,7 @@ class ExtensionManager {
                 return;
             }
 
-            return fetch(extensionURL/*, {mode: 'cors'}*/).then(response => response.text()).then(text => {
+            return fetch(extensionURL, {mode: 'cors'}).then(response => response.text()).then(text => {
                 eval(text);   // var ext = class { ..
                 builtinExtensions[extensionURL] = function() { return ext };
                 resolve();

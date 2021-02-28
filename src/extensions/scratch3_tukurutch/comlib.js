@@ -333,7 +333,7 @@ class comlib {
 					case 4: tmp = tmp2.getFloat32(4, true); break;
 					case 5: tmp = tmp2.getFloat64(4, true); break;
 					case 6: tmp = String.fromCharCode.apply(null, buf.subarray(4)); break;
-				//	case 7: break;		// bytes
+					case 7: tmp = buf.slice(5,5+buf[4]); break;
 					}
 				//	console.log(tmp);	// debug
 				}
@@ -609,8 +609,10 @@ class comlib {
 				reader.cancel();
 				reader.releaseLock();
 			}
-			_this.port.close();
-			_this.port = null;
+			if(_this.port) {
+				_this.port.close();
+				_this.port = null;
+			}
 			_this.espBurnBusy = false;
 		})
 	}
