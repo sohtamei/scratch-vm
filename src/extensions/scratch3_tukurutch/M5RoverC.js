@@ -1,10 +1,12 @@
-const extName = 'test';
+const extName = 'M5RoverC';
 
 const ArgumentType = require('../../extension-support/argument-type');
 const BlockType = require('../../extension-support/block-type');
 const formatMessage = require('format-message');
 
 const IconURI = require('./tukurutch-small.png');
+
+const ROVER_ADDRESS = 0X38;
 
 /**
  * Class for blocks in Scratch 3.0.
@@ -40,35 +42,6 @@ class Scratch3Blocks {
     
 	get_blocks() {
 		this._blocks = [
-{blockType: BlockType.COMMAND, opcode: 'tagServo', text: '--- ServoCar ---', arguments: {
-}},
-
-{blockType: BlockType.COMMAND, opcode: 'setCar', text: '[ARG1] at speed [ARG2]', arguments: {
-    ARG1: { type: ArgumentType.NUMBER, type2:'B', defaultValue:1, menu: 'direction' },
-    ARG2: { type: ArgumentType.NUMBER, type2:'B', defaultValue:100 },
-}},
-
-{blockType: BlockType.COMMAND, opcode: 'setMotor', text: 'set motor [ARG1] speed [ARG2]', arguments: {
-    ARG1: { type: ArgumentType.NUMBER, type2:'B', defaultValue:0, menu: 'servoch' },
-    ARG2: { type: ArgumentType.NUMBER, type2:'S', defaultValue:100, menu: 'speed' },
-}},
-
-{blockType: BlockType.COMMAND, opcode: 'stopCar', text: 'stop', arguments: {
-}},
-
-{blockType: BlockType.REPORTER, opcode: 'enumDirection', text: '[ARG1] .', arguments: {
-    ARG1: { type: ArgumentType.NUMBER, type2:'B', defaultValue:1, menu: 'direction' },
-}},
-
-{blockType: BlockType.COMMAND, opcode: 'setServo', text: 'set servo [ARG1] [ARG2]', arguments: {
-    ARG1: { type: ArgumentType.NUMBER, type2:'B', defaultValue:0, menu: 'servoch' },
-    ARG2: { type: ArgumentType.NUMBER, type2:'B', defaultValue:90, menu: 'angle' },
-}},
-
-'---',
-
-{blockType: BlockType.COMMAND, opcode: 'tagRover', text: '--- RoverC ---', arguments: {
-}},
 
 {blockType: BlockType.COMMAND, opcode: 'setRoverC', text: 'FL [ARG1] FR [ARG2] RL [ARG3] RR [ARG4]', arguments: {
     ARG1: { type: ArgumentType.NUMBER, type2:'S', defaultValue:0 },
@@ -99,24 +72,6 @@ class Scratch3Blocks {
 	get_menus() {
 
 	  return {
-angle: { acceptReporters: true, items: ['0','90','180',]},
-
-direction: { acceptReporters: true, items: [
-{ text: 'stop', value: 0 },
-{ text: 'run forward', value: 1 },
-{ text: 'turn left', value: 2 },
-{ text: 'turn right', value: 3 },
-{ text: 'run backward', value: 4 },
-{ text: 'rotate left', value: 5 },
-{ text: 'rotate right', value: 6 },
-{ text: 'calibration', value: 7 },
-]},
-
-onoff: { acceptReporters: true, items: [
-{ text: 'On', value: 1 },
-{ text: 'Off', value: 0 },
-]},
-
 roverDir: { acceptReporters: true, items: [
 { text: 'STOP', value: 0 },
 { text: 'UP_R', value: 1 },
@@ -131,26 +86,11 @@ roverDir: { acceptReporters: true, items: [
 { text: 'ROLL_L', value: 10 },
 ]},
 
-servoch: { acceptReporters: true, items: ['0','1',]},
-
-speed: { acceptReporters: true, items: ['100','50','0','-50','-100',]},
-
 	  };
 	}
 
-setLED(args,util) { return this.sendRecv(arguments.callee.name, args); }
-
-tagServo(args) { return args.ARG1; }
-setCar(args,util) { return this.sendRecv(arguments.callee.name, args); }
-setMotor(args,util) { return this.sendRecv(arguments.callee.name, args); }
-stopCar(args,util) { return this.sendRecv(arguments.callee.name, args); }
-enumDirection(args) { return args.ARG1; }
-setServo(args,util) { return this.sendRecv(arguments.callee.name, args); }
-tagRover(args) { return args.ARG1; }
-setRoverC(args,util) { return this.sendRecv(arguments.callee.name, args); }
-setRoverC_XYR(args,util) { return this.sendRecv(arguments.callee.name, args); }
-moveRoverC(args,util) { return this.sendRecv(arguments.callee.name, args); }
-enumRoverDir(args) { return args.ARG1; }
+	tagRover(args) { return args.ARG1; }
+	enumRoverDir(args) { return args.ARG1; }
 
 	setConfig(args) {
 		return this.comlib.setConfig(args.ARG1, args.ARG2);
@@ -163,6 +103,75 @@ enumRoverDir(args) { return args.ARG1; }
 			}
 		}
 		return 0;
+	}
+
+	Send_iic(Register, Speed)
+	{
+		if(Speed >  100) Speed =  100;
+		if(Speed < -100) Speed = -100;
+
+		//Wire.begin(0,26,100);		//sda 0, scl 26
+
+		const _this = this;
+		return _this.runtime.dev.comlib.wire_begin(0, 26)
+			.then(() => _this.runtime.dev.comlib.wire_write(ROVER_ADDRESS, new Uint8Array([Register,Speed])));
+	}
+
+	setRoverC(args)
+	{
+		let F_L = Number(args.ARG1);
+		let F_R = Number(args.ARG2);
+		let R_L = Number(args.ARG3);
+		let R_R = Number(args.ARG4);
+		console.log(F_L,F_R,R_L,R_R);
+		const _this = this;
+		return this.Send_iic(0x00, F_L)
+			.then(() => _this.Send_iic(0x01, F_R))
+			.then(() => _this.Send_iic(0x02, R_L))
+			.then(() => _this.Send_iic(0x03, R_R));
+	}
+
+	setRoverC_XYR(args)
+	{
+		let x = Number(args.ARG1);
+		let y = Number(args.ARG2);
+		let role = Number(args.ARG3);
+
+		let left = y+x;
+		let right = y-x;
+		let invK = 100;
+
+		     if(Math.abs(left) > 100) invK = Math.abs(left);
+		else if(Math.abs(right) > 100) invK = Math.abs(right);
+
+		if(invK != 100) {
+			left  = (left*100)/invK;
+			right = (right*100)/invK;
+		}
+		console.log(left+role, right-role, right+role, left-role);
+		return this.setRoverC({ARG1:left+role, ARG2:right-role, ARG3:right+role, ARG4:left-role});
+	}
+
+	moveRoverC(args)
+	{
+		let dir = Number(args.ARG1);
+		let speed = Number(args.ARG2);
+		const rdir_table = [
+			{x: 0,y: 0,r: 0},  // STOP
+			{x: 1,y: 1,r: 0},  // UP_R
+			{x: 0,y: 1,r: 0},  // UP
+			{x:-1,y: 1,r: 0},  // UP_L
+			{x: 1,y: 0,r: 0},  // RIGHT
+			{x:-1,y: 0,r: 0},  // LEFT
+			{x: 1,y:-1,r: 0},  // DOWN_R
+			{x: 0,y:-1,r: 0},  // DOWN
+			{x:-1,y:-1,r: 0},  // DOWN_L
+			{x: 0,y: 0,r: 1},  // ROLL_R
+			{x: 0,y: 0,r:-1},  // ROLL_L
+		];
+
+		if(dir >= rdir_table.length) return;
+		this.setRoverC_XYR({ARG1:speed*rdir_table[dir].x, ARG2:speed*rdir_table[dir].y, ARG3:speed*rdir_table[dir].r});
 	}
 }
 module.exports = Scratch3Blocks;

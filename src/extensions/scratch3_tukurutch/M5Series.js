@@ -155,37 +155,17 @@ class Scratch3Blocks {
     ARG1: { type: ArgumentType.NUMBER, type2:'B', defaultValue:1, menu: 'direction' },
 }},
 
-{blockType: BlockType.COMMAND, opcode: 'setServo', text: 'set servo [ARG1] [ARG2]', filter: ['xxx'], arguments: {
+{blockType: BlockType.COMMAND, opcode: 'setServo', text: 'set servo [ARG1] [ARG2]', arguments: {
     ARG1: { type: ArgumentType.NUMBER, type2:'B', defaultValue:0, menu: 'servoch' },
     ARG2: { type: ArgumentType.NUMBER, type2:'B', defaultValue:90, menu: 'angle' },
 }},
 
 '---',
-{blockType: BlockType.COMMAND, opcode: 'tagRover', text: '--- RoverC ---', arguments: {
-}},
-
-{blockType: BlockType.COMMAND, opcode: 'setRoverC', text: 'FL [ARG1] FR [ARG2] RL [ARG3] RR [ARG4]', arguments: {
-    ARG1: { type: ArgumentType.NUMBER, type2:'S', defaultValue:0 },
-    ARG2: { type: ArgumentType.NUMBER, type2:'S', defaultValue:0 },
-    ARG3: { type: ArgumentType.NUMBER, type2:'S', defaultValue:0 },
-    ARG4: { type: ArgumentType.NUMBER, type2:'S', defaultValue:0 },
-}},
-
-{blockType: BlockType.COMMAND, opcode: 'setRoverC_XYR', text: 'x [ARG1] y [ARG2] role [ARG3]', arguments: {
-    ARG1: { type: ArgumentType.NUMBER, type2:'S', defaultValue:0 },
-    ARG2: { type: ArgumentType.NUMBER, type2:'S', defaultValue:0 },
-    ARG3: { type: ArgumentType.NUMBER, type2:'S', defaultValue:0 },
-}},
-
-{blockType: BlockType.COMMAND, opcode: 'moveRoverC', text: 'dir [ARG1] speed [ARG2]', arguments: {
-    ARG1: { type: ArgumentType.NUMBER, type2:'B', defaultValue:2, menu: 'roverDir' },
-    ARG2: { type: ArgumentType.NUMBER, type2:'B', defaultValue:100 },
-}},
-
-{blockType: BlockType.REPORTER, opcode: 'enumRoverDir', text: '[ARG1] .', arguments: {
-    ARG1: { type: ArgumentType.NUMBER, type2:'B', defaultValue:2, menu: 'roverDir' },
-}},
-
+'---',
+'---',
+'---',
+'---',
+'---',
 '---',
 {blockType: BlockType.REPORTER, opcode: 'statusWifi', text: 'status WIFI', arguments: {
 }},
@@ -381,11 +361,6 @@ setMotor(args,util) { return this.sendRecv(arguments.callee.name, args); }
 stopCar(args,util) { return this.sendRecv(arguments.callee.name, args); }
 enumDirection(args) { return args.ARG1; }
 setServo(args,util) { return this.sendRecv(arguments.callee.name, args); }
-tagRover(args) { return args.ARG1; }
-setRoverC(args,util) { return this.sendRecv(arguments.callee.name, args); }
-setRoverC_XYR(args,util) { return this.sendRecv(arguments.callee.name, args); }
-moveRoverC(args,util) { return this.sendRecv(arguments.callee.name, args); }
-enumRoverDir(args) { return args.ARG1; }
 statusWifi(args,util) { return this.sendRecv(arguments.callee.name, args); }
 scanWifi(args,util) { return this.sendRecv(arguments.callee.name, args); }
 connectWifi(args,util) { return this.sendRecv(arguments.callee.name, args); }
