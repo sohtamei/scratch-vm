@@ -21,6 +21,7 @@ const builtinExtensions = Object.assign({
     M5Series: () => require('../extensions/scratch3_tukurutch/M5Series.js'),
     QuadCrawlerAI: () => require('../extensions/scratch3_tukurutch/QuadCrawlerAI.js'),
     M5RoverC: () => require('../extensions/scratch3_tukurutch/M5RoverC.js'),
+    TempHumSht3x: () => require('../extensions/scratch3_tukurutch/TempHumSht3x.js'),
 
     ml2scratch: () => require('../extensions/scratch3_ml2scratch'),
     facemesh2scratch: () => require('../extensions/scratch3_facemesh2scratch'),

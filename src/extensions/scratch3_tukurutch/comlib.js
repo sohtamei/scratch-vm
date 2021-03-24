@@ -15,9 +15,11 @@ class comlib {
 		this.SupportCamera = SupportCamera;
 
         this.ipadrs = '192.168.1.xx';
-        this.ifType = 'WLAN';
+        this.ifType = 'UART';
 		this._locale = 0;
 
+		this.busy = false;
+		this.cueue = [];
         this.ws = null;
 		this.wsResolve = null;
 		this.wsError = null;
@@ -161,14 +163,34 @@ class comlib {
 			}
 		}
 		data[2] = ofs-3;
-		console.log('W:'+this._dumpBuf(data.slice(0,ofs)));	// debug
-		if(this.ifType == 'WLAN')
-			return this._sendRecvWs(data.slice(0,ofs));
-		else
-			return this._sendRecvUart(data.slice(0,ofs));
+		data = data.slice(0,ofs);
+		if(this.cueue.length >= 3) return 'error';
+
+		const _this = this;
+		return new Promise(function(resolve) {
+			_this.cueue.push({resolve:resolve, data:data});
+			_this.checkCueue(_this);
+		})
 	}
 
-	_sendRecvUart(sendBuf) {
+	checkCueue(_this) {
+		if(_this.cueue.length == 0) return;
+		if(_this.busy) {
+			console.log("XXXXXXXXXXXXXXXXXXXX");
+			return;
+		}
+		_this.busy = true;
+
+		const {resolve, data} = _this.cueue.pop();
+	//	console.log('W:'+_this._dumpBuf(data));	// debug
+		if(_this.ifType == 'WLAN')
+			return _this._sendRecvWs(data);
+		else
+			return _this._sendRecvUart(data,resolve);
+		
+	}
+
+	_sendRecvUart(sendBuf,resolve) {
 		const _this = this;
 		return Promise.resolve().then(function(){
 			if(_this.port == null)
@@ -176,7 +198,7 @@ class comlib {
 			return;
 		}).then(function(){
 			if(_this.port.writable == null) {
-				console.warn(`unable to find writable port`);
+				console.warn('unable to find writable port');
 				return;
 			}
 
@@ -188,11 +210,11 @@ class comlib {
 			let count = 0;
 			let size = 3;
 			let buf = new Uint8Array(256);
-			return new Promise(function(resolve) {
+			return new Promise(function(resolve2) {
 				loop();
 				function loop(){
 					return reader.read().then(function(result) {
-					//	console.log(result.value);	// debug
+					//	console.log(_this._dumpBuf(result.value));	// debug
 						for(let i = 0; i < result.value.length; i++) {
 							switch(count) {
 							case 0:
@@ -229,13 +251,17 @@ class comlib {
 								case 7: tmp = buf.slice(5,5+buf[4]); break;
 								}
 							}
-							resolve(tmp);
+							resolve2(tmp);
 							return;
 						}
 						loop();
 					})
 				}
 			})
+		}).then(function(tmp) {
+			_this.busy = false;
+			_this.checkCueue(_this);
+			resolve(tmp);
 		}).catch(function(err) {
 		//	_this.port = null;
 			console.log(err);
@@ -244,8 +270,11 @@ class comlib {
 	}
 
 	_openUart() {
+		if(this.port) return;
+
 		const _this = this;
 		return navigator.serial.requestPort({}).then(function(result) {
+			_this.busy = true;
 			_this.port = result;
 
 			const options = {
@@ -291,6 +320,7 @@ class comlib {
 				let tmp = String.fromCharCode.apply(null, buf.slice(0,count));
 				_this.statusMessage.innerText = tmp;
 				console.log(tmp);
+				_this.busy = false;
 				return;
 			})
 		})
