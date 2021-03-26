@@ -41,7 +41,7 @@ class Scratch3Blocks {
     
 	get_blocks() {
 		this.flashList = [
-{name:'TukuBoard1.0', type:'esp32', baudrate:230400},
+{name:'generic_ESP32', type:'esp32', baudrate:230400},
 		];
 
 		this._blocks = [

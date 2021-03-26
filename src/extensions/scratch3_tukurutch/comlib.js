@@ -95,6 +95,13 @@ class comlib {
   {'B','b'},		// 0x82:wire_write     (adrs, [DATA])          ret:0-OK
   {'B','b','B'},	// 0x83:wire_writeRead (adrs, [DATA], readNum) ret:[DATA]-OK, NULL-ERROR
   {'B','B'},		// 0x84:wire_read      (adrs, readNum)         ret:[DATA]-OK, NULL-ERROR
+  {},				// 0x85:wire_scan      ()                      ret:[LIST]
+  
+  {'B','B'},		// 0x86:digiWrite      (port, data)
+  {'B'},			// 0x87:digiRead       (port)                  ret:level
+  {'B','S'},		// 0x88:anaRead        (port, count)           ret:level(int16)
+  {'B','S','S'},	// 0x89:tone           (port,freq,ms)
+//  {'B','S'},		// 0x90:set_pwm        (port, data)
 */
 	wire_begin(sda, scl) {
 		const _defs = {ARG1:{type2:'B'},ARG2:{type2:'B'}};
@@ -118,6 +125,36 @@ class comlib {
 		const _defs = {ARG1:{type2:'B'},ARG2:{type2:'B'}};
 		const _args = {ARG1:adrs, ARG2:readNum};
 		return this.sendRecv(0x84,_defs,_args);
+	}
+
+	wire_scan() {						// ret:[LIST]
+		const _defs = {};
+		const _args = {};
+		return this.sendRecv(0x85,_defs,_args);
+	}
+
+	digiWrite(port, level) {
+		const _defs = {ARG1:{type2:'B'},ARG2:{type2:'B'}};
+		const _args = {ARG1:port, ARG2:level};
+		return this.sendRecv(0x86,_defs,_args);
+	}
+
+	digiRead(port) {
+		const _defs = {ARG1:{type2:'B'}};
+		const _args = {ARG1:port};
+		return this.sendRecv(0x87,_defs,_args);
+	}
+
+	anaRead(port,count) {
+		const _defs = {ARG1:{type2:'B'},ARG2:{type2:'S'}};
+		const _args = {ARG1:port, ARG2:count};
+		return this.sendRecv(0x88,_defs,_args);
+	}
+
+	tone(port,freq,ms) {
+		const _defs = {ARG1:{type2:'B'},ARG2:{type2:'S'},ARG3:{type2:'S'}};
+		const _args = {ARG1:port, ARG2:freq, ARG3:ms};
+		return this.sendRecv(0x89,_defs,_args);
 	}
 
 	sendRecv(cmd, argsDef, args) {
@@ -164,25 +201,31 @@ class comlib {
 		}
 		data[2] = ofs-3;
 		data = data.slice(0,ofs);
-		if(this.cueue.length >= 3) return 'error';
+		if(this.cueue.length >= 5) return 'error';
 
 		const _this = this;
-		return new Promise(function(resolve) {
-			_this.cueue.push({resolve:resolve, data:data});
-			_this.checkCueue(_this);
+		return Promise.resolve().then(function(){
+			if(_this.port == null)
+				return _this._openUart();
+			return;
+		}).then(function(){
+			return new Promise(function(resolve) {
+				_this.cueue.push({resolve:resolve, data:data});
+				_this.checkCueue(_this);
+			})
 		})
 	}
 
 	checkCueue(_this) {
 		if(_this.cueue.length == 0) return;
 		if(_this.busy) {
-			console.log("XXXXXXXXXXXXXXXXXXXX");
+			console.log('+Cueue=' + (_this.cueue.length-1) + '->' + _this.cueue.length);
 			return;
 		}
 		_this.busy = true;
 
 		const {resolve, data} = _this.cueue.pop();
-	//	console.log('W:'+_this._dumpBuf(data));	// debug
+		console.log('W:'+_this._dumpBuf(data));	// debug
 		if(_this.ifType == 'WLAN')
 			return _this._sendRecvWs(data);
 		else
@@ -192,74 +235,69 @@ class comlib {
 
 	_sendRecvUart(sendBuf,resolve) {
 		const _this = this;
-		return Promise.resolve().then(function(){
-			if(_this.port == null)
-				return _this._openUart();
+		if(_this.port.writable == null) {
+			console.warn('unable to find writable port');
 			return;
-		}).then(function(){
-			if(_this.port.writable == null) {
-				console.warn('unable to find writable port');
-				return;
+		}
+
+		const writer = _this.port.writable.getWriter();
+		writer.write(sendBuf);
+		writer.releaseLock();
+
+		const reader = _this.port.readable.getReader();
+		let count = 0;
+		let size = 3;
+		let buf = new Uint8Array(256);
+		return new Promise(function(resolve2) {
+			loop();
+			function loop(){
+				return reader.read().then(function(result) {
+				//	console.log(_this._dumpBuf(result.value));	// debug
+					for(let i = 0; i < result.value.length; i++) {
+						switch(count) {
+						case 0:
+							if(result.value[i] != 0xFF) continue
+							break;
+						case 1:
+							if(result.value[i] != 0x55) {
+								count = 0;
+								continue;
+							}
+							break;
+						case 2:
+							size = 3 + result.value[i];
+							break;
+						default:
+							break;
+						}
+						buf[count] = result.value[i];
+						count++;
+					}
+					if(count >= size) {
+						reader.releaseLock();
+						console.log('R:'+_this._dumpBuf(buf.slice(0,size)));	// debug
+						let tmp = 0;
+						if(size >= 5) {
+							let tmp2 = new DataView(buf.buffer);
+							switch(buf[3]) {
+							case 1: tmp = tmp2.getUint8(4); break;
+							case 2: tmp = tmp2.getInt16(4, true); break;
+							case 3: tmp = tmp2.getInt32(4, true); break;
+							case 4: tmp = tmp2.getFloat32(4, true); break;
+							case 5: tmp = tmp2.getFloat64(4, true); break;
+							case 6: tmp = String.fromCharCode.apply(null, buf.subarray(4)); break;
+							case 7: tmp = buf.slice(5,5+buf[4]); break;
+							}
+						}
+						resolve2(tmp);
+						return;
+					}
+					loop();
+				})
 			}
-
-			const writer = _this.port.writable.getWriter();
-			writer.write(sendBuf);
-			writer.releaseLock();
-
-			const reader = _this.port.readable.getReader();
-			let count = 0;
-			let size = 3;
-			let buf = new Uint8Array(256);
-			return new Promise(function(resolve2) {
-				loop();
-				function loop(){
-					return reader.read().then(function(result) {
-					//	console.log(_this._dumpBuf(result.value));	// debug
-						for(let i = 0; i < result.value.length; i++) {
-							switch(count) {
-							case 0:
-								if(result.value[i] != 0xFF) continue
-								break;
-							case 1:
-								if(result.value[i] != 0x55) {
-									count = 0;
-									continue;
-								}
-								break;
-							case 2:
-								size = 3 + result.value[i];
-								break;
-							default:
-								break;
-							}
-							buf[count] = result.value[i];
-							count++;
-						}
-						if(count >= size) {
-							reader.releaseLock();
-							console.log('R:'+_this._dumpBuf(buf.slice(0,size)));	// debug
-							let tmp = 0;
-							if(size >= 5) {
-								let tmp2 = new DataView(buf.buffer);
-								switch(buf[3]) {
-								case 1: tmp = tmp2.getUint8(4); break;
-								case 2: tmp = tmp2.getInt16(4, true); break;
-								case 3: tmp = tmp2.getInt32(4, true); break;
-								case 4: tmp = tmp2.getFloat32(4, true); break;
-								case 5: tmp = tmp2.getFloat64(4, true); break;
-								case 6: tmp = String.fromCharCode.apply(null, buf.subarray(4)); break;
-								case 7: tmp = buf.slice(5,5+buf[4]); break;
-								}
-							}
-							resolve2(tmp);
-							return;
-						}
-						loop();
-					})
-				}
-			})
 		}).then(function(tmp) {
 			_this.busy = false;
+			if(_this.cueue.length != 0) console.log('-Cueue=' + _this.cueue.length + '->' + (_this.cueue.length-1));
 			_this.checkCueue(_this);
 			resolve(tmp);
 		}).catch(function(err) {
@@ -273,9 +311,9 @@ class comlib {
 		if(this.port) return;
 
 		const _this = this;
+		let port = null;
 		return navigator.serial.requestPort({}).then(function(result) {
-			_this.busy = true;
-			_this.port = result;
+			port = result;
 
 			const options = {
 				baudRate: 115200,
@@ -290,14 +328,14 @@ class comlib {
 				stopbits: 1,
 				rtscts: false,
 			};
-			return _this.port.open(options);
+			return port.open(options);
 		}).then(function(){
-			const writer = _this.port.writable.getWriter();
+			const writer = port.writable.getWriter();
 			let tmp = new Uint8Array([0x00,0xff,0x55,0x01,0xfe]);
 			writer.write(tmp);
 			writer.releaseLock();
 
-			const reader = _this.port.readable.getReader();
+			const reader = port.readable.getReader();
 			let count = 0;
 			let buf = new Uint8Array(256);
 			return new Promise(function(resolve) {
@@ -320,7 +358,7 @@ class comlib {
 				let tmp = String.fromCharCode.apply(null, buf.slice(0,count));
 				_this.statusMessage.innerText = tmp;
 				console.log(tmp);
-				_this.busy = false;
+				_this.port = port;
 				return;
 			})
 		})

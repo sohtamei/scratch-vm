@@ -17,11 +17,14 @@ const builtinExtensions = {
     coreExample: () => require('../blocks/scratch3_core_example'),
     // These are the non-core built-in extensions.
     TukuBoard: () => require('../extensions/scratch3_tukurutch/TukuBoard.js'),
+    GroveBeginnerKit: () => require('../extensions/scratch3_tukurutch/GroveBeginnerKit.js'),
     M5CameraCar: () => require('../extensions/scratch3_tukurutch/M5CameraCar.js'),
     M5Series: () => require('../extensions/scratch3_tukurutch/M5Series.js'),
     QuadCrawlerAI: () => require('../extensions/scratch3_tukurutch/QuadCrawlerAI.js'),
     M5RoverC: () => require('../extensions/scratch3_tukurutch/M5RoverC.js'),
+
     TempHumSht3x: () => require('../extensions/scratch3_tukurutch/TempHumSht3x.js'),
+    genericIO: () => require('../extensions/scratch3_tukurutch/genericIO.js'),
 
     ml2scratch: () => require('../extensions/scratch3_ml2scratch'),
     facemesh2scratch: () => require('../extensions/scratch3_facemesh2scratch'),

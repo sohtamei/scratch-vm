@@ -320,20 +320,6 @@ onoff: { acceptReporters: true, items: [
 { text: 'Off', value: 0 },
 ]},
 
-roverDir: { acceptReporters: true, items: [
-{ text: 'STOP', value: 0 },
-{ text: 'UP_R', value: 1 },
-{ text: 'UP', value: 2 },
-{ text: 'UP_L', value: 3 },
-{ text: 'RIGHT', value: 4 },
-{ text: 'LEFT', value: 5 },
-{ text: 'DOWN_R', value: 6 },
-{ text: 'DOWN', value: 7 },
-{ text: 'DOWN_L', value: 8 },
-{ text: 'ROLL_R', value: 9 },
-{ text: 'ROLL_L', value: 10 },
-]},
-
 servoch: { acceptReporters: true, items: ['0','1',]},
 
 speed: { acceptReporters: true, items: ['100','50','0','-50','-100',]},

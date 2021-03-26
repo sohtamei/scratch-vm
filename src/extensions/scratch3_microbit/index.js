@@ -13,6 +13,7 @@ const UARTCommand = {
 	CMD_DISPLAY_TEXT: 1,
 	CMD_DISPLAY_LED: 2,
 	CMD_GET_DATA: 3,
+	CMD_GET_TILT: 4,
 };
 
 const BLECommand = {
@@ -141,6 +142,10 @@ const TILT_THRESHOLD = 15.0;
 class Scratch3Blocks {
 
 	constructor (runtime) {
+		this.digitalPorts = ['0','1','2','3','4','5','6','7','8','9','10','11','13','14','15','16',];
+	//	this.digitalPorts = ['2','3','4','5','6','7','8','9','10','11','12','13',{text:'A0',value:14},{text:'A1',value:15},{text:'A2',value:16},{text:'A3',value:17},{text:'A4',value:18},{text:'A5',value:19},];
+		this.analogPorts = ['0','1','2','3','4','10',];
+
 		this.runtime = runtime;
 		runtime.dev = this;
 		this.ifType = 'UART';
@@ -153,6 +158,7 @@ class Scratch3Blocks {
 		this.button = 0;
 		this.tiltX = 0;
 		this.tiltY = 0;
+		this.updatedTime = 0;
 	}
 
 	getInfo () {
@@ -310,7 +316,7 @@ class Scratch3Blocks {
 	intervalFunc() {
 		if(this.comlib.port && !this.comlib.busy) {
 			const _this = this;
-			ret = _this.comlib.sendRecv(UARTCommand.CMD_GET_DATA, {}, {});
+			let ret = _this.comlib.sendRecv(UARTCommand.CMD_GET_DATA, {}, {});
 			if(!(ret instanceof Promise)) return ret;
 
 			return ret.then(function(data) {
@@ -413,31 +419,20 @@ class Scratch3Blocks {
 	}
 
 	whenTilted (args) {
-		return this._isTilted(args.DIRECTION);
-/*
-		let ret = 0;
-		switch(args.DIRECTION) {
-		case 'front': ret = this.events & EVENT.TILT_F; this.events &= ~EVENT.TILT_F; break;
-		case 'back':  ret = this.events & EVENT.TILT_B; this.events &= ~EVENT.TILT_B; break;
-		case 'left':  ret = this.events & EVENT.TILT_L; this.events &= ~EVENT.TILT_L; break;
-		case 'right': ret = this.events & EVENT.TILT_R; this.events &= ~EVENT.TILT_R; break;
-		case 'any':   ret = this.events & EVENT.TILT_ANY; this.events &= ~EVENT.TILT_ANY; break;
-		}
-		return ret ? true:false;
-*/
+		return this._isTilted(args.DIRECTION, dontUpdate=true);
 	}
 
 	isTilted (args) {
 		return this._isTilted(args.DIRECTION);
 	}
 
-	_isTilted (direction) {
+	_isTilted (direction, dontUpdate=false) {
 		switch (direction) {
 		case 'any':
 			return (Math.abs(this.tiltX/10) >= TILT_THRESHOLD) ||
 				   (Math.abs(this.tiltY/10) >= TILT_THRESHOLD);
 		default:
-			return this._getTiltAngle(direction) >= TILT_THRESHOLD;
+			return this._getTiltAngle(direction, dontUpdate) >= TILT_THRESHOLD;
 		}
 	}
 
@@ -445,14 +440,33 @@ class Scratch3Blocks {
 		return this._getTiltAngle(args.DIRECTION);
 	}
 
-	_getTiltAngle (direction) {
+	_getTiltAngle (direction, dontUpdate=false) {
+		if(!dontUpdate && (performance.now()-this.updatedTime) > 20 && this.comlib.cueue.length == 0) {
+			let xy = (direction == 'front' || direction == 'back') ? 1: 0;
+			let ret = this.comlib.sendRecv(UARTCommand.CMD_GET_TILT, {ARG1:{type2:'B'}}, {ARG1:xy});
+			if(!(ret instanceof Promise)) {
+				this.updatedTime = performance.now();
+				return this._getTiltAngle(direction, true);
+			}
+
+			const _this = this;
+			return ret.then(function(data) {
+				_this.updatedTime = performance.now();
+				if(xy == 1) _this.tiltY = data;
+				else        _this.tiltX = data;
+				return _this._getTiltAngle(direction, true);
+			})
+		}
+
+		let angle = 0;
 		switch (direction) {
-		case 'front': return Math.round(-this.tiltY/10);
-		case 'back':  return Math.round( this.tiltY/10);
-		case 'left':  return Math.round(-this.tiltX/10);
-		case 'right': return Math.round( this.tiltX/10);
+		case 'front': angle = Math.round(-this.tiltY/10); break;
+		case 'back':  angle = Math.round( this.tiltY/10); break;
+		case 'left':  angle = Math.round(-this.tiltX/10); break;
+		case 'right': angle = Math.round( this.tiltX/10); break;
 		default:      console.log(`Unknown tilt direction in _getTiltAngle: ${direction}`); break;
 		}
+		return angle;
 	}
 
 	whenPinConnected (args) {
@@ -474,6 +488,7 @@ class Scratch3Blocks {
 
 		this.tiltY = data[6] | (data[7]<<8);
 		if (this.tiltY > (1<<15)) this.tiltY -= (1<<16);
+		this.updatedTime = performance.now();
 	}
 }
 
