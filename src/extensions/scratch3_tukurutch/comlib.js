@@ -97,7 +97,7 @@ class comlib {
   {'B','B'},		// 0x84:wire_read      (adrs, readNum)         ret:[DATA]-OK, NULL-ERROR
   {},				// 0x85:wire_scan      ()                      ret:[LIST]
   
-  {'B','B'},		// 0x86:digiWrite      (port, data)
+  {'b'},			// 0x86:digiWrite      (LIST[port,data])
   {'B'},			// 0x87:digiRead       (port)                  ret:level
   {'B','S'},		// 0x88:anaRead        (port, count)           ret:level(int16)
   {'B','S','S'},	// 0x89:tone           (port,freq,ms)
@@ -133,9 +133,9 @@ class comlib {
 		return this.sendRecv(0x85,_defs,_args);
 	}
 
-	digiWrite(port, level) {
-		const _defs = {ARG1:{type2:'B'},ARG2:{type2:'B'}};
-		const _args = {ARG1:port, ARG2:level};
+	digiWrite(portLevels) {
+		const _defs = {ARG1:{type2:'b'}};
+		const _args = {ARG1:portLevels};
 		return this.sendRecv(0x86,_defs,_args);
 	}
 
