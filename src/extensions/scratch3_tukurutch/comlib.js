@@ -205,7 +205,7 @@ class comlib {
 
 		const _this = this;
 		return Promise.resolve().then(function(){
-			if(_this.port == null)
+			if(_this.ifType == 'UART' && _this.port == null)
 				return _this._openUart();
 			return;
 		}).then(function(){
@@ -227,7 +227,7 @@ class comlib {
 		const {resolve, data} = _this.cueue.pop();
 		console.log('W:'+_this._dumpBuf(data));	// debug
 		if(_this.ifType == 'WLAN')
-			return _this._sendRecvWs(data);
+			return _this._sendRecvWs(data,resolve);
 		else
 			return _this._sendRecvUart(data,resolve);
 		
@@ -364,72 +364,73 @@ class comlib {
 		})
 	}
 
-	_sendRecvWs(sendBuf) {
+	_sendRecvWs(sendBuf,resolve) {
 		const _this = this;
-		return new Promise(function(resolve, error) {
-			_this.wsResolve = resolve;
-			_this.wsError = error;
+		_this.wsResolve = resolve;
+	//	_this.wsError = error;
 
-			if(_this.ws !== null) {
-				_this.ws.send(sendBuf);
-				return;
-			}
-		/*
-			if(_this.ipadrs == '192.168.1.xx') {
-				error('');
-				return;
-			}
-		*/
-			_this.ws = new WebSocket('ws://'+_this.ipadrs+':54323');
-			_this.ws.binaryType = 'arraybuffer';
-
-			_this.ws.onopen = function(e) {
-				console.log('open: ' + e);
-				_this.ws.send(sendBuf);
-			}
-
-			_this.ws.onmessage = function(event) {
-				let buf = new Uint8Array(event.data);
-				console.log('R:'+_this._dumpBuf(buf));	// debug
-				let tmp = 0;
-				if(buf[0] == 0xFF && buf[1] == 0x55 && buf[2]+3 == buf.length && buf.length >= 5) {
-					let tmp2 = new DataView(buf.buffer);
-					switch(buf[3]) {
-					case 1: tmp = tmp2.getUint8(4); break;
-					case 2: tmp = tmp2.getInt16(4, true); break;
-					case 3: tmp = tmp2.getInt32(4, true); break;
-					case 4: tmp = tmp2.getFloat32(4, true); break;
-					case 5: tmp = tmp2.getFloat64(4, true); break;
-					case 6: tmp = String.fromCharCode.apply(null, buf.subarray(4)); break;
-					case 7: tmp = buf.slice(5,5+buf[4]); break;
-					}
-				//	console.log(tmp);	// debug
-				}
-				_this.wsResolve(tmp);
-				_this.wsResolve = null;
-				_this.wsError = null;
-				return tmp;
-			}
-
-			_this.ws.onclose = function(event) {
-				if (event.wasClean) {
-					console.log(`close: Connection closed cleanly, code=${event.code} reason=${event.reason}`);
-				} else {
-					console.log('close: Connection died');
-				}
-				_this.ws = null;
-				if(_this.wsError !== null) _this.wsError('');
-			};
-
-			_this.ws.onerror = function(error) {
-				console.log('[error] '+error.message);
-				_this.ws.close();
-				_this.ws = null;
-				if(_this.wsError !== null) _this.wsError('');
-				_this.statusMessage.innerText = ['cannot connect to ','接続できませんでした：'][_this._locale] + _this.ipadrs;
-			};
+		if(_this.ws !== null) {
+			_this.ws.send(sendBuf);
 			return;
-		});
+		}
+	/*
+		if(_this.ipadrs == '192.168.1.xx') {
+			error('');
+			return;
+		}
+	*/
+		_this.ws = new WebSocket('ws://'+_this.ipadrs+':54323');
+		_this.ws.binaryType = 'arraybuffer';
+
+		_this.ws.onopen = function(e) {
+			console.log('open: ' + e);
+			_this.ws.send(sendBuf);
+		}
+
+		_this.ws.onmessage = function(event) {
+			let buf = new Uint8Array(event.data);
+			console.log('R:'+_this._dumpBuf(buf));	// debug
+			let tmp = 0;
+			if(buf[0] == 0xFF && buf[1] == 0x55 && buf[2]+3 == buf.length && buf.length >= 5) {
+				let tmp2 = new DataView(buf.buffer);
+				switch(buf[3]) {
+				case 1: tmp = tmp2.getUint8(4); break;
+				case 2: tmp = tmp2.getInt16(4, true); break;
+				case 3: tmp = tmp2.getInt32(4, true); break;
+				case 4: tmp = tmp2.getFloat32(4, true); break;
+				case 5: tmp = tmp2.getFloat64(4, true); break;
+				case 6: tmp = String.fromCharCode.apply(null, buf.subarray(4)); break;
+				case 7: tmp = buf.slice(5,5+buf[4]); break;
+				}
+			//	console.log(tmp);	// debug
+			}
+			_this.busy = false;
+			if(_this.cueue.length != 0) console.log('-Cueue=' + _this.cueue.length + '->' + (_this.cueue.length-1));
+			_this.checkCueue(_this);
+			_this.wsResolve(tmp);
+			_this.wsResolve = null;
+			_this.wsError = null;
+			return tmp;
+		}
+
+		_this.ws.onclose = function(event) {
+			if (event.wasClean) {
+				console.log(`close: Connection closed cleanly, code=${event.code} reason=${event.reason}`);
+			} else {
+				console.log('close: Connection died');
+			}
+			_this.ws = null;
+			if(_this.wsError !== null) _this.wsError('');
+		};
+
+		_this.ws.onerror = function(error) {
+			console.log('[error] '+error.message);
+			_this.ws.close();
+			_this.ws = null;
+			if(_this.wsError !== null) _this.wsError('');
+			_this.statusMessage.innerText = ['cannot connect to ','接続できませんでした：'][_this._locale] + _this.ipadrs;
+		};
+		return;
 	}
 
 	// WLANアップデート ----------------------------------------------------------------------------

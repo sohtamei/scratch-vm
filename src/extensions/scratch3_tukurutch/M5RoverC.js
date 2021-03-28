@@ -27,7 +27,7 @@ class Scratch3Blocks {
 		return {
 			id: extName,
 			name: extName,
-			blockIconURI: IconURI,  // Icon png to be displayed at the left edge of each extension block, encoded as a data URI.
+		//	blockIconURI: IconURI,  // Icon png to be displayed at the left edge of each extension block, encoded as a data URI.
 			menuIconURI: IconURI,   // Icon png to be displayed in the blocks category menu, encoded as a data URI.
 
 			blocks: [
@@ -74,10 +74,10 @@ class Scratch3Blocks {
 				]},
 
 				i2cPort: { acceptReporters: true, items: [
-				{ text: 'd0  c26 M5StickC Hat', value: '0_26', },
-				{ text: 'd21 c22 default', value: '21_22', },
-				{ text: 'd26 c32 M5Atom', value: '26_32', },
-				{ text: 'd4  c13 M5Camera', value: '4_13', },
+					{ text: 'd0  c26 M5StickC Hat', value: '0_26', },
+					{ text: 'd21 c22 default', value: '21_22', },
+					{ text: 'd26 c32 M5Atom', value: '26_32', },
+					{ text: 'd4  c13 M5Camera', value: '4_13', },
 				]},
 			},
 		};
@@ -85,6 +85,7 @@ class Scratch3Blocks {
 	
 	setPort(args, util, blockInfo) {
 		this.port = args.ARG1.split('_');
+		this.initWire = false;
 	}
 	
 	enumRoverDir(args) { return args.ARG1; }

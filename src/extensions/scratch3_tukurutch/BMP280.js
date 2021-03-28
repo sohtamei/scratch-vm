@@ -7,7 +7,7 @@ const ArgumentType = require('../../extension-support/argument-type');
 const BlockType = require('../../extension-support/block-type');
 const formatMessage = require('format-message');
 
-const BMP280_ADDRESS   = 0x77;
+const BMP280_ADDRESS   = 0x76;
 
 const BMP280_REG_DIG_T1    = 0x88;
 const BMP280_REG_DIG_T2    = 0x8A;
@@ -37,6 +37,7 @@ class Scratch3Blocks {
 //var ext = class {
 	constructor(runtime) {
 		this.runtime = runtime;
+		this.adrs = 0x76;
 		this.port = [21,22];
 
 		this.dig_T1 = 0;
@@ -70,7 +71,8 @@ class Scratch3Blocks {
 			menuIconURI: IconURI,
 
 			blocks: [
-				{blockType: BlockType.COMMAND, opcode: 'init', text: 'init', arguments: {
+				{blockType: BlockType.COMMAND, opcode: 'init', text: ['init adrs','初期化 アドレス'][this._locale]+'[ARG1]', arguments: {
+					ARG1: { type: ArgumentType.STRING, defaultValue:'76', menu: 'adrs' },
 				}},
 
 				{blockType: BlockType.REPORTER, opcode: 'getTemperature', text: ['temperature［C］','温度［C］'][this._locale], arguments: {
@@ -85,12 +87,13 @@ class Scratch3Blocks {
 			],
 
 			menus: {
+				adrs:[ '76','77' ],
 				i2cPort: { acceptReporters: true, items: [
-				{ text: 'd21 c22 default', value: '21_22', },
-				{ text: 'd32 c33 M5StickC', value: '32_33', },
-				{ text: 'd26 c32 M5Atom', value: '26_32', },
-				{ text: 'd4  c13 M5Camera', value: '4_13', },
-				{ text: 'd0  c26 M5StickC Hat', value: '0_26', },
+					{ text: 'd21 c22 default', value: '21_22', },
+					{ text: 'd32 c33 M5StickC', value: '32_33', },
+					{ text: 'd26 c32 M5Atom', value: '26_32', },
+					{ text: 'd4  c13 M5Camera', value: '4_13', },
+					{ text: 'd0  c26 M5StickC Hat', value: '0_26', },
 				]},
 			},
 		};
@@ -100,8 +103,9 @@ class Scratch3Blocks {
 		this.port = args.ARG1.split('_');
 	}
 
-init()
+init(args)
 {
+	this.adrs = parseInt(args.ARG1, 16);
 	const _this = this;
 	return this.runtime.dev.comlib.wire_begin(this.port[0], this.port[1])
 		.then(() => _this.bmp280Read8(BMP280_REG_CHIPID))
@@ -123,14 +127,14 @@ init()
 					.then((data) => {_this.dig_P6=data; return _this.bmp280ReadS16LE(BMP280_REG_DIG_P7); })
 					.then((data) => {_this.dig_P7=data; return _this.bmp280ReadS16LE(BMP280_REG_DIG_P8); })
 					.then((data) => {_this.dig_P8=data; return _this.bmp280ReadS16LE(BMP280_REG_DIG_P9); })
-					.then((data) => {_this.dig_P9=data; return _this.runtime.dev.comlib.wire_write(BMP280_ADDRESS, 
+					.then((data) => {_this.dig_P9=data; return _this.runtime.dev.comlib.wire_write(_this.adrs, 
 																	new Uint8Array([BMP280_REG_CONTROL, 0x3F])); })
 					.then(() => true)
 			}
 		})
 }
 
-getTemperature()
+getTemperature(args)
 {
 	const _this = this;
 	return this.bmp280Read24(BMP280_REG_TEMPDATA)
@@ -146,7 +150,7 @@ getTemperature()
 		})
 }
 
-getPressure()
+getPressure(args)
 {
 	const _this = this;
 
@@ -188,8 +192,8 @@ calcAltitude(pressure)
 bmp280Read8(reg)
 {
 	const _this = this;
-	return this.runtime.dev.comlib.wire_write(BMP280_ADDRESS, new Uint8Array([reg]))
-		.then(() => _this.runtime.dev.comlib.wire_read(BMP280_ADDRESS, 1))
+	return this.runtime.dev.comlib.wire_write(this.adrs, new Uint8Array([reg]))
+		.then(() => _this.runtime.dev.comlib.wire_read(_this.adrs, 1))
 		.then((data) => data[0])
 }
 /*
@@ -197,11 +201,11 @@ bmp280Read16(reg)
 {
   let msb, lsb;
 
-  Wire.beginTransmission(BMP280_ADDRESS);
+  Wire.beginTransmission(this.adrs);
   Wire.write(reg);
   Wire.endTransmission();
 
-  Wire.requestFrom(BMP280_ADDRESS, 2);
+  Wire.requestFrom(this.adrs, 2);
   while(Wire.available()<2);
   msb = Wire.read();
   lsb = Wire.read();
@@ -212,8 +216,8 @@ bmp280Read16(reg)
 bmp280Read16LE(reg)
 {
 	const _this = this;
-	return this.runtime.dev.comlib.wire_write(BMP280_ADDRESS, new Uint8Array([reg]))
-		.then(() => _this.runtime.dev.comlib.wire_read(BMP280_ADDRESS, 2))
+	return this.runtime.dev.comlib.wire_write(this.adrs, new Uint8Array([reg]))
+		.then(() => _this.runtime.dev.comlib.wire_read(_this.adrs, 2))
 		.then((data) => (data[0]|(data[1]<<8)))
 }
 /*
@@ -231,14 +235,14 @@ bmp280ReadS16LE(reg)
 bmp280Read24(reg)
 {
 	const _this = this;
-	return this.runtime.dev.comlib.wire_write(BMP280_ADDRESS, new Uint8Array([reg]))
-		.then(() => _this.runtime.dev.comlib.wire_read(BMP280_ADDRESS, 3))
+	return this.runtime.dev.comlib.wire_write(this.adrs, new Uint8Array([reg]))
+		.then(() => _this.runtime.dev.comlib.wire_read(_this.adrs, 3))
 		.then((data) => ((data[0]<<16)|(data[1]<<8)|data[2]))
 }
 /*
 writeRegister(reg, val)
 {
-  Wire.beginTransmission(BMP280_ADDRESS); // start transmission to device
+  Wire.beginTransmission(this.adrs); // start transmission to device
   Wire.write(reg);       // send register address
   Wire.write(val);         // send value to write
   Wire.endTransmission();     // end transmission

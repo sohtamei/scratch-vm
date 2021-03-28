@@ -15,13 +15,13 @@ class Scratch3Blocks {
 	}
 
 	getInfo() {
-        this._locale = 0;
-        switch(formatMessage.setup().locale) {
-          case 'ja':
-          case 'ja-Hira':
-            this._locale = 1;
-            break;
-        }
+		this._locale = 0;
+		switch(formatMessage.setup().locale) {
+		  case 'ja':
+		  case 'ja-Hira':
+			this._locale = 1;
+			break;
+		}
 
 		let digitalPorts;
 		let digitalPortArg;
