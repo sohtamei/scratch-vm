@@ -39,7 +39,7 @@ class comlib {
 				this.ipadrs=tmp[1];
 				console.log(tmp[0]+'='+tmp[1]);
 				break;
-			case 'if_type':
+			case extName+'_if_type':
 				this.ifType=tmp[1];
 				console.log(tmp[0]+'='+tmp[1]);
 				break;
@@ -58,7 +58,7 @@ class comlib {
     setConfig(ifType, ipadrs) {
         this.ifType = ifType;
         this.ipadrs = ipadrs;
-        document.cookie = 'if_type=' + this.ifType + '; samesite=lax; expires=Tue, 31-Dec-2037 00:00:00 GMT;';
+        document.cookie = this.extName+'_if_type=' + this.ifType + '; samesite=lax; expires=Tue, 31-Dec-2037 00:00:00 GMT;';
         document.cookie = this.extName+'_ip=' + this.ipadrs + '; samesite=lax; expires=Tue, 31-Dec-2037 00:00:00 GMT;';
         if(this.SupportCamera)
           document.cookie = 'Camera_ip=' + this.ipadrs + '; samesite=lax; expires=Tue, 31-Dec-2037 00:00:00 GMT;';

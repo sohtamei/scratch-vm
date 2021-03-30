@@ -170,6 +170,9 @@ class Scratch3Blocks {
 			break;
 		}
 		this.comlib.setLocale(this._locale);
+		[this.ifType, this.ipadrs] = this.comlib.getConfig();
+		if(this.ifType != 'UART') this.comlib.setConfig('UART', '192.168.1.xx');
+
 		this.comlib._openUart();
 		this.intervalFunc = this.intervalFunc.bind(this);
 		this._intervalId = setInterval(this.intervalFunc, 100);
