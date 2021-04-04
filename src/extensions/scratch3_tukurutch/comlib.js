@@ -9,28 +9,34 @@ const StubCodeBin = require('!arraybuffer-loader!./STUB_CODE.bin');
 const BootloaderBin = require('!arraybuffer-loader!./bootloader_qio_80m.bin');
 const BootApp0Bin = require('!arraybuffer-loader!./boot_app0.bin');
 
+const WlanStatus = [['IDLE_STATUS','NO_SSID_AVAIL','SCAN_COMPLETED','CONNECTED','CONNECT_FAILED','CONNECTION_LOST','DISCONNECTED',],
+				   ['アイドル中','SSIDが見つかりません','SCAN完了','接続中','接続失敗','切断されました','切断',]];
+
 class comlib {
-    constructor(extName, SupportCamera) {
+    constructor(extName, server, SupportCamera) {
 		this.extName = extName;
+		this.server = server;
 		this.SupportCamera = SupportCamera;
 
-        this.ipadrs = '192.168.1.xx';
-        this.ifType = 'UART';
+		this.ipadrs = '192.168.1.xx';
+		this.ifType = 'UART';
 		this._locale = 0;
 
 		this.busy = false;
 		this.cueue = [];
-        this.ws = null;
+		this.ws = null;
 		this.wsResolve = null;
 		this.wsError = null;
 
-        this.port = null;
+		this.port = null;
+		this.reader = null;
 		this.espBurnBusy = false;
 		this.recvResolve = null;
 		this.recvTimeout = null;
 
 		this.statusMessage = document.body.querySelector('#StatusMessage');
 
+		let cookie_ifType = null;
 		let cookies_get = document.cookie.split(';');
 		for(let i=0;i<cookies_get.length;i++) {
 			let tmp = cookies_get[i].trim().split('=');
@@ -40,10 +46,22 @@ class comlib {
 				console.log(tmp[0]+'='+tmp[1]);
 				break;
 			case extName+'_if_type':
-				this.ifType=tmp[1];
+				cookie_ifType=tmp[1];
 				console.log(tmp[0]+'='+tmp[1]);
 				break;
 			}
+		}
+
+		switch(this.server) {
+		case 'local':
+			if(cookie_ifType) this.ifType = cookie_ifType;
+			break;
+		case 'https':		// wlan or webBT
+			this.ifType = 'UART';
+			break;
+		case 'http':
+			this.ifType = 'WLAN';
+			break;
 		}
     }
 
@@ -51,42 +69,42 @@ class comlib {
 		this._locale = locale;
 	}
 
-    getConfig() {
-        return [this.ifType, this.ipadrs];
-    }
+	getConfig() {
+		return [this.ifType, this.ipadrs];
+	}
 
-    setConfig(ifType, ipadrs) {
-        this.ifType = ifType;
-        this.ipadrs = ipadrs;
-        document.cookie = this.extName+'_if_type=' + this.ifType + '; samesite=lax; expires=Tue, 31-Dec-2037 00:00:00 GMT;';
-        document.cookie = this.extName+'_ip=' + this.ipadrs + '; samesite=lax; expires=Tue, 31-Dec-2037 00:00:00 GMT;';
-        if(this.SupportCamera)
-          document.cookie = 'Camera_ip=' + this.ipadrs + '; samesite=lax; expires=Tue, 31-Dec-2037 00:00:00 GMT;';
+	setConfig(ifType, ipadrs) {
+		this.ifType = ifType;
+		this.ipadrs = ipadrs;
+		document.cookie = this.extName+'_if_type=' + this.ifType + '; samesite=lax; expires=Tue, 31-Dec-2037 00:00:00 GMT;';
+		document.cookie = this.extName+'_ip=' + this.ipadrs + '; samesite=lax; expires=Tue, 31-Dec-2037 00:00:00 GMT;';
+		if(this.SupportCamera)
+		  document.cookie = 'Camera_ip=' + this.ipadrs + '; samesite=lax; expires=Tue, 31-Dec-2037 00:00:00 GMT;';
 
-		if(this.ifType == 'UART') {
-          this.statusMessage.innerText = [
-            'UART has been saved.',
-            'UARTを設定しました',
-          ][this._locale];
-        } else if(this.SupportCamera) {
-          this.statusMessage.innerText = this.ifType + ", " + this.ipadrs + [
-            ' has been saved (for Robot & Camera).',
-            'を設定しました(ロボット & カメラ)',
-          ][this._locale];
-        } else {
-          this.statusMessage.innerText = this.ifType + ", " + this.ipadrs + [
-            ' has been saved.',
-            'を設定しました',
-          ][this._locale];
-        }
+		if(this.reader) {
+			this.reader.cancel();
+			this.reader.releaseLock();
+			this.reader = null;
+		}
 
 		if(this.port) {
 			this.port.close();
 			this.port = null;
 		}
+
 		if(this.ws) {
 			this.ws.close();
 			this.ws = null;
+		}
+		this.busy = false;
+		this.cueue = [];
+
+		if(this.ifType == 'UART') {
+			return ['USB(UART) has been saved.', 'USB(UART)を設定しました'][this._locale];
+		} else if(this.SupportCamera) {
+			return this.ifType + ", " + this.ipadrs + [' has been saved (for Robot & Camera).', 'を設定しました(ロボット & カメラ)'][this._locale];
+		} else {
+			return this.ifType + ", " + this.ipadrs + [' has been saved.', 'を設定しました'][this._locale];
 		}
     }
 
@@ -102,6 +120,13 @@ class comlib {
   {'B','S'},		// 0x88:anaRead        (port, count)           ret:level(int16)
   {'B','S','S'},	// 0x89:tone           (port,freq,ms)
 //  {'B','S'},		// 0x90:set_pwm        (port, data)
+
+  {},				// 0xFB:statusWifi     ()                      ret:wlanStatus SSID ip
+  {},				// 0xFC:scanWifi       ()                      ret:SSID1 SSID2 SSID3 ..
+  {'s','s'},		// 0xFD:connectWifi    (ssid,pass)             ret:wlanStatus
+
+  {},				// 0xFE:getFwName      ()                      ret:FwName
+  {},				// 0xFF:reset          ()                      ret:
 */
 	wire_begin(sda, scl) {
 		const _defs = {ARG1:{type2:'B'},ARG2:{type2:'B'}};
@@ -155,6 +180,66 @@ class comlib {
 		const _defs = {ARG1:{type2:'B'},ARG2:{type2:'S'},ARG3:{type2:'S'}};
 		const _args = {ARG1:port, ARG2:freq, ARG3:ms};
 		return this.sendRecv(0x89,_defs,_args);
+	}
+
+	statusWifi() {
+		const _this = this;
+		return this._statusWifi().then((status) => {
+			if(status[0] == 3)
+				return ['connected','接続中'][_this._locale] + ' ('+status[1]+', '+status[2]+')';
+			else if(status[1] == '')
+				return ['Not set up','未設定'][_this._locale];
+			else
+				return ['cannot connect to ', '接続できません '][_this._locale] + status[1];
+		})
+	}
+
+	_statusWifi() {
+		const _this = this;
+		const _defs = {};
+		const _args = {};
+		return this.sendRecv(0xFB,_defs,_args)
+		.then((result) => {
+			const status = result.split('\t');
+
+			status[0] = parseInt(status[0], 10);
+			if(status[0] == 3) {
+				_this.ipadrs = status[2];
+				document.cookie = _this.extName+'_ip=' + _this.ipadrs + '; samesite=lax; expires=Tue, 31-Dec-2037 00:00:00 GMT;';
+				if(_this.SupportCamera)
+				  document.cookie = 'Camera_ip=' + _this.ipadrs + '; samesite=lax; expires=Tue, 31-Dec-2037 00:00:00 GMT;';
+			}
+			console.log(status);
+			return status;
+		})
+	}
+
+	scanWifi() {
+		const _defs = {};
+		const _args = {};
+		return this.sendRecv(0xFC,_defs,_args).split('\t');
+	}
+
+	connectWifi(ssid, pass) {
+		ssid = ssid.trim();
+		pass = pass.trim();
+		if(ssid=='') return ['enter ssid and password','SSIDとパスワードを入力して下さい'][this._locale];
+
+		const _this = this;
+		const _defs = {ARG1:{type2:'s'},ARG2:{type2:'s'}};
+		const _args = {ARG1:ssid, ARG2:pass};
+		return this.sendRecv(0xFD,_defs,_args)
+		.then((result) => {
+			const status = parseInt(result);
+			console.log(status);
+			if(status != 3) return ['Failed', '失敗しました'][_this._locale];
+
+			return _this._statusWifi();
+		}).then((status) => {
+			if(status[0] != 3) return ['Failed', '失敗しました'][_this._locale];
+
+			return ['connected','接続しました'][_this._locale] + ' ('+status[2]+')';
+		})
 	}
 
 	sendRecv(cmd, argsDef, args) {
@@ -244,14 +329,14 @@ class comlib {
 		writer.write(sendBuf);
 		writer.releaseLock();
 
-		const reader = _this.port.readable.getReader();
+		this.reader = _this.port.readable.getReader();
 		let count = 0;
 		let size = 3;
 		let buf = new Uint8Array(256);
 		return new Promise(function(resolve2) {
 			loop();
 			function loop(){
-				return reader.read().then(function(result) {
+				return _this.reader.read().then(function(result) {
 				//	console.log(_this._dumpBuf(result.value));	// debug
 					for(let i = 0; i < result.value.length; i++) {
 						switch(count) {
@@ -274,7 +359,8 @@ class comlib {
 						count++;
 					}
 					if(count >= size) {
-						reader.releaseLock();
+						_this.reader.releaseLock();
+						_this.reader = null;
 						console.log('R:'+_this._dumpBuf(buf.slice(0,size)));	// debug
 						let tmp = 0;
 						if(size >= 5) {
@@ -285,7 +371,7 @@ class comlib {
 							case 3: tmp = tmp2.getInt32(4, true); break;
 							case 4: tmp = tmp2.getFloat32(4, true); break;
 							case 5: tmp = tmp2.getFloat64(4, true); break;
-							case 6: tmp = String.fromCharCode.apply(null, buf.subarray(4)); break;
+							case 6: tmp = String.fromCharCode.apply(null, buf.slice(4,size)); break;
 							case 7: tmp = buf.slice(5,5+buf[4]); break;
 							}
 						}
@@ -297,9 +383,9 @@ class comlib {
 			}
 		}).then(function(tmp) {
 			_this.busy = false;
+			resolve(tmp);
 			if(_this.cueue.length != 0) console.log('-Cueue=' + _this.cueue.length + '->' + (_this.cueue.length-1));
 			_this.checkCueue(_this);
-			resolve(tmp);
 		}).catch(function(err) {
 		//	_this.port = null;
 			console.log(err);
@@ -335,18 +421,19 @@ class comlib {
 			writer.write(tmp);
 			writer.releaseLock();
 
-			const reader = port.readable.getReader();
+			_this.reader = port.readable.getReader();
 			let count = 0;
 			let buf = new Uint8Array(256);
 			return new Promise(function(resolve) {
 				loop();
 				function loop(){
-					return reader.read().then(function(result) {
+					return _this.reader.read().then(function(result) {
 					//	console.log(result.value);	// debug
 						for(let i = 0; i < result.value.length; i++) {
 							buf[count++] = result.value[i];
 							if(result.value[i] == 0x0a) {
-								reader.releaseLock();
+								_this.reader.releaseLock();
+								_this.reader = null;
 								resolve();
 								return;
 							}
@@ -367,18 +454,12 @@ class comlib {
 	_sendRecvWs(sendBuf,resolve) {
 		const _this = this;
 		_this.wsResolve = resolve;
-	//	_this.wsError = error;
 
 		if(_this.ws !== null) {
 			_this.ws.send(sendBuf);
 			return;
 		}
-	/*
-		if(_this.ipadrs == '192.168.1.xx') {
-			error('');
-			return;
-		}
-	*/
+
 		_this.ws = new WebSocket('ws://'+_this.ipadrs+':54323');
 		_this.ws.binaryType = 'arraybuffer';
 
@@ -405,12 +486,11 @@ class comlib {
 			//	console.log(tmp);	// debug
 			}
 			_this.busy = false;
-			if(_this.cueue.length != 0) console.log('-Cueue=' + _this.cueue.length + '->' + (_this.cueue.length-1));
-			_this.checkCueue(_this);
 			_this.wsResolve(tmp);
 			_this.wsResolve = null;
-			_this.wsError = null;
-			return tmp;
+			if(_this.cueue.length != 0) console.log('-Cueue=' + _this.cueue.length + '->' + (_this.cueue.length-1));
+			_this.checkCueue(_this);
+			return;
 		}
 
 		_this.ws.onclose = function(event) {
@@ -420,15 +500,22 @@ class comlib {
 				console.log('close: Connection died');
 			}
 			_this.ws = null;
-			if(_this.wsError !== null) _this.wsError('');
+			_this.busy = false;
+			if(_this.wsResolve !== null) {
+				_this.wsResolve('error');
+				_this.wsResolve = null;
+			}
 		};
 
 		_this.ws.onerror = function(error) {
 			console.log('[error] '+error.message);
 			_this.ws.close();
 			_this.ws = null;
-			if(_this.wsError !== null) _this.wsError('');
 			_this.statusMessage.innerText = ['cannot connect to ','接続できませんでした：'][_this._locale] + _this.ipadrs;
+			if(_this.wsResolve !== null) {
+				_this.wsResolve(_this.statusMessage.innerText);
+				_this.wsResolve = null;
+			}
 		};
 		return;
 	}
