@@ -129,7 +129,8 @@ class MicroBit {
 			output[i + 1] = message[i];
 		const data = Base64Util.uint8ArrayToBase64(output);
 
-		this._ble.write(BLEUUID.service, BLEUUID.txChar, data, 'base64', true).then(() => {
+		this._ble.write(BLEUUID.service, BLEUUID.txChar, data, 'base64', true)
+		.then(() => {
 			this._busy = false;
 			clearTimeout(this._busyTimeoutID);
 		});
@@ -322,7 +323,7 @@ class Scratch3Blocks {
 			let ret = _this.comlib.sendRecv(UARTCommand.CMD_GET_DATA, {}, {});
 			if(!(ret instanceof Promise)) return ret;
 
-			return ret.then(function(data) {
+			return ret.then(data => {
 				if(data.length >= 8) _this.gotData(data);
 			});
 		}
@@ -453,7 +454,7 @@ class Scratch3Blocks {
 			}
 
 			const _this = this;
-			return ret.then(function(data) {
+			return ret.then(data => {
 				_this.updatedTime = performance.now();
 				if(xy == 1) _this.tiltY = data;
 				else        _this.tiltX = data;
