@@ -184,7 +184,8 @@ class comlib {
 
 	statusWifi() {
 		const _this = this;
-		return this._statusWifi().then((status) => {
+		return this._statusWifi()
+		.then(status => {
 			if(status[0] == 3)
 				return ['connected','接続中'][_this._locale] + ' ('+status[1]+', '+status[2]+')';
 			else if(status[1] == '')
@@ -199,7 +200,7 @@ class comlib {
 		const _defs = {};
 		const _args = {};
 		return this.sendRecv(0xFB,_defs,_args)
-		.then((result) => {
+		.then(result => {
 			const status = result.split('\t');
 
 			status[0] = parseInt(status[0], 10);
@@ -229,13 +230,13 @@ class comlib {
 		const _defs = {ARG1:{type2:'s'},ARG2:{type2:'s'}};
 		const _args = {ARG1:ssid, ARG2:pass};
 		return this.sendRecv(0xFD,_defs,_args)
-		.then((result) => {
+		.then(result => {
 			const status = parseInt(result);
 			console.log(status);
 			if(status != 3) return ['Failed', '失敗しました'][_this._locale];
 
 			return _this._statusWifi();
-		}).then((status) => {
+		}).then(status => {
 			if(status[0] != 3) return ['Failed', '失敗しました'][_this._locale];
 
 			return ['connected','接続しました'][_this._locale] + ' ('+status[2]+')';
@@ -289,16 +290,14 @@ class comlib {
 		if(this.cueue.length >= 5) return 'error';
 
 		const _this = this;
-		return Promise.resolve().then(function(){
+		return Promise.resolve().then(() => {
 			if(_this.ifType == 'UART' && _this.port == null)
 				return _this._openUart();
 			return;
-		}).then(function(){
-			return new Promise(function(resolve) {
-				_this.cueue.push({resolve:resolve, data:data});
-				_this.checkCueue(_this);
-			})
-		})
+		}).then(() => new Promise(resolve => {
+			_this.cueue.push({resolve:resolve, data:data});
+			_this.checkCueue(_this);
+		}))
 	}
 
 	checkCueue(_this) {
@@ -333,10 +332,11 @@ class comlib {
 		let count = 0;
 		let size = 3;
 		let buf = new Uint8Array(256);
-		return new Promise(function(resolve2) {
+		return new Promise(resolve2 => {
 			loop();
 			function loop(){
-				return _this.reader.read().then(function(result) {
+				return _this.reader.read()
+				.then(result => {
 				//	console.log(_this._dumpBuf(result.value));	// debug
 					for(let i = 0; i < result.value.length; i++) {
 						switch(count) {
@@ -398,7 +398,8 @@ class comlib {
 
 		const _this = this;
 		let port = null;
-		return navigator.serial.requestPort({}).then(function(result) {
+		return navigator.serial.requestPort({})
+		.then(result => {
 			port = result;
 
 			const options = {
@@ -415,7 +416,7 @@ class comlib {
 				rtscts: false,
 			};
 			return port.open(options);
-		}).then(function(){
+		}).then(() => {
 			const writer = port.writable.getWriter();
 			let tmp = new Uint8Array([0x00,0xff,0x55,0x01,0xfe]);
 			writer.write(tmp);
@@ -424,10 +425,11 @@ class comlib {
 			_this.reader = port.readable.getReader();
 			let count = 0;
 			let buf = new Uint8Array(256);
-			return new Promise(function(resolve) {
+			return new Promise(resolve => {
 				loop();
 				function loop(){
-					return _this.reader.read().then(function(result) {
+					return _this.reader.read()
+					.then(result => {
 					//	console.log(result.value);	// debug
 						for(let i = 0; i < result.value.length; i++) {
 							buf[count++] = result.value[i];
@@ -441,7 +443,7 @@ class comlib {
 						loop();
 					})
 				}
-			}).then(function(){
+			}).then(() => {
 				let tmp = String.fromCharCode.apply(null, buf.slice(0,count));
 				_this.statusMessage.innerText = tmp;
 				console.log(tmp);
@@ -544,7 +546,8 @@ class comlib {
 		let flashBinPart = null;
 		let flashBinImage = null;
 
-		return navigator.serial.requestPort({}).then(function(result) {
+		return navigator.serial.requestPort({})
+		.then(result => {
 			_this.port = result;
 
 			const options = {
@@ -561,50 +564,37 @@ class comlib {
 				rtscts: false,
 			};
 			return _this.port.open(options);
-		}).then(function(){
+		}).then(() => {
 			_this.statusMessage.innerText = UpdateMsg+'0%';
 
-			return fetch('static/extensions/'+flashBin.name+'.part.bin').then(response => response.blob()).then(blob => {
-				return new Promise(function(resolve) {
-					let reader = new FileReader();
-					reader.onload = function(e){
-						flashBinPart = new Uint8Array(reader.result);
-						resolve();
-					};
-					reader.readAsArrayBuffer(blob);
-				});
-			});
-		}).then(function(){
+			return fetch('static/extensions/'+flashBin.name+'.part.bin')
+			.then(response => response.blob())
+			.then(blob => new Promise(resolve => {
+				let reader = new FileReader();
+				reader.onload = function(e){
+					flashBinPart = new Uint8Array(reader.result);
+					resolve();
+				};
+				return reader.readAsArrayBuffer(blob);
+			}))
+		}).then(() => {
 			_this.statusMessage.innerText = UpdateMsg+'1%';
 
-			return fetch('static/extensions/'+flashBin.name+'.image.bin').then(response => response.blob()).then(blob => {
-				return new Promise(function(resolve) {
-					let reader = new FileReader();
-					reader.onload = function(e){
-						flashBinImage = new Uint8Array(reader.result);
-						resolve();
-					};
-					reader.readAsArrayBuffer(blob);
-				});
-			});
-		}).then(function(){
+			return fetch('static/extensions/'+flashBin.name+'.image.bin')
+			.then(response => response.blob())
+			.then(blob => new Promise(resolve => {
+				let reader = new FileReader();
+				reader.onload = function(e){
+					flashBinImage = new Uint8Array(reader.result);
+					resolve();
+				};
+				return reader.readAsArrayBuffer(blob);
+			}))
+		}).then(() => {
 			_this.statusMessage.innerText = UpdateMsg+'2%';
-			// DTR=1 RTS=0 IO0=1 EN=0
-			// DTR=0 RTS=1 IO0=0 EN=1(delay)
-			// DTR=1 RTS=1 IO0=1 EN=1
-			return _this.port.setSignals({ dataTerminalReady: false, requestToSend: true })
-			.then(() => new Promise(resolve => setTimeout(resolve, 100)))
-			.then(() => _this.port.setSignals({ dataTerminalReady: true, requestToSend: false }))
-			.then(() => new Promise(resolve => setTimeout(resolve, 100)))
-			.then(() => _this.port.setSignals({ dataTerminalReady: false, requestToSend: false }));
 
-		}).then(function(){
 			reader = _this.port.readable.getReader();
 			_this._RecvEspBurn(reader);
-			return new Promise(resolve => setTimeout(resolve, 3000));
-
-		}).then(function(){
-			_this.statusMessage.innerText = UpdateMsg+'5%';
 
 			// esptool.exe --chip esp32 --port COM6 --baud 921600 --before default_reset --after hard_reset write_flash -z --flash_mode dio --flash_freq 80m --flash_size detect 0xe000 Arduino/portable/packages/esp32/hardware/esp32/1.0.4/tools/partitions/boot_app0.bin 0x1000 Arduino/portable/packages/esp32/hardware/esp32/1.0.4/tools/sdk/bin/bootloader_qio_80m.bin 0x10000 C:\Users\n-tom\fd_work\TuKuRutch\ext\libraries\TukuBoard1.0\robot_pcmode\robot_pcmode.ino.esp32.bin 0x8000 C:\Users\n-tom\fd_work\TuKuRutch\ext\libraries\TukuBoard1.0\robot_pcmode\robot_pcmode.ino.partitions.bin
 
@@ -613,14 +603,12 @@ class comlib {
 			//	0x10000 robot_pcmode.ino.image.bin
 			//	0x8000 robot_pcmode.ino.part.bin
 
-			// connecting ###############################
-
 			return _this._syncEspBurn();
-		}).then(function(){
+		}).then(() => {
 //console.log("");
 			_this.statusMessage.innerText = UpdateMsg+'10%';
 			return new Promise(resolve => setTimeout(resolve, 500));
-		}).then(function() {
+		}).then(() => {
 //console.log("");
 
 			// Chip Is ESP32D0WDQ6(revision 0) ######################
@@ -633,7 +621,7 @@ class comlib {
 			dv.setUint32(0, 0x6001A018, true);
 			return _this._SendRecvEspBurn(0xA, data, 0);
 
-		}).then(function(rcvParam) {
+		}).then(rcvParam => {
 			// run_stub ###########################################
 //console.log(rcvParam);
 
@@ -648,7 +636,7 @@ class comlib {
 			dv.setUint32(12, 0x40090000, true);
 			return _this._SendRecvEspBurn(0x5, data, 0);
 
-		}).then(function(rcvParam) {
+		}).then(rcvParam => {
 //console.log(rcvParam);
 
 			// ESP_MEM_DATA(07)				len(data)	seq			0			0			data
@@ -664,7 +652,7 @@ class comlib {
 				data[0x10 + i] = StubCode[i];
 			return _this._SendRecvEspBurn(0x7, data, StubCode.length);
 
-		}).then(function(rcvParam) {
+		}).then(rcvParam => {
 //console.log(rcvParam);
 
 			// ESP_MEM_BEGIN(05)			size		blocks		blocksize	offset
@@ -678,7 +666,7 @@ class comlib {
 			dv.setUint32(12, 0x3FFD2BA4, true);
 			return _this._SendRecvEspBurn(0x5, data, 0);
 
-		}).then(function(rcvParam) {
+		}).then(rcvParam => {
 //console.log(rcvParam);
 
 			// ESP_MEM_DATA(07)				len(data)	seq			0			0			data
@@ -693,7 +681,7 @@ class comlib {
 			dv.setUint32(16, 0x3FFC0008, true);
 			return _this._SendRecvEspBurn(0x7, data, 4);
 
-		}).then(function(rcvParam) {
+		}).then(rcvParam => {
 //console.log(rcvParam);
 
 			// ESP_MEM_END(06)				int(entrypoint == 0)	entrypoint
@@ -705,12 +693,12 @@ class comlib {
 			dv.setUint32(4, 0x40090560, true);
 			return _this._SendRecvEspBurn(0x6, data, 0);
 
-		}).then(function(rcvParam) {
+		}).then(rcvParam => {
 //console.log(rcvParam);
 
 			//C0 4F 48 41 49 C0 - 'OHAI'
 			return new Promise(resolve => setTimeout(resolve, 1000));
-		}).then(function(){
+		}).then(() => {
 //console.log("");
 
 			// flash_set_parameters ##############################
@@ -728,12 +716,12 @@ class comlib {
 			dv.setUint32(20, 0xFFFF, true);
 			return _this._SendRecvEspBurn(0xB, data, 0);
 
-		}).then(function(rcvParam) {
+		}).then(rcvParam => {
 //console.log(rcvParam);
 			// 0xe000  boot_app0.bin
 			let data = new Uint8Array(BootApp0Bin);
 			return _this._espFlash(data, 0xe000, data.length, 11, 11);
-		}).then(function(rcvParam) {
+		}).then(rcvParam => {
 //console.log(rcvParam);
 			// 0x1000  bootloader
 			let data = new Uint8Array(BootloaderBin);
@@ -741,26 +729,26 @@ class comlib {
 			data[2] = 0x2;
 			data[3] = 0x20;
 			return _this._espFlash(data, 0x1000, data.length, 12, 12);
-		}).then(function(rcvParam) {
+		}).then(rcvParam => {
 			// 0x8000  partitions.bin
 			return _this._espFlash(flashBinPart, 0x8000, flashBinPart.length, 13, 13);
-		}).then(function(rcvParam) {
+		}).then(rcvParam => {
 			// 0x10000  esp32.bin
 			return _this._espFlash(flashBinImage, 0x10000, flashBinImage.length, 15, 100)
-		}).then(function(rcvParam) {
+		}).then(rcvParam => {
 			// DTR=1 RTS=0 IO0=1 EN=0
 			// DTR=1 RTS=1 IO0=1 EN=1
-			return _this.port.setSignals({ dataTerminalReady: false, requestToSend: true })
+			return      _this.port.setSignals({ dataTerminalReady: false, requestToSend: true })
 			.then(() => new Promise(resolve => setTimeout(resolve, 100)))
 			.then(() => _this.port.setSignals({ dataTerminalReady: false, requestToSend: false }));
 
-		}).then(function(){
+		}).then(() => {
 			_this.statusMessage.innerText = ['Finished', '書き込み完了'][_this._locale];
 			console.log("OK");
-		}).catch(function() {
+		}).catch(() => {
 			_this.statusMessage.innerText = ['Failed', '書き込み失敗'][_this._locale];
 			console.log("NG");
-		}).finally(function() {
+		}).finally(() => {
 			if(reader) {
 				reader.cancel();
 				reader.releaseLock();
@@ -837,38 +825,57 @@ class comlib {
 		//W:C0 00 08 24 00	00000000	20120707	55 55 55 55 55 55 55 55 55 55 55 55 55 55 55 55 55 55 55 55 55 55 55 55 55 55 55 55 55 55 55 55 C0
 		//R:C0 01 08 04 00	55552012	00000000	C0
 		//R:c0 01 08 00 00	00000000	ff 00 c0
+		let data = new Uint8Array(0x24);
+		let dv = new DataView(data.buffer);
+		dv.setUint32(0, 0x20120707, true);
+		for(let j = 4; j < 0x24; j++)
+			data[j] = 0x55;
 
 		const _this = this;
-		return new Promise(function(resolve1, reject1) {
+		return new Promise((resolve1, reject1) => {
 			let i = 0;
-			let data = new Uint8Array(0x24);
-			let dv = new DataView(data.buffer);
-			dv.setUint32(0, 0x20120707, true);
-			for(let j = 4; j < 0x24; j++)
-				data[j] = 0x55;
-			let hTimeout = null;
-
 			loop();
 			function loop(){
-				return new Promise(function(resolve2, reject2) {
-					hTimeout = setTimeout(reject2, 2000);
-					_this.recvResolve = resolve2;
-					_this._SendEspBurn(0x8, data, 0);
-				}).then(function(rcvParam) {
-					console.log(rcvParam.toString(16));
-					clearTimeout(hTimeout);
-					_this.recvResolve = null;
-					resolve1();
-					return;
-				}).catch(function() {
-					console.log(i);
-					clearTimeout(hTimeout);
-					i++;
-					if(i >= 10) {
-						reject1();
-						return;
+				// DTR=1 RTS=0 IO0=1 EN=0
+				// DTR=0 RTS=1 IO0=0 EN=1(delay)
+				// DTR=1 RTS=1 IO0=1 EN=1
+				return      _this.port.setSignals({ dataTerminalReady: false, requestToSend: true })
+				.then(() => new Promise(resolve => setTimeout(resolve, (i&1)? 1300: 110)))
+				.then(() => _this.port.setSignals({ dataTerminalReady: true,  requestToSend: false }))
+				.then(() => new Promise(resolve => setTimeout(resolve, (i&1)? 460: 60)))
+				.then(() => _this.port.setSignals({ dataTerminalReady: false, requestToSend: false }))
+				.then(() => {
+					let hTimeout = null;
+					let j = 0;
+					loop2();
+					function loop2(){
+						return new Promise((resolve2, reject2) => {
+							hTimeout = setTimeout(reject2, 170);
+							_this.recvResolve = resolve2;
+							_this._SendEspBurn(0x8, data, 0);
+						}).then(rcvParam => {
+							console.log(rcvParam.toString(16));
+							clearTimeout(hTimeout);
+							_this.recvResolve = null;
+							resolve1();
+							return;
+						}).catch(() => {
+							console.log(i+','+j);
+							clearTimeout(hTimeout);
+							j++;
+							if(j < 5) {
+								loop2();
+							} else {
+								i++;
+								if(i < 10) {
+									loop();
+								} else {
+									reject1();
+									return;
+								}
+							}
+						})
 					}
-					loop();
 				})
 			}
 		})
@@ -876,15 +883,15 @@ class comlib {
 
 	_SendRecvEspBurn(cmd, data, sumSize) {	// ret:[result, rcvParam]
 		const _this = this;
-		return new Promise(function(resolve1, reject1) {
-			_this.recvTimeout = setTimeout(function() {
+		return new Promise((resolve1, reject1) => {
+			_this.recvTimeout = setTimeout(() => {
 				console.log("");
 				_this.recvTimeout = null;
 				_this.recvResolve = null;
 				reject1();
 			}, 5000);
 
-			_this.recvResolve = function(rcvParam) {
+			_this.recvResolve = rcvParam => {
 			//	console.log(rcvParam);	// debug
 				clearTimeout(_this.recvTimeout);
 				_this.recvTimeout = null;
@@ -903,16 +910,17 @@ class comlib {
 		let rcvBuf = new Uint8Array((8 + 1024) * 2);
 
 		const _this = this;
-		return new Promise(function(resolve) {
+		return new Promise(resolve => {
 			loop();
 			function loop(){
-				return reader.read().then(function(result) {
+				return reader.read()
+				.then(result => {
 					if(result.done) {
 						reader.releaseLock();
 						resolve();
 						return;
 					}
-				//	console.log('R:'+_this._dumpBuf(result.value));	// debug
+				//	console.log('r:'+_this._dumpBuf(result.value));	// debug
 					for(let i = 0; i < result.value.length; i++) {
 						if(count == 0 && result.value[i] != 0xC0) {
 							continue;
@@ -971,7 +979,6 @@ class comlib {
 	//	progressBurn = progressStart
 
 		const _this = this;
-		return Promise.resolve().then(function(){
 			// ESP_FLASH_BEGIN(02)		erase_size	num_blocks	FLASH_WRITE_SIZE	offset
 			//C0 00 02 10 00	00000000	00004CC0	00000002	00004000	00001000	C0
 			//C0 01 02 00 00	00000000	00 00 C0
@@ -981,9 +988,8 @@ class comlib {
 			dv.setUint32(4, numBlocks, true);
 			dv.setUint32(8, BLOCK_SIZE, true);
 			dv.setUint32(12, adrs, true);
-			return _this._SendRecvEspBurn(0x2, data, 0);
-
-		}).then(function(rcvParam) {
+			return _this._SendRecvEspBurn(0x2, data, 0)
+		.then(rcvParam => {
 console.log(rcvParam);
 
 			// ESP_FLASH_DATA(03)		len(data)	seq			0			0			data
@@ -992,7 +998,7 @@ console.log(rcvParam);
 			let data = new Uint8Array(0x10 + BLOCK_SIZE);
 			let dv = new DataView(data.buffer);
 			i = 0;
-			return new Promise(function(resolve) {
+			return new Promise(resolve => {
 			//	For i = 0 To binSize - 1 Step BLOCK_SIZE
 				loop();
 				function loop(){
@@ -1007,7 +1013,8 @@ console.log(rcvParam);
 						else
 							data[0x10+j] = 0xFF
 					}
-					return _this._SendRecvEspBurn(0x3, data, BLOCK_SIZE).then(function(rcvParam) {
+					return _this._SendRecvEspBurn(0x3, data, BLOCK_SIZE)
+					.then(rcvParam => {
 						i += BLOCK_SIZE;
 						if(i > binSize) {
 							resolve(rcvParam);
@@ -1019,7 +1026,7 @@ console.log(rcvParam);
 					})
 				}
 			})
-		}).then(function(rcvParam) {
+		}).then(rcvParam => {
 console.log(rcvParam);
 
 			// ESP_SPI_FLASH_MD5(13)		addr		size		0			0

@@ -14,9 +14,22 @@ const IconURI = require('./tukurutch-small.png');
  */
 class Scratch3Blocks {
     constructor (runtime) {
-        if(typeof SupportCamera === "undefined") SupportCamera = false;
-        this.comlib = new comlib(extName, SupportCamera);
-        runtime.dev = this;
+		runtime.dev = this;
+
+		let href = location.href.split(':');
+		console.log(href);
+		if(href[1] == '//localhost' || href[0] == 'file') {
+			this.server = 'local';
+		//	this.server = 'https';		// for test
+		//	this.server = 'http';		// for test
+		} else if(href[0] == 'https') {
+			this.server = 'https';
+		} else {
+			this.server = 'http';
+		}
+
+		if(typeof SupportCamera === "undefined") SupportCamera = false;
+		this.comlib = new comlib(extName, this.server, SupportCamera);
     }
 
     getInfo () {
@@ -33,7 +46,7 @@ class Scratch3Blocks {
         return {
             id: extName,
             name: extName,
-            blockIconURI: IconURI,  // Icon png to be displayed at the left edge of each extension block, encoded as a data URI.
+            //blockIconURI: IconURI,  // Icon png to be displayed at the left edge of each extension block, encoded as a data URI.
             menuIconURI: IconURI,   // Icon png to be displayed in the blocks category menu, encoded as a data URI.
             blocks: this.get_blocks(),
             menus: this.get_menus(),
@@ -42,21 +55,33 @@ class Scratch3Blocks {
     
 	get_blocks() {
 		this.flashList = [
-{name:'QuadCrawlerAI', type:'esp32', baudrate:230400},
+{name:'QuadCrawlerAI', type:'esp32', baudrate:115200},//230400},
 		];
 
-		this._blocks = [
-{blockType: BlockType.COMMAND, opcode: 'setConfig', text: '[ARG1] IP=[ARG2]', arguments: {
-	ARG1: { type: ArgumentType.STRING, defaultValue: this.ifType, menu: 'ifType' },
-	ARG2: { type: ArgumentType.STRING, defaultValue: this.ipadrs},
-}},
+		this.blockOffset = 5;
 
+		this._blocks = [
 {blockType: BlockType.COMMAND, opcode: 'burnFlash', text: [
     'burn [ARG1]',
     '[ARG1]書き込み',
 ][this._locale], arguments: {
 	ARG1: { type: ArgumentType.NUMBER, defaultValue: 0, menu: 'flashList' },
 }},
+
+{blockType: BlockType.COMMAND, opcode: 'connectWifi', text: ['connect','接続'][this._locale]+' ssid[ARG1] pass[ARG2]', arguments: {
+	ARG1: { type: ArgumentType.STRING, defaultValue: ' ' },
+	ARG2: { type: ArgumentType.STRING, defaultValue: ' ' },
+}},
+
+{blockType: BlockType.REPORTER, opcode: 'statusWifi', text: ['WiFi status','WiFi接続状態'][this._locale], disableMonitor:true, arguments: {
+}},
+
+{blockType: BlockType.COMMAND, opcode: 'setConfig', text: ['I/F type','接続方法'][this._locale]+'[ARG1] IP=[ARG2]', arguments: {
+	ARG1: { type: ArgumentType.STRING, defaultValue: this.ifType, menu: 'ifType' },
+	ARG2: { type: ArgumentType.STRING, defaultValue: this.ipadrs},
+}},//, hideFromPalette:(this.server=='http')},
+
+'---',
 
 {blockType: BlockType.COMMAND, opcode: 'setWalk', text: [
     'walk [ARG1] [ARG2]',
@@ -178,18 +203,6 @@ class Scratch3Blocks {
     ARG1: { type: ArgumentType.NUMBER, type2:'B', defaultValue:1, menu: 'walkcmd' },
 }},
 
-'---',
-{blockType: BlockType.REPORTER, opcode: 'statusWifi', text: 'status WIFI', arguments: {
-}},
-
-{blockType: BlockType.REPORTER, opcode: 'scanWifi', text: 'scan WIFI', arguments: {
-}},
-
-{blockType: BlockType.REPORTER, opcode: 'connectWifi', text: 'connect WIFI [ARG1] [ARG2]', arguments: {
-    ARG1: { type: ArgumentType.STRING, type2:'s', defaultValue:'ssid' },
-    ARG2: { type: ArgumentType.STRING, type2:'s', defaultValue:'pass' },
-}},
-
 		];
 		return this._blocks;
 	}
@@ -200,7 +213,10 @@ class Scratch3Blocks {
 			this.flashItems[i] = { text:this.flashList[i].name, value:i };
 
 	  return {
-ifType: { acceptReporters: true, items: ['WLAN','UART',]},
+ifType: { acceptReporters: true, items: [
+	{ text: 'USB', value: 'UART' },
+	{ text: 'WiFi', value: 'WLAN' },
+]},
 
 flashList: { acceptReporters: true, items: this.flashItems },
 
@@ -364,22 +380,37 @@ setPWM(args,util) { return this.sendRecv(arguments.callee.name, args); }
 setLED(args,util) { return this.sendRecv(arguments.callee.name, args); }
 enumColor(args) { return args.ARG1; }
 enumWalkcmd(args) { return args.ARG1; }
-statusWifi(args,util) { return this.sendRecv(arguments.callee.name, args); }
-scanWifi(args,util) { return this.sendRecv(arguments.callee.name, args); }
-connectWifi(args,util) { return this.sendRecv(arguments.callee.name, args); }
-
-	setConfig(args) {
-		return this.comlib.setConfig(args.ARG1, args.ARG2);
-	}
 
 	burnFlash(args) {
+		if(this.server=='http') return ['please access via https://','https:// でアクセスして下さい'][this._locale];
+
+		let ret = window.confirm(['Burn TuKuRutch firmware to device, sure ?', 'つくるっち用ファームをデバイスに書き込みますか？'][this._locale]);
+		console.log(ret);
+		if(!ret) return;
 		return this.comlib.burnWlan(this.flashList[Number(args.ARG1)]);
 	}
 
+	connectWifi(args) {
+		if(this.server=='http') return ['please access via https://','https:// でアクセスして下さい'][this._locale];
+
+		return this.comlib.connectWifi(args.ARG1, args.ARG2);
+	}
+
+	statusWifi(args) {
+		return this.comlib.statusWifi();
+	}
+
+	setConfig(args) {
+		if(this.server=='http' && args.ARG1=='UART') return ['please access via https://','https:// でアクセスして下さい'][this._locale];
+		if(this.server=='https' && args.ARG1=='WLAN') return ['please access via http://','http:// でアクセスして下さい'][this._locale];
+
+		return this.comlib.setConfig(args.ARG1, args.ARG2);
+	}
+
 	sendRecv(opcode,args) {
-		for(index = 0; index < this._blocks.length; index++) {
+		for(index = this.blockOffset; index < this._blocks.length; index++) {
 			if(this._blocks[index].opcode == opcode) {
-				return this.comlib.sendRecv(index-1, this._blocks[index].arguments, args);
+				return this.comlib.sendRecv(index - this.blockOffset + 1, this._blocks[index].arguments, args);
 			}
 		}
 		return 0;
