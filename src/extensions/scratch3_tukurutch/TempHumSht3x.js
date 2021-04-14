@@ -47,6 +47,7 @@ class Scratch3Blocks {
 					{ text: 'd26 c32 M5Atom', value: '26_32', },
 					{ text: 'd4  c13 M5Camera', value: '4_13', },
 					{ text: 'd0  c26 M5StickC Hat', value: '0_26', },
+					{ text: 'd26 c27 QuadCrawler', value: '26_27', },
 				]},
 			},
 		};

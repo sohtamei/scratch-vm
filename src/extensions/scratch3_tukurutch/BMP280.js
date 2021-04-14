@@ -71,18 +71,18 @@ class Scratch3Blocks {
 			menuIconURI: IconURI,
 
 			blocks: [
-				{blockType: BlockType.COMMAND, opcode: 'init', text: ['init adrs','初期化 アドレス'][this._locale]+'[ARG1]', arguments: {
+				{blockType: BlockType.COMMAND, opcode: 'setPort', text: '1. I2C port [ARG1] for ESP32', arguments: {
+					ARG1: { type: ArgumentType.STRING, defaultValue:'21_22', menu: 'i2cPort' },
+				}},
+
+				{blockType: BlockType.COMMAND, opcode: 'init', text: ['2. init adrs','2. 初期化 アドレス'][this._locale]+'[ARG1]', arguments: {
 					ARG1: { type: ArgumentType.STRING, defaultValue:'76', menu: 'adrs' },
 				}},
 
-				{blockType: BlockType.REPORTER, opcode: 'getTemperature', text: ['temperature［C］','温度［C］'][this._locale], arguments: {
+				{blockType: BlockType.REPORTER, opcode: 'getTemperature', text: ['3. temperature［C］','3. 温度［C］'][this._locale], arguments: {
 				}},
 
-				{blockType: BlockType.REPORTER, opcode: 'getPressure', text: ['pressure［Pa］','気圧［Pa］'][this._locale], arguments: {
-				}},
-
-				{blockType: BlockType.COMMAND, opcode: 'setPort', text: 'I2C port [ARG1] for ESP32', arguments: {
-					ARG1: { type: ArgumentType.STRING, defaultValue:'21_22', menu: 'i2cPort' },
+				{blockType: BlockType.REPORTER, opcode: 'getPressure', text: ['3. pressure［Pa］','3. 気圧［Pa］'][this._locale], arguments: {
 				}},
 			],
 
@@ -94,6 +94,7 @@ class Scratch3Blocks {
 					{ text: 'd26 c32 M5Atom', value: '26_32', },
 					{ text: 'd4  c13 M5Camera', value: '4_13', },
 					{ text: 'd0  c26 M5StickC Hat', value: '0_26', },
+					{ text: 'd26 c27 QuadCrawler', value: '26_27', },
 				]},
 			},
 		};
