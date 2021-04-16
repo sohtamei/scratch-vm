@@ -54,7 +54,8 @@ class Scratch3Blocks {
     
 	get_blocks() {
 		this.flashList = [
-{name:'generic_ESP32', type:'esp32', baudrate:115200},//230400},
+{name:'uno', type:'atmega328', baudrate:115200},
+{name:'generic_ESP32', type:'esp32', baudrate:921600},
 		];
 
 		this.blockOffset = 5;

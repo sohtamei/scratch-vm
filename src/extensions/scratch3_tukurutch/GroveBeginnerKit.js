@@ -54,7 +54,7 @@ class Scratch3Blocks {
     
 	get_blocks() {
 		this.flashList = [
-{name:'', type:'avr', baudrate:115200},
+{name:'GroveBeginnerKit', type:'atmega328', baudrate:115200},
 		];
 
 		this.blockOffset = 5;

@@ -55,8 +55,8 @@ class Scratch3Blocks {
     
 	get_blocks() {
 		this.flashList = [
-{name:'M5Camera', type:'esp32', baudrate:115200},//230400},
-{name:'M5TimerCam', type:'esp32', baudrate:115200},//230400},
+{name:'M5Camera', type:'esp32', baudrate:921600},
+{name:'M5TimerCam', type:'esp32', baudrate:1500000},
 		];
 
 		this.blockOffset = 5;
