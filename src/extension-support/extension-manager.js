@@ -22,10 +22,10 @@ const builtinExtensions = {
     M5Series: () => require('../extensions/scratch3_tukurutch/M5Series.js'),
     QuadCrawlerAI: () => require('../extensions/scratch3_tukurutch/QuadCrawlerAI.js'),
 
-    genericIO: () => require('../extensions/scratch3_tukurutch/genericIO.js'),
-    TempHumSht3x: () => require('../extensions/scratch3_tukurutch/TempHumSht3x.js'),
-    BMP280: () => require('../extensions/scratch3_tukurutch/BMP280.js'),
-    M5RoverC: () => require('../extensions/scratch3_tukurutch/M5RoverC.js'),
+    genericIO: () => require('../extensions/scratch3_devices/genericIO.js'),
+    TempHumSht3x: () => require('../extensions/scratch3_devices/TempHumSht3x.js'),
+    BMP280: () => require('../extensions/scratch3_devices/BMP280.js'),
+    M5RoverC: () => require('../extensions/scratch3_devices/M5RoverC.js'),
 
     ml2scratch: () => require('../extensions/scratch3_ml2scratch'),
     facemesh2scratch: () => require('../extensions/scratch3_facemesh2scratch'),

@@ -9,8 +9,8 @@ const StubCodeBin = require('!arraybuffer-loader!./STUB_CODE.bin');
 const BootloaderBin = require('!arraybuffer-loader!./bootloader_qio_80m.bin');
 const BootApp0Bin = require('!arraybuffer-loader!./boot_app0.bin');
 
-const WlanStatus = [['IDLE_STATUS','NO_SSID_AVAIL','SCAN_COMPLETED','CONNECTED','CONNECT_FAILED','CONNECTION_LOST','DISCONNECTED',],
-				   ['アイドル中','SSIDが見つかりません','SCAN完了','接続中','接続失敗','切断されました','切断',]];
+//const WlanStatus = [['IDLE_STATUS','NO_SSID_AVAIL','SCAN_COMPLETED','CONNECTED','CONNECT_FAILED','CONNECTION_LOST','DISCONNECTED',],
+//				   ['アイドル中','SSIDが見つかりません','SCAN完了','接続中','接続失敗','切断されました','切断',]];
 
 class comlib {
     constructor(extName, server, SupportCamera) {
@@ -37,7 +37,7 @@ class comlib {
 
 		let cookie_ifType = null;
 		let cookies_get = document.cookie.split(';');
-		for(let i=0;i<cookies_get.length;i++) {
+		for(let i = 0; i < cookies_get.length; i++) {
 			let tmp = cookies_get[i].trim().split('=');
 			switch(tmp[0]) {
 			case extName+'_ip':
@@ -237,16 +237,14 @@ class comlib {
 	}
 
 	sendRecv(cmd, argsDef, args) {
-		this.statusMessage.innerText = ' ';
+		this.statusMessage.innerText = '';
 
 		let data = new Uint8Array(256);
 		let dv = new DataView(data.buffer);
-		let tmp = new Uint8Array([0xff, 0x55, 0x00, cmd]);
-		let ofs = 0;
-		for(ofs = 0; ofs < tmp.length; ofs++)
-			data[ofs] = tmp[ofs];
 
-		let j = 0;
+		data.set([0xff,0x55,0x00,cmd],0);
+		let ofs = 4;
+
 		for(let i = 1; ; i++) {
 			eval("var param = args.ARG"+i);
 			eval("var def = argsDef.ARG"+i);
@@ -260,6 +258,7 @@ class comlib {
 			case 'D': dv.setFloat64(ofs,param,true); ofs+=8; break;
 
 			case 's':
+				let j = 0;
 				if(param !== 'undefined') {
 					let charList = param.split('');
 					for(j = 0; j < charList.length; j++)
@@ -271,10 +270,9 @@ class comlib {
 
 			case 'b':
 				if(typeof param !== 'object') break;
-				data[ofs] = param.length; ofs++;
-				for(j = 0; j < param.length; j++)
-					data[ofs+j] = param[j];
-				ofs += j;
+				data[ofs+0] = param.length;
+				data.set(param, ofs+1);
+				ofs += param.length+1;
 				break;
 			}
 		}
@@ -403,21 +401,26 @@ class comlib {
 
 		const _this = this;
 		let port = null;
+
+		navigator.serial.ondisconnect = function(e) {
+			console.log('disconnected');
+			_this.port.close();
+			_this.port = null;
+			_this.statusMessage.innerText = ['Disconnected','切断されました'][_this._locale];
+		}
+
 		return navigator.serial.requestPort({})
 		.then(result => {
 			port = result;
-
 			return port.open({ baudRate:115200 });
 		}).then(() => {
 			const writer = port.writable.getWriter();
-			let tmp = new Uint8Array([0x00,0xff,0x55,0x01,0xfe]);
-			writer.write(tmp);
-			writer.releaseLock();
-
-			reader = port.readable.getReader();
+			const reader = port.readable.getReader();
 			let count = 0;
 			let buf = new Uint8Array(256);
-			return new Promise(resolve => {
+			
+			return writer.write(new Uint8Array([0x00,0xff,0x55,0x01,0xfe]))
+			.then(() => new Promise((resolve,reject) => {
 				loop();
 				function loop(){
 					return reader.read()
@@ -426,6 +429,7 @@ class comlib {
 						for(let i = 0; i < result.value.length; i++) {
 							buf[count++] = result.value[i];
 							if(result.value[i] == 0x0a) {
+								writer.releaseLock();
 								reader.releaseLock();
 								resolve();
 								return;
@@ -434,7 +438,7 @@ class comlib {
 						loop();
 					})
 				}
-			}).then(() => {
+			})).then(() => {
 				let tmp = String.fromCharCode.apply(null, buf.slice(0,count));
 				_this.statusMessage.innerText = tmp;
 				console.log(tmp);
