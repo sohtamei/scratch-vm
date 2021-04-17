@@ -29,7 +29,6 @@ class comlib {
 		this.wsError = null;
 
 		this.port = null;
-		this.reader = null;
 		this.espBurnBusy = false;
 		this.recvResolve = null;
 		this.recvTimeout = null;
@@ -80,12 +79,6 @@ class comlib {
 		document.cookie = this.extName+'_ip=' + this.ipadrs + '; samesite=lax; expires=Tue, 31-Dec-2037 00:00:00 GMT;';
 		if(this.SupportCamera)
 		  document.cookie = 'Camera_ip=' + this.ipadrs + '; samesite=lax; expires=Tue, 31-Dec-2037 00:00:00 GMT;';
-
-		if(this.reader) {
-			this.reader.cancel();
-			this.reader.releaseLock();
-			this.reader = null;
-		}
 
 		if(this.port) {
 			this.port.close();
@@ -296,11 +289,12 @@ class comlib {
 			return;
 		}).then(() => new Promise(resolve => {
 			_this.cueue.push({resolve:resolve, data:data});
-			_this.checkCueue(_this);
+			_this.checkCueue();
 		}))
 	}
 
-	checkCueue(_this) {
+	checkCueue() {
+		const _this = this;
 		if(_this.cueue.length == 0) return;
 		if(_this.busy) {
 			console.log('+Cueue=' + (_this.cueue.length-1) + '->' + _this.cueue.length);
@@ -312,31 +306,51 @@ class comlib {
 		console.log('W:'+_this._dumpBuf(data));	// debug
 		if(_this.ifType == 'WLAN')
 			return _this._sendRecvWs(data,resolve);
-		else
-			return _this._sendRecvUart(data,resolve);
-		
+		else {
+			return _this._sendRecvUart(data)
+			.then(tmp => {
+				_this.busy = false;
+				resolve(tmp);
+				if(_this.cueue.length != 0) console.log('-Cueue=' + _this.cueue.length + '->' + (_this.cueue.length-1));
+				_this.checkCueue();
+			}).catch(err => {
+				_this.busy = false;
+				resolve(err);
+				console.log(err);
+			})
+		}
 	}
 
-	_sendRecvUart(sendBuf,resolve) {
+	_sendRecvUart(sendBuf) {
 		const _this = this;
-		if(_this.port.writable == null) {
-			console.warn('unable to find writable port');
-			return;
-		}
 
 		const writer = _this.port.writable.getWriter();
-		writer.write(sendBuf);
-		writer.releaseLock();
-
-		this.reader = _this.port.readable.getReader();
+		const reader = _this.port.readable.getReader();
 		let count = 0;
 		let size = 3;
 		let buf = new Uint8Array(256);
-		return new Promise(resolve2 => {
+		
+		return writer.write(sendBuf)
+		.then(() => new Promise((resolve,reject) => {
+			let hTimeout = null;
 			loop();
 			function loop(){
-				return _this.reader.read()
+				new Promise(resolve2 => {
+					hTimeout = setTimeout(resolve2, 3000);
+				}).then(() => {
+					console.log('timeout !');
+					reader.cancel();
+				})
+
+				return reader.read()
 				.then(result => {
+					clearTimeout(hTimeout);
+					if(result.done) {
+						writer.releaseLock();
+						reader.releaseLock();
+						reject('timeout');
+						return;
+					}
 				//	console.log(_this._dumpBuf(result.value));	// debug
 					for(let i = 0; i < result.value.length; i++) {
 						switch(count) {
@@ -357,40 +371,31 @@ class comlib {
 						}
 						buf[count] = result.value[i];
 						count++;
-					}
-					if(count >= size) {
-						_this.reader.releaseLock();
-						_this.reader = null;
-						console.log('R:'+_this._dumpBuf(buf.slice(0,size)));	// debug
-						let tmp = 0;
-						if(size >= 5) {
-							let tmp2 = new DataView(buf.buffer);
-							switch(buf[3]) {
-							case 1: tmp = tmp2.getUint8(4); break;
-							case 2: tmp = tmp2.getInt16(4, true); break;
-							case 3: tmp = tmp2.getInt32(4, true); break;
-							case 4: tmp = tmp2.getFloat32(4, true); break;
-							case 5: tmp = tmp2.getFloat64(4, true); break;
-							case 6: tmp = String.fromCharCode.apply(null, buf.slice(4,size)); break;
-							case 7: tmp = buf.slice(5,5+buf[4]); break;
+						if(count >= size) {
+							console.log('R:'+_this._dumpBuf(buf.slice(0,size)));	// debug
+							let tmp = 0;
+							if(size >= 5) {
+								let tmp2 = new DataView(buf.buffer);
+								switch(buf[3]) {
+								case 1: tmp = tmp2.getUint8(4); break;
+								case 2: tmp = tmp2.getInt16(4, true); break;
+								case 3: tmp = tmp2.getInt32(4, true); break;
+								case 4: tmp = tmp2.getFloat32(4, true); break;
+								case 5: tmp = tmp2.getFloat64(4, true); break;
+								case 6: tmp = String.fromCharCode.apply(null, buf.slice(4,size)); break;
+								case 7: tmp = buf.slice(5,5+buf[4]); break;
+								}
 							}
+							writer.releaseLock();
+							reader.releaseLock();
+							resolve(tmp);
+							return;
 						}
-						resolve2(tmp);
-						return;
 					}
 					loop();
 				})
-			}
-		}).then(tmp => {
-			_this.busy = false;
-			resolve(tmp);
-			if(_this.cueue.length != 0) console.log('-Cueue=' + _this.cueue.length + '->' + (_this.cueue.length-1));
-			_this.checkCueue(_this);
-		}).catch(err => {
-		//	_this.port = null;
-			console.log(err);
-			return 'error';
-		})
+			} // loop
+		})) // promise
 	}
 
 	_openUart() {
@@ -409,20 +414,19 @@ class comlib {
 			writer.write(tmp);
 			writer.releaseLock();
 
-			_this.reader = port.readable.getReader();
+			reader = port.readable.getReader();
 			let count = 0;
 			let buf = new Uint8Array(256);
 			return new Promise(resolve => {
 				loop();
 				function loop(){
-					return _this.reader.read()
+					return reader.read()
 					.then(result => {
 					//	console.log(result.value);	// debug
 						for(let i = 0; i < result.value.length; i++) {
 							buf[count++] = result.value[i];
 							if(result.value[i] == 0x0a) {
-								_this.reader.releaseLock();
-								_this.reader = null;
+								reader.releaseLock();
 								resolve();
 								return;
 							}
@@ -478,7 +482,7 @@ class comlib {
 			_this.wsResolve(tmp);
 			_this.wsResolve = null;
 			if(_this.cueue.length != 0) console.log('-Cueue=' + _this.cueue.length + '->' + (_this.cueue.length-1));
-			_this.checkCueue(_this);
+			_this.checkCueue();
 			return;
 		}
 
@@ -526,7 +530,6 @@ class comlib {
 		this.statusMessage.innerText = '';
 
 		const _this = this;
-		let reader = null;
 		if(this.port) {
 			this.port.close();
 			this.port = null;
@@ -607,10 +610,6 @@ class comlib {
 			console.log(err);
 			return 'error';
 		}).finally(result => {
-			if(reader) {
-				reader.cancel();
-				reader.releaseLock();
-			}
 			if(_this.port) {
 				_this.port.close();
 				_this.port = null;
@@ -657,10 +656,10 @@ class comlib {
 	_SendRecvAvrBurn(sendBuf, recvNum) {
 		const _this = this;
 
-		let tmp = new Uint8Array(sendBuf.length+1);
-		tmp.set(sendBuf, 0);
-		tmp[sendBuf.length] = 0x20;
-	//	console.log('W:'+_this._dumpBuf(tmp));	// debug
+		let _send = new Uint8Array(sendBuf.length+1);
+		_send.set(sendBuf, 0);
+		_send[sendBuf.length] = 0x20;
+	//	console.log('W:'+_this._dumpBuf(_send));	// debug
 
 		const writer = _this.port.writable.getWriter();
 		const reader = _this.port.readable.getReader();
@@ -668,7 +667,7 @@ class comlib {
 		let size = 2+recvNum;
 		let buf = new Uint8Array(size);
 		
-		return writer.write(tmp)
+		return writer.write(_send)
 		.then(() => new Promise((resolve,reject) => {
 			let hTimeout = null;
 			loop();
@@ -686,15 +685,14 @@ class comlib {
 					if(result.done) {
 						writer.releaseLock();
 						reader.releaseLock();
-						reject();
+						reject('timeout');
 						return;
 					}
-
 				//	console.log(_this._dumpBuf(result.value));	// debug
 					for(let i = 0; i < result.value.length; i++) {
 						if(count == 0) {
 							if(result.value[i] == 0x15) {
-								return writer.write(tmp)
+								return writer.write(_send)
 								.then(() => loop())
 							} else if(result.value[i] != 0x14) {
 								continue;
@@ -717,10 +715,9 @@ class comlib {
 					loop();
 				})
 			} // loop
-		}))
-		.then(recv => {
-			console.log((recv.length>0) ? _this._dumpBuf(recv): 'OK');
-			return recv;
+		})).then(tmp => {
+			console.log((tmp.length>0) ? _this._dumpBuf(tmp): 'OK');
+			return tmp;
 		})
 	}
 
