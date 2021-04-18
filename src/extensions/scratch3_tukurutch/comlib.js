@@ -112,7 +112,7 @@ class comlib {
   {'B'},			// 0x87:digiRead       (port)                  ret:level
   {'B','S'},		// 0x88:anaRead        (port, count)           ret:level(int16)
   {'B','S','S'},	// 0x89:tone           (port,freq,ms)
-//  {'B','S'},		// 0x90:set_pwm        (port, data)
+  {'b'},			// 0x8a:setPwms        (LIST[port,data])
 
   {},				// 0xFB:statusWifi     ()                      ret:wlanStatus SSID ip
   {},				// 0xFC:scanWifi       ()                      ret:SSID1 SSID2 SSID3 ..
@@ -173,6 +173,20 @@ class comlib {
 		const _defs = {ARG1:{type2:'B'},ARG2:{type2:'S'},ARG3:{type2:'S'}};
 		const _args = {ARG1:port, ARG2:freq, ARG3:ms};
 		return this.sendRecv(0x89,_defs,_args);
+	}
+
+	setPwms(portLevels) {
+		let buf = new Uint8Array(portLevels.length*3);
+		for(let i = 0; i < portLevels.length; i++) {
+			let level = Math.min(portLevels[i].level, 0xFFF);
+			buf[i*3+0] = portLevels[i].port;
+			buf[i*3+1] = level&0xFF;
+			buf[i*3+2] = level>>8;
+		}
+
+		const _defs = {ARG1:{type2:'b'}};
+		const _args = {ARG1:buf};
+		return this.sendRecv(0x8A,_defs,_args);
 	}
 
 	statusWifi() {
@@ -414,36 +428,55 @@ class comlib {
 			port = result;
 			return port.open({ baudRate:115200 });
 		}).then(() => {
-			const writer = port.writable.getWriter();
-			const reader = port.readable.getReader();
+			_this.port = port;
+			const writer = _this.port.writable.getWriter();
+			const reader = _this.port.readable.getReader();
 			let count = 0;
 			let buf = new Uint8Array(256);
 			
 			return writer.write(new Uint8Array([0x00,0xff,0x55,0x01,0xfe]))
 			.then(() => new Promise((resolve,reject) => {
+				let hTimeout = null;
 				loop();
 				function loop(){
+					new Promise(resolve2 => {
+						hTimeout = setTimeout(resolve2, 1000);
+					}).then(() => {
+						console.log('timeout !');
+						reader.cancel();
+					})
+
 					return reader.read()
 					.then(result => {
-					//	console.log(result.value);	// debug
+						clearTimeout(hTimeout);
+						if(result.done) {
+							writer.releaseLock();
+							reader.releaseLock();
+							reject('timeout');
+							return;
+						}
+					//	console.log(_this._dumpBuf(result.value));	// debug
 						for(let i = 0; i < result.value.length; i++) {
 							buf[count++] = result.value[i];
 							if(result.value[i] == 0x0a) {
 								writer.releaseLock();
 								reader.releaseLock();
-								resolve();
+								resolve(buf.slice(0,count));
 								return;
 							}
 						}
 						loop();
 					})
-				}
-			})).then(() => {
-				let tmp = String.fromCharCode.apply(null, buf.slice(0,count));
+				} // loop
+			})).then(recv => {
+				let tmp = String.fromCharCode.apply(null, recv);
 				_this.statusMessage.innerText = tmp;
 				console.log(tmp);
-				_this.port = port;
 				return;
+			}).catch(err => {
+				if(_this.port) _this.port.close();
+				_this.port = null;
+				throw err;
 			})
 		})
 	}
@@ -606,13 +639,13 @@ class comlib {
 							loop();
 						}
 					})
-				}
+				} // loop
 			})
 		}).then(() => _this._SendRecvAvrBurn([0x51], 0))		// LEAVE_PROGMODE
 		.then(() => 'OK !')
 		.catch(err => {
 			console.log(err);
-			return 'error';
+			throw 'error';
 		}).finally(result => {
 			if(_this.port) {
 				_this.port.close();
@@ -870,7 +903,7 @@ class comlib {
 		}).catch(() => {
 			_this.statusMessage.innerText = ['Failed', '書き込み失敗'][_this._locale];
 			console.log('NG');
-			return 'Error';
+			throw 'Error';
 		}).finally(result => {
 			if(reader) {
 				reader.cancel();

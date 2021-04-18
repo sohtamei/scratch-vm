@@ -93,10 +93,10 @@ class Scratch3Blocks {
 
 	setRoverC(args)
 	{
-		let F_L = Number(args.ARG1);
-		let F_R = Number(args.ARG2);
-		let R_L = Number(args.ARG3);
-		let R_R = Number(args.ARG4);
+		let F_L = args.ARG1*1;
+		let F_R = args.ARG2*1;
+		let R_L = args.ARG3*1;
+		let R_R = args.ARG4*1;
 		console.log(F_L,F_R,R_L,R_R);
 
 		F_L = Math.min(100, Math.max(-100, F_L));
@@ -116,9 +116,9 @@ class Scratch3Blocks {
 
 	setRoverC_XYR(args)
 	{
-		let x = Number(args.ARG1);
-		let y = Number(args.ARG2);
-		let role = Number(args.ARG3);
+		let x = args.ARG1*1;
+		let y = args.ARG2*1;
+		let role = args.ARG3*1;
 
 		let left = y+x;
 		let right = y-x;
@@ -137,8 +137,8 @@ class Scratch3Blocks {
 
 	moveRoverC(args)
 	{
-		let dir = Number(args.ARG1);
-		let speed = Number(args.ARG2);
+		let dir = args.ARG1*1;
+		let speed = args.ARG2*1;
 		const rdir_table = [
 			{x: 0,y: 0,r: 0},  // STOP
 			{x: 1,y: 1,r: 0},  // UP_R

@@ -95,6 +95,16 @@ class Scratch3Blocks {
 					ARG3: { type: ArgumentType.NUMBER, defaultValue:500, menu:'beats' },
 				}},
 
+				{blockType: BlockType.COMMAND, opcode: 'setPwms', text: '［PWM］port[ARG1] level[ARG2]', arguments: {
+					ARG1: digitalPortArg,
+					ARG2: { type: ArgumentType.NUMBER, defaultValue:2048 },
+				}},
+
+				{blockType: BlockType.COMMAND, opcode: 'setServo180', text: '[PWM]servo port[ARG1] angle[ARG2]', arguments: {
+					ARG1: digitalPortArg,
+				    ARG2: { type: ArgumentType.NUMBER, defaultValue:90 },
+				}},
+
 				'---',
 				{blockType: BlockType.REPORTER, opcode: 'hex2dec', text: '［UTIL］hex[ARG1] (up[ARG2] low[ARG3]) to number', arguments: {
 					ARG1: { type: ArgumentType.STRING, defaultValue:"FF0001" },
@@ -168,7 +178,7 @@ class Scratch3Blocks {
 
 	wire_read(args) {
 		let adrs = parseInt(args.ARG1, 16);
-		let size = parseInt(args.ARG2, 10);
+		let size = args.ARG2*1;
 
 		const _this = this;
 		return this.runtime.dev.comlib.wire_begin(this.port[0], this.port[1])
@@ -183,7 +193,7 @@ class Scratch3Blocks {
 
 	wire_writeRead(args) {
 		let adrs = parseInt(args.ARG1, 16);
-		let sizeR = parseInt(args.ARG3, 10);
+		let sizeR = args.ARG3*1;
 
 		if(args.ARG2.length & 1) args.ARG2 = '0'+args.ARG2;
 		let size = args.ARG2.length/2;
@@ -215,27 +225,27 @@ class Scratch3Blocks {
 	}
 
 	digiWrite(args) {
-		let port = parseInt(args.ARG1, 10);
-		let level = parseInt(args.ARG2, 10);
+		let port = args.ARG1*1;
+		let level = args.ARG2*1;
 		return this.runtime.dev.comlib.digiWrite(new Uint8Array([port,level]));
 	}
 
 	digiRead(args) {
-		let port = parseInt(args.ARG1, 10);
+		let port = args.ARG1*1;
 		return this.runtime.dev.comlib.digiRead(port);
 	}
 
 	anaRead(args) {
-		let port = parseInt(args.ARG1, 10);
-		let count = parseInt(args.ARG2, 10);
+		let port = args.ARG1*1;
+		let count = args.ARG2*1;
 		return this.runtime.dev.comlib.anaRead(port,count);
 	}
 
 	tone(args) {
-		let port = parseInt(args.ARG1, 10);
-		let ms = parseInt(args.ARG3, 10);
-		let freq = parseInt(args.ARG2, 10);
-	/*	let code = parseInt(args.ARG2, 10);
+		let port = args.ARG1*1;
+		let ms = args.ARG3*1;
+		let freq = args.ARG2*1;
+	/*	let code = args.ARG2*1;
 		let freq = [65,69,73,78,82,87,93,98,104,110,117,123,
 					131,139,147,156,165,175,186,196,208,220,234,247,
 					262,278,294,312,330,349,371,392,416,440,467,494,
@@ -248,9 +258,26 @@ class Scratch3Blocks {
 		return this.runtime.dev.comlib.tone(port,freq,ms);
 	}
 
+	setPwms(args) {
+		let port = args.ARG1*1;
+		let level = Math.min(args.ARG2*1, 0xFFF);
+		return this.runtime.dev.comlib.setPwms([{port:port,level:level}]);
+	}
+
+	setServo180(args) {
+		let port = args.ARG1*1;
+		let angle = args.ARG2*1;	// 0~180
+		angle = Math.min(180, Math.max(0, angle));
+
+		const srvMin = 103;		// 0.5ms/20ms*4096 = 102.4 (-90c)
+		const srvMax = 491;		// 2.4ms/20ms*4096 = 491.5 (+90c)
+		let level = (angle * (srvMax - srvMin)) / 180 + srvMin;
+		return this.runtime.dev.comlib.setPwms([{port:port,level:level}]);
+	}
+
 	hex2dec(args) {
-		let upper = parseInt(args.ARG2, 10);
-		let lower = parseInt(args.ARG3, 10);
+		let upper = args.ARG2*1;
+		let lower = args.ARG3*1;
 		console.log(args.ARG1);
 		if(args.ARG1.length & 1) args.ARG1 = '0'+args.ARG1;
 		if(args.ARG1.length < upper || args.ARG1.length < lower) return 'error';

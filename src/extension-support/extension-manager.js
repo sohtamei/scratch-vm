@@ -25,6 +25,7 @@ const builtinExtensions = {
     genericIO: () => require('../extensions/scratch3_devices/genericIO.js'),
     TempHumSht3x: () => require('../extensions/scratch3_devices/TempHumSht3x.js'),
     BMP280: () => require('../extensions/scratch3_devices/BMP280.js'),
+    servoCar: () => require('../extensions/scratch3_devices/servoCar.js'),
     M5RoverC: () => require('../extensions/scratch3_devices/M5RoverC.js'),
 
     ml2scratch: () => require('../extensions/scratch3_ml2scratch'),
