@@ -152,8 +152,14 @@ class comlib {
 	}
 
 	digiWrite(portLevels) {
+		let buf = new Uint8Array(portLevels.length*2);
+		for(let i = 0; i < portLevels.length; i++) {
+			buf[i*2+0] = portLevels[i].port;
+			buf[i*2+1] = portLevels[i].level;
+		}
+
 		const _defs = {ARG1:{type2:'b'}};
-		const _args = {ARG1:portLevels};
+		const _args = {ARG1:buf};
 		return this.sendRecv(0x86,_defs,_args);
 	}
 

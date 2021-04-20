@@ -13,6 +13,13 @@ class Scratch3Blocks {
 		this.runtime = runtime;
 		this.port = [0,26];
 		this.initWire = false;
+
+		this.stick1X = 0;
+		this.stick1Y = 0;
+		this.stick1R = 0;
+		this.stick2X = 0;
+		this.stick2Y = 0;
+		this.stick2R = 0;
 	}
 
 	getInfo () {
@@ -27,13 +34,33 @@ class Scratch3Blocks {
 		return {
 			id: extName,
 			name: extName,
-		//	blockIconURI: IconURI,  // Icon png to be displayed at the left edge of each extension block, encoded as a data URI.
 			menuIconURI: IconURI,   // Icon png to be displayed in the blocks category menu, encoded as a data URI.
 
 			blocks: [
+				{blockType: BlockType.COMMAND, opcode: 'setPort', text: 'I2C port [ARG1] for ESP32', arguments: {
+					ARG1: { type: ArgumentType.STRING, defaultValue:'0_26', menu: 'i2cPort' },
+				}},
+
 				{blockType: BlockType.COMMAND, opcode: 'moveRoverC', text: 'dir [ARG1] speed [ARG2]', arguments: {
 				    ARG1: { type: ArgumentType.NUMBER, type2:'B', defaultValue:2, menu: 'roverDir' },
 				    ARG2: { type: ArgumentType.NUMBER, type2:'B', defaultValue:100 },
+				}},
+
+				{blockType: BlockType.COMMAND, opcode: 'stopCar', text: 'stop', arguments: {
+				}},
+
+				{blockType: BlockType.COMMAND, opcode: 'setupStickXY', text: ['setup XY-stick, size[ARG1]','XYスティック設定 サイズ[ARG1]'][this._locale], arguments: {
+				    ARG1: { type: ArgumentType.NUMBER, defaultValue:50 },
+				}},
+
+				{blockType: BlockType.BOOLEAN, opcode: 'updateStickXY', text: ['finish of XY-stick operation','XYスティック操作完了'][this._locale], arguments: {
+				}},
+
+				{blockType: BlockType.COMMAND, opcode: 'setupStickR', text: ['setup Role-stick, size[ARG1]','Roleスティック設定 サイズ[ARG1]'][this._locale], arguments: {
+				    ARG1: { type: ArgumentType.NUMBER, defaultValue:50 },
+				}},
+
+				{blockType: BlockType.BOOLEAN, opcode: 'updateStickR', text: ['finish of Role-stick operation','Roleスティック操作完了'][this._locale], arguments: {
 				}},
 
 				{blockType: BlockType.COMMAND, opcode: 'setRoverC_XYR', text: 'x [ARG1] y [ARG2] role [ARG3]', arguments: {
@@ -47,10 +74,6 @@ class Scratch3Blocks {
 				    ARG2: { type: ArgumentType.NUMBER, type2:'S', defaultValue:0 },
 				    ARG3: { type: ArgumentType.NUMBER, type2:'S', defaultValue:0 },
 				    ARG4: { type: ArgumentType.NUMBER, type2:'S', defaultValue:0 },
-				}},
-
-				{blockType: BlockType.COMMAND, opcode: 'setPort', text: 'I2C port [ARG1] for ESP32', arguments: {
-					ARG1: { type: ArgumentType.STRING, defaultValue:'0_26', menu: 'i2cPort' },
 				}},
 
 				{blockType: BlockType.REPORTER, opcode: 'enumRoverDir', text: '[ARG1] .', arguments: {
@@ -108,7 +131,7 @@ class Scratch3Blocks {
 		if(!this.initWire) {
 			this.initWire = true;
 			return this.runtime.dev.comlib.wire_begin(this.port[0], this.port[1])
-				.then(() => _this.runtime.dev.comlib.wire_write(ROVER_ADDRESS, new Uint8Array([0x00,F_L,F_R,R_L,R_R])));
+			.then(() => _this.runtime.dev.comlib.wire_write(ROVER_ADDRESS, new Uint8Array([0x00,F_L,F_R,R_L,R_R])));
 		} else {
 			return _this.runtime.dev.comlib.wire_write(ROVER_ADDRESS, new Uint8Array([0x00,F_L,F_R,R_L,R_R]));
 		}
@@ -155,6 +178,71 @@ class Scratch3Blocks {
 
 		if(dir >= rdir_table.length) return;
 		this.setRoverC_XYR({ARG1:speed*rdir_table[dir].x, ARG2:speed*rdir_table[dir].y, ARG3:speed*rdir_table[dir].r});
+	}
+
+	stopCar(args) {
+		return this.runtime.dev.comlib.wire_write(ROVER_ADDRESS, new Uint8Array([0x00,0,0,0,0]));
+	}
+
+	setupStickXY(args, util) {
+		this.stick1X = util.target.x;
+		this.stick1Y = util.target.y;
+		this.stick1R = args.ARG1*1;
+	}
+
+	updateStickXY(args, util) {
+		let mouseX = util.ioQuery('mouse', 'getScratchX');
+		let mouseY = util.ioQuery('mouse', 'getScratchY');
+		let mouseDown = util.ioQuery('mouse', 'getIsDown');
+		let dX = mouseX - this.stick1X;
+		let dY = mouseY - this.stick1Y;
+
+		if(!mouseDown) {
+			util.target.setXY(this.stick1X, this.stick1Y);
+			return this.stopCar(args)
+			.then(() => true)
+		}
+
+		let a = Math.sqrt(dX*dX + dY*dY);
+		if(a > this.stick1R) {
+			dX = dX * this.stick1R/a;
+			dY = dY * this.stick1R/a;
+			util.target.setXY(dX+this.stick1X, dY+this.stick1Y);
+		} else {
+			util.target.setXY(mouseX, mouseY);
+		}
+
+		return this.setRoverC_XYR({ARG1:dX,ARG2:dY,ARG3:0})
+		.then(() => false)
+	}
+
+	setupStickR(args, util) {
+		this.stick2X = util.target.x;
+		this.stick2Y = util.target.y;
+		this.stick2R = args.ARG1*1;
+	}
+
+	updateStickR(args, util) {
+		let mouseX = util.ioQuery('mouse', 'getScratchX');
+		let mouseDown = util.ioQuery('mouse', 'getIsDown');
+		let dX = mouseX - this.stick2X;
+
+		if(!mouseDown) {
+			util.target.setXY(this.stick2X, this.stick2Y);
+			return this.stopCar(args)
+			.then(() => true)
+		}
+
+		let a = dX;
+		if(a > this.stick2R) {
+			dX = dX * this.stick2R/a;
+			util.target.setXY(dX+this.stick2X, this.stick2Y);
+		} else {
+			util.target.setXY(mouseX, this.stick2Y);
+		}
+
+		return this.setRoverC_XYR({ARG1:0,ARG2:0,ARG3:dX})
+		.then(() => false)
 	}
 }
 module.exports = Scratch3Blocks;

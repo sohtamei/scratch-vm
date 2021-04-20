@@ -106,29 +106,9 @@ class Scratch3Blocks {
     ARG1: { type: ArgumentType.NUMBER, type2:'B', defaultValue:0, menu: 'button' },
 }},
 
-{blockType: BlockType.COMMAND, opcode: 'setDigital', text: [
-    'set digital pin [ARG1] output as [ARG2]',
-    'デジタルピン [ARG1] の出力を [ARG2] にする',
-][this._locale], arguments: {
-    ARG1: { type: ArgumentType.NUMBER, type2:'B', defaultValue:26 },
-    ARG2: { type: ArgumentType.NUMBER, type2:'B', defaultValue:1, menu: 'digital' },
-}},
-
-{blockType: BlockType.BOOLEAN, opcode: 'getDigital', text: [
-    'read digital pin [ARG1]',
-    'デジタルピン [ARG1]',
-][this._locale], arguments: {
-    ARG1: { type: ArgumentType.NUMBER, type2:'B', defaultValue:26 },
-}},
-
-{blockType: BlockType.REPORTER, opcode: 'getAnalog', text: [
-    'read analog pin [ARG1] average [ARG2] times',
-    'アナログピン [ARG1] の [ARG2] 回平均',
-][this._locale], arguments: {
-    ARG1: { type: ArgumentType.NUMBER, type2:'B', defaultValue:36 },
-    ARG2: { type: ArgumentType.NUMBER, type2:'S', defaultValue:4 },
-}},
-
+'---',
+'---',
+'---',
 '---',
 {blockType: BlockType.COMMAND, opcode: 'setText', text: 'set text [ARG1] size=[ARG2]', arguments: {
     ARG1: { type: ArgumentType.NUMBER, type2:'S', defaultValue:65535, menu: 'color' },
@@ -159,32 +139,6 @@ class Scratch3Blocks {
     ARG1: { type: ArgumentType.NUMBER, type2:'S', defaultValue:0, menu: 'color' },
 }},
 
-'---',
-{blockType: BlockType.COMMAND, opcode: 'tagServo', text: '--- ServoCar ---', arguments: {
-}},
-
-{blockType: BlockType.COMMAND, opcode: 'setCar', text: '[ARG1] at speed [ARG2]', arguments: {
-    ARG1: { type: ArgumentType.NUMBER, type2:'B', defaultValue:1, menu: 'direction' },
-    ARG2: { type: ArgumentType.NUMBER, type2:'B', defaultValue:100 },
-}},
-
-{blockType: BlockType.COMMAND, opcode: 'setMotor', text: 'set motor [ARG1] speed [ARG2]', arguments: {
-    ARG1: { type: ArgumentType.NUMBER, type2:'B', defaultValue:0, menu: 'servoch' },
-    ARG2: { type: ArgumentType.NUMBER, type2:'S', defaultValue:100, menu: 'speed' },
-}},
-
-{blockType: BlockType.COMMAND, opcode: 'stopCar', text: 'stop', arguments: {
-}},
-
-{blockType: BlockType.REPORTER, opcode: 'enumDirection', text: '[ARG1] .', arguments: {
-    ARG1: { type: ArgumentType.NUMBER, type2:'B', defaultValue:1, menu: 'direction' },
-}},
-
-{blockType: BlockType.COMMAND, opcode: 'setServo', text: 'set servo [ARG1] [ARG2]', arguments: {
-    ARG1: { type: ArgumentType.NUMBER, type2:'B', defaultValue:0, menu: 'servoch' },
-    ARG2: { type: ArgumentType.NUMBER, type2:'B', defaultValue:90, menu: 'angle' },
-}},
-
 		];
 		return this._blocks;
 	}
@@ -201,8 +155,6 @@ ifType: { acceptReporters: true, items: [
 ]},
 
 flashList: { acceptReporters: true, items: this.flashItems },
-
-angle: { acceptReporters: true, items: ['0','90','180',]},
 
 beats: { acceptReporters: true, items: [
 { text: 'Half', value: 500 },
@@ -238,22 +190,6 @@ color: { acceptReporters: true, items: [
 { text: 'ORANGE', value: 64800 },
 { text: 'GREENYELLOW', value: 45029 },
 { text: 'PINK', value: 63519 },
-]},
-
-digital: { acceptReporters: true, items: [
-{ text: 'HIGH', value: 1 },
-{ text: 'LOW', value: 0 },
-]},
-
-direction: { acceptReporters: true, items: [
-{ text: 'stop', value: 0 },
-{ text: 'run forward', value: 1 },
-{ text: 'turn left', value: 2 },
-{ text: 'turn right', value: 3 },
-{ text: 'run backward', value: 4 },
-{ text: 'rotate left', value: 5 },
-{ text: 'rotate right', value: 6 },
-{ text: 'calibration', value: 7 },
 ]},
 
 font: { acceptReporters: true, items: [
@@ -330,10 +266,6 @@ onoff: { acceptReporters: true, items: [
 { text: 'Off', value: 0 },
 ]},
 
-servoch: { acceptReporters: true, items: ['0','1',]},
-
-speed: { acceptReporters: true, items: ['100','50','0','-50','-100',]},
-
 	  };
 	}
 
@@ -342,21 +274,12 @@ getIMU(args,util) { return this.sendRecv(arguments.callee.name, args); }
 Buzzer(args,util) { return this.sendRecv(arguments.callee.name, args); }
 Beep(args,util) { return this.sendRecv(arguments.callee.name, args); }
 getSw(args,util) { return this.sendRecv(arguments.callee.name, args); }
-setDigital(args,util) { return this.sendRecv(arguments.callee.name, args); }
-getDigital(args,util) { return this.sendRecv(arguments.callee.name, args); }
-getAnalog(args,util) { return this.sendRecv(arguments.callee.name, args); }
 setText(args,util) { return this.sendRecv(arguments.callee.name, args); }
 setCursor(args,util) { return this.sendRecv(arguments.callee.name, args); }
 printText(args,util) { return this.sendRecv(arguments.callee.name, args); }
 printlnText(args,util) { return this.sendRecv(arguments.callee.name, args); }
 drawString(args,util) { return this.sendRecv(arguments.callee.name, args); }
 fillScreen(args,util) { return this.sendRecv(arguments.callee.name, args); }
-tagServo(args) { return args.ARG1; }
-setCar(args,util) { return this.sendRecv(arguments.callee.name, args); }
-setMotor(args,util) { return this.sendRecv(arguments.callee.name, args); }
-stopCar(args,util) { return this.sendRecv(arguments.callee.name, args); }
-enumDirection(args) { return args.ARG1; }
-setServo(args,util) { return this.sendRecv(arguments.callee.name, args); }
 
 	burnFlash(args) {
 		if(this.server=='http') return ['please access via https://','https:// でアクセスして下さい'][this._locale];

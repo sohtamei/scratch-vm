@@ -26,7 +26,9 @@ const builtinExtensions = {
     TempHumSht3x: () => require('../extensions/scratch3_devices/TempHumSht3x.js'),
     BMP280: () => require('../extensions/scratch3_devices/BMP280.js'),
     servoCar: () => require('../extensions/scratch3_devices/servoCar.js'),
+    motorCar: () => require('../extensions/scratch3_devices/motorCar.js'),
     M5RoverC: () => require('../extensions/scratch3_devices/M5RoverC.js'),
+    uiParts: () => require('../extensions/scratch3_devices/uiParts.js'),
 
     ml2scratch: () => require('../extensions/scratch3_ml2scratch'),
     facemesh2scratch: () => require('../extensions/scratch3_facemesh2scratch'),

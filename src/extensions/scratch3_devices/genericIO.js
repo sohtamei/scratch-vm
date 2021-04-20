@@ -227,7 +227,7 @@ class Scratch3Blocks {
 	digiWrite(args) {
 		let port = args.ARG1*1;
 		let level = args.ARG2*1;
-		return this.runtime.dev.comlib.digiWrite(new Uint8Array([port,level]));
+		return this.runtime.dev.comlib.digiWrite([{port:port, level:level}]);
 	}
 
 	digiRead(args) {

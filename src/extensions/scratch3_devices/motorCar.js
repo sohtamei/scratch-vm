@@ -1,4 +1,4 @@
-const extName = 'servoCar';
+const extName = 'motorCar';
 
 const IconURI = require('./tukurutch-small.png');
 
@@ -9,8 +9,12 @@ const formatMessage = require('format-message');
 class Scratch3Blocks {
 	constructor (runtime) {
 		this.runtime = runtime;
-		this.portL = 0;
-		this.portR = 0;
+
+		// L293D
+		this.port = {
+		//	L_in1:13, L_in2:12, L_en :18, R_in1:14, R_in2:15, R_en :19,
+			L_in1:2,  L_in2:16, L_en :15, R_in1:12, R_in2:13, R_en :0,
+		};
 
 		this.stickX = 0;
 		this.stickY = 0;
@@ -42,9 +46,13 @@ class Scratch3Blocks {
 			menuIconURI: IconURI,   // Icon png to be displayed in the blocks category menu, encoded as a data URI.
 
 			blocks: [
-				{blockType: BlockType.COMMAND, opcode: 'setPort', text: ['setup port','ポート設定'][this._locale]+' L[ARG1] R[ARG2]', arguments: {
-					ARG1: digitalPortArg,
-					ARG2: digitalPortArg,
+				{blockType: BlockType.COMMAND, opcode: 'setPort', text: ['port','ポート'][this._locale]+' L:in1[ARG1]in2[ARG2]en[ARG3] R:in1[ARG4]in2[ARG5]en[ARG6]', arguments: {
+				    ARG1: { type: ArgumentType.NUMBER, defaultValue:2 },
+				    ARG2: { type: ArgumentType.NUMBER, defaultValue:16 },
+				    ARG3: { type: ArgumentType.NUMBER, defaultValue:15 },
+				    ARG4: { type: ArgumentType.NUMBER, defaultValue:12 },
+				    ARG5: { type: ArgumentType.NUMBER, defaultValue:13 },
+				    ARG6: { type: ArgumentType.NUMBER, defaultValue:0 },
 				}},
 
 				{blockType: BlockType.COMMAND, opcode: 'setCar', text: '[ARG1] at speed [ARG2]', arguments: {
@@ -62,14 +70,9 @@ class Scratch3Blocks {
 				{blockType: BlockType.BOOLEAN, opcode: 'updateStick', text: ['finish of stick operation','スティック操作完了'][this._locale], arguments: {
 				}},
 
-				{blockType: BlockType.COMMAND, opcode: 'setServo360', text: 'rotate servo port[ARG1] speed[ARG2]', arguments: {
-					ARG1: digitalPortArg,
+				{blockType: BlockType.COMMAND, opcode: 'setMotor', text: 'set motor L[ARG1] R[ARG2]', arguments: {
+				    ARG1: { type: ArgumentType.NUMBER, defaultValue:100 },
 				    ARG2: { type: ArgumentType.NUMBER, defaultValue:100 },
-				}},
-
-				{blockType: BlockType.COMMAND, opcode: 'setServo180', text: 'servo port[ARG1] angle[ARG2]', arguments: {
-					ARG1: digitalPortArg,
-				    ARG2: { type: ArgumentType.NUMBER, defaultValue:90 },
 				}},
 
 				{blockType: BlockType.REPORTER, opcode: 'enumDirection', text: '[ARG1] .', arguments: {
@@ -94,65 +97,69 @@ class Scratch3Blocks {
 	}
 	
 	setPort(args) {
-		this.portL = args.ARG1*1;
-		this.portR = args.ARG2*1;
+		this.port.L_in1 = args.ARG1*1;
+		this.port.L_in2 = args.ARG2*1;
+		this.port.L_en  = args.ARG3*1;
+		this.port.R_in1 = args.ARG4*1;
+		this.port.R_in2 = args.ARG5*1;
+		this.port.R_en  = args.ARG6*1;
 	}
 	
-	setServo180(args) {
-		let port = args.ARG1*1;
-		let angle = args.ARG2*1;	// 0~180
-		angle = Math.min(180, Math.max(0, angle));
+	setMotor(args) {
+		let speedL = args.ARG1*1;
+		let speedR = args.ARG2*1;
+		speedL = Math.min(100, Math.max(-100, speedL));
+		speedR = Math.min(100, Math.max(-100, speedR));
 
-		const srvMin = 103;		// 0.5ms/20ms*4096 = 102.4 (-90c)
-		const srvMax = 491;		// 2.4ms/20ms*4096 = 491.5 (+90c)
-		let level = (angle * (srvMax - srvMin)) / 180 + srvMin;
-		return this.runtime.dev.comlib.setPwms([{port:port,level:level}]);
-	}
+		let gpios = [
+			{port:this.port.L_in1, level:((speedL>0) ? 1: 0)},
+			{port:this.port.L_in2, level:((speedL<0) ? 1: 0)},
+			{port:this.port.R_in1, level:((speedR>0) ? 1: 0)},
+			{port:this.port.R_in2, level:((speedR<0) ? 1: 0)},
+		];
+		let pwms = [
+			{port:this.port.L_en, level:speedL*0xFFF/100},
+			{port:this.port.R_en, level:speedR*0xFFF/100},
+		];
 
-	setServo360(args) {
-		let port = args.ARG1*1;
-		let speed = args.ARG2*1;	// -100~100
-		return this._setServo360([{port:port, level:speed}]);
-	}
-
-	_setServo360(portLevels) {
-		let i = 0;
-		for(i = 0; i < portLevels.length; i++) {
-			speed = Math.min(100, Math.max(-100, portLevels[i].level));
-			let level = 0;
-			if(speed) {
-				const srvZero = 307;		// 1.5ms/20ms*4096 = 307.2
-				const srvCoef = 163;		// (2.3ms-1.5ms)/20ms*4096 = 163.8
-				level = (speed * srvCoef) / 100 + srvZero;
-			}
-			portLevels[i].level = level;
-		}
-		return this.runtime.dev.comlib.setPwms(portLevels);
+		const _this = this;
+		return _this.runtime.dev.comlib.digiWrite(gpios)
+		.then(() => _this.runtime.dev.comlib.setPwms(pwms))
 	}
 
 	setCar(args) {
 		let dir = args.ARG1*1;
 		let speed = args.ARG2*1;
+		speed = Math.min(100, Math.max(0, speed));
 		const dir_table = [
 			{L: 0, R: 0},  // 0:STOP
-			{L: 1, R:-1},  // 1:FORWARD
-			{L: 0, R:-1},  // 2:LEFT
+			{L: 1, R: 1},  // 1:FORWARD
+			{L: 0, R: 1},  // 2:LEFT
 			{L: 1, R: 0},  // 3:RIGHT
-			{L:-1, R: 1},  // 4:BACK
-			{L:-1, R:-1},  // 5:ROLL_LEFT
-			{L: 1, R: 1},  // 6:ROLL_RIGHT
+			{L:-1, R:-1},  // 4:BACK
+			{L:-1, R: 1},  // 5:ROLL_LEFT
+			{L: 1, R:-1},  // 6:ROLL_RIGHT
 		];
 
 		if(dir >= dir_table.length) return;
-		let portLevels = [
-			{port:this.portL, level:speed*dir_table[dir].L},
-			{port:this.portR, level:speed*dir_table[dir].R},
+		let gpios = [
+			{port:this.port.L_in1, level:((dir_table[dir].L>0) ? 1: 0)},
+			{port:this.port.L_in2, level:((dir_table[dir].L<0) ? 1: 0)},
+			{port:this.port.R_in1, level:((dir_table[dir].R>0) ? 1: 0)},
+			{port:this.port.R_in2, level:((dir_table[dir].R<0) ? 1: 0)},
 		];
-		return this._setServo360(portLevels);
+		let pwms = [
+			{port:this.port.L_en, level:(dir_table[dir].L ? speed*0xFFF/100: 0)},
+			{port:this.port.R_en, level:(dir_table[dir].R ? speed*0xFFF/100: 0)},
+		];
+
+		const _this = this;
+		return _this.runtime.dev.comlib.digiWrite(gpios)
+		.then(() => _this.runtime.dev.comlib.setPwms(pwms))
 	}
 
 	stopCar(args) {
-		return this._setServo360([{port:this.portL, level:0}, {port:this.portR, level:0}]);
+		return this.setMotor({ARG1:0, ARG2:0});
 	}
 
 	setupStick(args, util) {
@@ -183,11 +190,7 @@ class Scratch3Blocks {
 			util.target.setXY(mouseX, mouseY);
 		}
 
-		let portLevels = [
-			{port:this.portL, level: (dX+dY)*2},
-			{port:this.portR, level:-(dY-dX)*2},
-		];
-		return this._setServo360(portLevels)
+		return this.setMotor({ARG1:(dX+dY)*2, ARG2:(dY-dX)*2})
 		.then(() => false)
 	}
 
