@@ -37,17 +37,17 @@ class Scratch3Blocks {
 			name: ['UI parts','UIパーツ'][this._locale],
 			menuIconURI: IconURI,
 			blocks: [
-				{blockType: BlockType.COMMAND, opcode: 'plot1', text: 'plot [ARG1]', arguments: {
+				{blockType: BlockType.COMMAND, opcode: 'plot1', text: 'plot ch[ARG1]', arguments: {
 					ARG1: { type: ArgumentType.NUMBER, defaultValue:1 },
 				}},
-				{blockType: BlockType.COMMAND, opcode: 'plot2', text: 'plot [ARG1] [ARG2]', arguments: {
+				{blockType: BlockType.COMMAND, opcode: 'plot2', text: 'plot ch[ARG1] [ARG2]', arguments: {
 					ARG1: { type: ArgumentType.NUMBER, defaultValue:1 },
-					ARG2: { type: ArgumentType.NUMBER, defaultValue:1 },
+					ARG2: { type: ArgumentType.NUMBER, defaultValue:2 },
 				}},
-				{blockType: BlockType.COMMAND, opcode: 'plot3', text: 'plot [ARG1] [ARG2] [ARG3]', arguments: {
+				{blockType: BlockType.COMMAND, opcode: 'plot3', text: 'plot ch[ARG1] [ARG2] [ARG3]', arguments: {
 					ARG1: { type: ArgumentType.NUMBER, defaultValue:1 },
-					ARG2: { type: ArgumentType.NUMBER, defaultValue:1 },
-					ARG3: { type: ArgumentType.NUMBER, defaultValue:1 },
+					ARG2: { type: ArgumentType.NUMBER, defaultValue:2 },
+					ARG3: { type: ArgumentType.NUMBER, defaultValue:3 },
 				}},
 			],
 			menus: {
