@@ -342,6 +342,8 @@ class comlib {
 	_sendRecvUart(sendBuf) {
 		const _this = this;
 
+		if(!_this.port.writable || !_this.port.readable) throw 'error';
+
 		const writer = _this.port.writable.getWriter();
 		const reader = _this.port.readable.getReader();
 		let count = 0;
@@ -357,7 +359,13 @@ class comlib {
 					hTimeout = setTimeout(resolve2, 3000);
 				}).then(() => {
 					console.log('timeout !');
-					reader.cancel();
+					if(_this.port && _this.port.readable) {
+						// for no resp
+						reader.cancel();
+					} else {
+						// for disconnect
+						reject('error');
+					}
 				})
 
 				return reader.read()
@@ -411,6 +419,12 @@ class comlib {
 						}
 					}
 					loop();
+				}).catch(() => {
+					// for disconnect. releaseLock -> port.close -> reject
+					writer.releaseLock();
+					reader.releaseLock();
+					console.log('error');
+				//	reject('error');
 				})
 			} // loop
 		})) // promise
