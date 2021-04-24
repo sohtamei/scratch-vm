@@ -45,7 +45,7 @@ const EVENT = {
 };
 
 class MicroBit {
-	constructor (runtime, extensionId, gotData) {
+	constructor(runtime, extensionId, gotData) {
 		this._runtime = runtime;
 		this._extensionId = extensionId;
 		this._gotData = gotData;
@@ -64,37 +64,37 @@ class MicroBit {
 	}
 
 	// for runtime
-	scan () {
-		if (this._ble) this._ble.disconnect();
+	scan() {
+		if(this._ble) this._ble.disconnect();
 
 		this._ble = new BLE(this._runtime, this._extensionId, {
 			filters: [{services: [BLEUUID.service]}]
 		}, this.onConnect, this.reset);
 	}
 
-	connect (id) {
-		if (this._ble) this._ble.connectPeripheral(id);
+	connect(id) {
+		if(this._ble) this._ble.connectPeripheral(id);
 	}
 
-	disconnect () {
-		if (this._ble) this._ble.disconnect();
+	disconnect() {
+		if(this._ble) this._ble.disconnect();
 		this.reset();
 	}
 
-	isConnected () {
-		if (this._ble) return this._ble.isConnected();
+	isConnected() {
+		if(this._ble) return this._ble.isConnected();
 		return false;
 	}
 
 	// for BLE
-	reset () {
-		if (this._timeoutID) {
+	reset() {
+		if(this._timeoutID) {
 			clearTimeout(this._timeoutID);
 			this._timeoutID = null;
 		}
 	}
 
-	onConnect () {
+	onConnect() {
 		this._ble.read(BLEUUID.service, BLEUUID.rxChar, true, this.onMessage);
 		this._timeoutID = setTimeout(
 			() => this._ble.handleDisconnectError(BLEDataStoppedError),
@@ -102,7 +102,7 @@ class MicroBit {
 		);
 	}
 
-	onMessage (base64) {
+	onMessage(base64) {
 		this._gotData(Base64Util.base64ToUint8Array(base64));
 
 		// cancel disconnect timeout and start a new one
@@ -114,9 +114,9 @@ class MicroBit {
 	}
 
 	// public
-	send (command, message) {
-		if (!this.isConnected()) return;
-		if (this._busy) return;
+	send(command, message) {
+		if(!this.isConnected()) return;
+		if(this._busy) return;
 
 		this._busy = true;
 		this._busyTimeoutID = setTimeout(() => {
@@ -125,7 +125,7 @@ class MicroBit {
 
 		const output = new Uint8Array(message.length + 1);
 		output[0] = command;
-		for (let i = 0; i < message.length; i++)
+		for(let i = 0; i < message.length; i++)
 			output[i + 1] = message[i];
 		const data = Base64Util.uint8ArrayToBase64(output);
 
@@ -142,7 +142,7 @@ const TILT_THRESHOLD = 15.0;
 
 class Scratch3Blocks {
 
-	constructor (runtime) {
+	constructor(runtime) {
 		this.digitalPorts = ['0','1','2','3','4','5','6','7','8','9','10','11','13','14','15','16',];
 	//	this.digitalPorts = ['2','3','4','5','6','7','8','9','10','11','12','13',{text:'A0',value:14},{text:'A1',value:15},{text:'A2',value:16},{text:'A3',value:17},{text:'A4',value:18},{text:'A5',value:19},];
 		this.analogPorts = ['0','1','2','3','4','10',];
@@ -162,7 +162,7 @@ class Scratch3Blocks {
 		this.updatedTime = 0;
 	}
 
-	getInfo () {
+	getInfo() {
 		this._locale = 0;
 		switch(formatMessage.setup().locale) {
 		  case 'ja':
@@ -349,7 +349,7 @@ class Scratch3Blocks {
 		return ret ? true:false;
 	}
 
-	whenGesture (args) {
+	whenGesture(args) {
 		let ret = 0;
 		switch(args.GESTURE) {
 		case 'shaken': ret = this.events & EVENT.SHAKEN; this.events &= ~EVENT.SHAKEN; break;
@@ -359,15 +359,15 @@ class Scratch3Blocks {
 		return ret;
 	}
 
-	displayText (args) {
+	displayText(args) {
 		const text = args.TEXT.substring(0, 19);
-		if (text.length <= 0) return "";
+		if(text.length <= 0) return '';
 
 		if(this.ifType == 'UART') {
 			return this.comlib.sendRecv(UARTCommand.CMD_DISPLAY_TEXT, {ARG1:{type2:'s'}}, {ARG1:text});
 		} else {
 			const output = new Uint8Array(text.length);
-			for (let i = 0; i < text.length; i++)
+			for(let i = 0; i < text.length; i++)
 				output[i] = text.charCodeAt(i);
 
 			this._microbit.send(BLECommand.CMD_DISPLAY_TEXT, output);
@@ -381,7 +381,7 @@ class Scratch3Blocks {
 		}
 	}
 
-	displaySymbol (args) {
+	displaySymbol(args) {
 		// 2進数計算 '0101010101100010101000100' -> 4546AA
 		const symbol = args.MATRIX.replace(/\s/g, '');
 		const reducer = function(accumulator, c, index) {
@@ -409,7 +409,7 @@ class Scratch3Blocks {
 		}
 	}
 
-	displayClear () {
+	displayClear() {
 		if(this.ifType == 'UART') {
 			return this.comlib.sendRecv(UARTCommand.CMD_DISPLAY_LED, {ARG1:{type2:'L'}}, {ARG1:0x00000000});
 		} else {
@@ -422,16 +422,16 @@ class Scratch3Blocks {
 		}
 	}
 
-	whenTilted (args) {
+	whenTilted(args) {
 		return this._isTilted(args.DIRECTION, dontUpdate=true);
 	}
 
-	isTilted (args) {
+	isTilted(args) {
 		return this._isTilted(args.DIRECTION);
 	}
 
-	_isTilted (direction, dontUpdate=false) {
-		switch (direction) {
+	_isTilted(direction, dontUpdate=false) {
+		switch(direction) {
 		case 'any':
 			return (Math.abs(this.tiltX/10) >= TILT_THRESHOLD) ||
 				   (Math.abs(this.tiltY/10) >= TILT_THRESHOLD);
@@ -440,12 +440,12 @@ class Scratch3Blocks {
 		}
 	}
 
-	getTiltAngle (args) {
+	getTiltAngle(args) {
 		return this._getTiltAngle(args.DIRECTION);
 	}
 
-	_getTiltAngle (direction, dontUpdate=false) {
-		if(!dontUpdate && (performance.now()-this.updatedTime) > 20 && this.comlib.cueue.length == 0) {
+	_getTiltAngle(direction, dontUpdate=false) {
+		if(!dontUpdate && (performance.now()-this.updatedTime) > 20 && (this.comlib.cueue.length == 0 || !this.comlib.port)) {
 			let xy = (direction == 'front' || direction == 'back') ? 1: 0;
 			let ret = this.comlib.sendRecv(UARTCommand.CMD_GET_TILT, {ARG1:{type2:'B'}}, {ARG1:xy});
 			if(!(ret instanceof Promise)) {
@@ -463,7 +463,7 @@ class Scratch3Blocks {
 		}
 
 		let angle = 0;
-		switch (direction) {
+		switch(direction) {
 		case 'front': angle = Math.round(-this.tiltY/10); break;
 		case 'back':  angle = Math.round( this.tiltY/10); break;
 		case 'left':  angle = Math.round(-this.tiltX/10); break;
@@ -473,7 +473,7 @@ class Scratch3Blocks {
 		return angle;
 	}
 
-	whenPinConnected (args) {
+	whenPinConnected(args) {
 		let ret = 0;
 		switch(args.PIN) {
 		case '0': ret = this.events & EVENT.PORT0; this.events &= ~EVENT.PORT0; break;
@@ -488,10 +488,10 @@ class Scratch3Blocks {
 		this.button = data[2];
 
 		this.tiltX = data[4] | (data[5]<<8);
-		if (this.tiltX > (1<<15)) this.tiltX -= (1<<16);
+		if(this.tiltX > (1<<15)) this.tiltX -= (1<<16);
 
 		this.tiltY = data[6] | (data[7]<<8);
-		if (this.tiltY > (1<<15)) this.tiltY -= (1<<16);
+		if(this.tiltY > (1<<15)) this.tiltY -= (1<<16);
 		this.updatedTime = performance.now();
 	}
 }

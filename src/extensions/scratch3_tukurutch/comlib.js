@@ -342,7 +342,10 @@ class comlib {
 	_sendRecvUart(sendBuf) {
 		const _this = this;
 
-		if(!_this.port.writable || !_this.port.readable) throw 'error';
+		if(!_this.port.writable || !_this.port.readable) {
+			throw 'error';
+			return;
+		}
 
 		const writer = _this.port.writable.getWriter();
 		const reader = _this.port.readable.getReader();
@@ -434,6 +437,8 @@ class comlib {
 		if(this.port) return;
 
 		const _this = this;
+		this.busy = false;
+		this.cueue = [];
 		let port = null;
 
 		navigator.serial.ondisconnect = function(e) {
@@ -448,9 +453,8 @@ class comlib {
 			port = result;
 			return port.open({ baudRate:115200 });
 		}).then(() => {
-			_this.port = port;
-			const writer = _this.port.writable.getWriter();
-			const reader = _this.port.readable.getReader();
+			const writer = port.writable.getWriter();
+			const reader = port.readable.getReader();
 			let count = 0;
 			let buf = new Uint8Array(256);
 			
@@ -489,12 +493,13 @@ class comlib {
 					})
 				} // loop
 			})).then(recv => {
+				_this.port = port;
 				let tmp = String.fromCharCode.apply(null, recv);
 				_this.statusMessage.innerText = tmp;
 				console.log(tmp);
 				return;
 			}).catch(err => {
-				if(_this.port) _this.port.close();
+				if(port) port.close();
 				_this.port = null;
 				throw err;
 			})
