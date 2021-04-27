@@ -81,7 +81,7 @@ class Scratch3Blocks {
 {blockType: BlockType.COMMAND, opcode: 'setConfig', text: ['I/F type','接続方法'][this._locale]+'[ARG1] IP=[ARG2]', arguments: {
 	ARG1: { type: ArgumentType.STRING, defaultValue: this.ifType, menu: 'ifType' },
 	ARG2: { type: ArgumentType.STRING, defaultValue: this.ipadrs},
-}},//, hideFromPalette:(this.server=='http')},
+}},
 
 '---',
 

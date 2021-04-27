@@ -66,7 +66,7 @@ class Scratch3Blocks {
     'burn [ARG1]',
     '[ARG1]書き込み',
 ][this._locale], arguments: {
-	ARG1: { type: ArgumentType.NUMBER, defaultValue: 0, menu: 'flashList' },
+	ARG1: { type: ArgumentType.STRING, defaultValue:'0', menu: 'flashList' },
 }},
 
 {blockType: BlockType.COMMAND, opcode: 'connectWifi', text: ['connect','接続'][this._locale]+' ssid[ARG1] pass[ARG2]', arguments: {
@@ -88,8 +88,8 @@ class Scratch3Blocks {
     '[ARG1] at speed [ARG2] calib [ARG3] duration [ARG4]',
     '[ARG1] 向きに [ARG2] の速さで動かす(補正 [ARG3] , [ARG4] ms)',
 ][this._locale], arguments: {
-    ARG1: { type: ArgumentType.NUMBER, type2:'B', defaultValue:1, menu: 'direction' },
-    ARG2: { type: ArgumentType.NUMBER, type2:'S', defaultValue:4, menu: 'speed' },
+    ARG1: { type: ArgumentType.STRING, type2:'B', defaultValue:'1', menu: 'direction' },
+    ARG2: { type: ArgumentType.STRING, type2:'S', defaultValue:'4', menu: 'speed' },
     ARG3: { type: ArgumentType.NUMBER, type2:'S', defaultValue:0 },
     ARG4: { type: ArgumentType.NUMBER, type2:'S', defaultValue:0 },
 }},
@@ -98,8 +98,8 @@ class Scratch3Blocks {
     'set motor left [ARG1] right [ARG2] calib [ARG3] duration [ARG4]',
     '左 [ARG1] 右 [ARG2] で動かす(補正 [ARG3] , [ARG4] ms)',
 ][this._locale], arguments: {
-    ARG1: { type: ArgumentType.NUMBER, type2:'S', defaultValue:4, menu: 'speed' },
-    ARG2: { type: ArgumentType.NUMBER, type2:'S', defaultValue:4, menu: 'speed' },
+    ARG1: { type: ArgumentType.STRING, type2:'S', defaultValue:'4', menu: 'speed' },
+    ARG2: { type: ArgumentType.STRING, type2:'S', defaultValue:'4', menu: 'speed' },
     ARG3: { type: ArgumentType.NUMBER, type2:'S', defaultValue:0 },
     ARG4: { type: ArgumentType.NUMBER, type2:'S', defaultValue:0 },
 }},
@@ -108,7 +108,7 @@ class Scratch3Blocks {
     'set servo [ARG1] [ARG2]',
     'サーボ [ARG1] の角度を [ARG2] にする',
 ][this._locale], arguments: {
-    ARG1: { type: ArgumentType.NUMBER, type2:'B', defaultValue:0, menu: 'servoch' },
+    ARG1: { type: ArgumentType.STRING, type2:'B', defaultValue:'0', menu: 'servoch' },
     ARG2: { type: ArgumentType.NUMBER, type2:'B', defaultValue:90 },
 }},
 
@@ -116,7 +116,7 @@ class Scratch3Blocks {
     'set motor [ARG1] pwm [ARG2]',
     'サーボ [ARG1] にPWM [ARG2] を設定',
 ][this._locale], arguments: {
-    ARG1: { type: ArgumentType.NUMBER, type2:'B', defaultValue:0, menu: 'servoch' },
+    ARG1: { type: ArgumentType.STRING, type2:'B', defaultValue:'0', menu: 'servoch' },
     ARG2: { type: ArgumentType.NUMBER, type2:'S', defaultValue:307 },
 }},
 
@@ -127,14 +127,14 @@ class Scratch3Blocks {
 }},
 
 {blockType: BlockType.REPORTER, opcode: 'enumDirection', text: '[ARG1] .', arguments: {
-    ARG1: { type: ArgumentType.NUMBER, type2:'B', defaultValue:1, menu: 'direction' },
+    ARG1: { type: ArgumentType.STRING, type2:'B', defaultValue:'1', menu: 'direction' },
 }},
 
 {blockType: BlockType.COMMAND, opcode: 'setLED', text: [
     'set LED [ARG1]',
     'LED [ARG1]',
 ][this._locale], arguments: {
-    ARG1: { type: ArgumentType.NUMBER, type2:'B', defaultValue:1, menu: 'onoff' },
+    ARG1: { type: ArgumentType.STRING, type2:'B', defaultValue:'1', menu: 'onoff' },
 }},
 
 {blockType: BlockType.REPORTER, opcode: 'downloadCal', text: [
@@ -152,7 +152,7 @@ class Scratch3Blocks {
 }},
 
 {blockType: BlockType.COMMAND, opcode: 'setBatteryConnect', text: 'battery connection [ARG1]', arguments: {
-    ARG1: { type: ArgumentType.NUMBER, type2:'B', defaultValue:0, menu: 'onoff' },
+    ARG1: { type: ArgumentType.STRING, type2:'B', defaultValue:'0', menu: 'onoff' },
 }},
 
 {blockType: BlockType.REPORTER, opcode: 'getBatteryVoltage', text: 'battery voltage', arguments: {
@@ -176,19 +176,19 @@ ifType: { acceptReporters: true, items: [
 flashList: { acceptReporters: true, items: this.flashItems },
 
 direction: { acceptReporters: true, items: [
-{ text: ['stop','ストップ'][this._locale], value: 0 },
-{ text: ['run forward','前'][this._locale], value: 1 },
-{ text: ['turn left','左'][this._locale], value: 2 },
-{ text: ['turn right','右'][this._locale], value: 3 },
-{ text: ['run backward','後'][this._locale], value: 4 },
-{ text: ['rotate left','左旋回'][this._locale], value: 5 },
-{ text: ['rotate right','右旋回'][this._locale], value: 6 },
-{ text: ['calibration','原点調整'][this._locale], value: 7 },
+{ text: ['stop','ストップ'][this._locale], value: '0' },
+{ text: ['run forward','前'][this._locale], value: '1' },
+{ text: ['turn left','左'][this._locale], value: '2' },
+{ text: ['turn right','右'][this._locale], value: '3' },
+{ text: ['run backward','後'][this._locale], value: '4' },
+{ text: ['rotate left','左旋回'][this._locale], value: '5' },
+{ text: ['rotate right','右旋回'][this._locale], value: '6' },
+{ text: ['calibration','原点調整'][this._locale], value: '7' },
 ]},
 
 onoff: { acceptReporters: true, items: [
-{ text: 'On', value: 1 },
-{ text: 'Off', value: 0 },
+{ text: 'On', value: '1' },
+{ text: 'Off', value: '0' },
 ]},
 
 servoch: { acceptReporters: true, items: ['0','1',]},

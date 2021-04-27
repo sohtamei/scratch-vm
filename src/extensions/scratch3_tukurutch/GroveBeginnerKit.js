@@ -64,7 +64,7 @@ class Scratch3Blocks {
     'burn [ARG1]',
     '[ARG1]書き込み',
 ][this._locale], arguments: {
-	ARG1: { type: ArgumentType.NUMBER, defaultValue: 0, menu: 'flashList' },
+	ARG1: { type: ArgumentType.STRING, defaultValue:'0', menu: 'flashList' },
 }},
 
 {blockType: BlockType.COMMAND, opcode: 'connectWifi', text: ['connect','接続'][this._locale]+' ssid[ARG1] pass[ARG2]', arguments: {
@@ -86,8 +86,8 @@ class Scratch3Blocks {
     'play tone [ARG1] beat [ARG2]',
     '[ARG1] を [ARG2] 鳴らす',
 ][this._locale], arguments: {
-    ARG1: { type: ArgumentType.NUMBER, type2:'S', defaultValue:262, menu: 'noteJ2' },
-    ARG2: { type: ArgumentType.NUMBER, type2:'S', defaultValue:500, menu: 'beats' },
+    ARG1: { type: ArgumentType.STRING, type2:'S', defaultValue:'262', menu: 'noteJ2' },
+    ARG2: { type: ArgumentType.STRING, type2:'S', defaultValue:'500', menu: 'beats' },
 }},
 
 {blockType: BlockType.COMMAND, opcode: 'oledSetCursor', text: '［OLED］set cursor [ARG1] [ARG2]', arguments: {
@@ -119,7 +119,7 @@ class Scratch3Blocks {
 }},
 
 {blockType: BlockType.REPORTER, opcode: 'getAccel', text: 'get Accel [ARG1]', arguments: {
-    ARG1: { type: ArgumentType.NUMBER, type2:'B', defaultValue:0, menu: 'xyz' },
+    ARG1: { type: ArgumentType.STRING, type2:'B', defaultValue:'0', menu: 'xyz' },
 }},
 
 		];
@@ -140,34 +140,34 @@ ifType: { acceptReporters: true, items: [
 flashList: { acceptReporters: true, items: this.flashItems },
 
 beats: { acceptReporters: true, items: [
-{ text: ['Half','2分音符'][this._locale], value: 500 },
-{ text: ['Quarter','4分音符'][this._locale], value: 250 },
-{ text: ['Eighth','8分音符'][this._locale], value: 125 },
-{ text: ['Whole','全音符'][this._locale], value: 1000 },
-{ text: ['Double','倍全音符'][this._locale], value: 2000 },
+{ text: ['Half','2分音符'][this._locale], value: '500' },
+{ text: ['Quarter','4分音符'][this._locale], value: '250' },
+{ text: ['Eighth','8分音符'][this._locale], value: '125' },
+{ text: ['Whole','全音符'][this._locale], value: '1000' },
+{ text: ['Double','倍全音符'][this._locale], value: '2000' },
 ]},
 
 noteJ2: { acceptReporters: true, items: [
-{ text: ['C4','ド4'][this._locale], value: 262 },
-{ text: ['D4','レ4'][this._locale], value: 294 },
-{ text: ['E4','ミ4'][this._locale], value: 330 },
-{ text: ['F4','ファ4'][this._locale], value: 349 },
-{ text: ['G4','ソ4'][this._locale], value: 392 },
-{ text: ['A4','ラ4'][this._locale], value: 440 },
-{ text: ['B4','シ4'][this._locale], value: 494 },
-{ text: ['C5','ド5'][this._locale], value: 523 },
-{ text: ['D5','レ5'][this._locale], value: 587 },
-{ text: ['E5','ミ5'][this._locale], value: 659 },
-{ text: ['F5','ファ5'][this._locale], value: 698 },
-{ text: ['G5','ソ5'][this._locale], value: 784 },
-{ text: ['A5','ラ5'][this._locale], value: 880 },
-{ text: ['B5','シ5'][this._locale], value: 988 },
+{ text: ['C4','ド4'][this._locale], value: '262' },
+{ text: ['D4','レ4'][this._locale], value: '294' },
+{ text: ['E4','ミ4'][this._locale], value: '330' },
+{ text: ['F4','ファ4'][this._locale], value: '349' },
+{ text: ['G4','ソ4'][this._locale], value: '392' },
+{ text: ['A4','ラ4'][this._locale], value: '440' },
+{ text: ['B4','シ4'][this._locale], value: '494' },
+{ text: ['C5','ド5'][this._locale], value: '523' },
+{ text: ['D5','レ5'][this._locale], value: '587' },
+{ text: ['E5','ミ5'][this._locale], value: '659' },
+{ text: ['F5','ファ5'][this._locale], value: '698' },
+{ text: ['G5','ソ5'][this._locale], value: '784' },
+{ text: ['A5','ラ5'][this._locale], value: '880' },
+{ text: ['B5','シ5'][this._locale], value: '988' },
 ]},
 
 xyz: { acceptReporters: true, items: [
-{ text: 'x', value: 0 },
-{ text: 'y', value: 1 },
-{ text: 'z', value: 2 },
+{ text: 'x', value: '0' },
+{ text: 'y', value: '1' },
+{ text: 'z', value: '2' },
 ]},
 
 	  };

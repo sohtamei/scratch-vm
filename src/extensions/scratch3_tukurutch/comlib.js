@@ -9,8 +9,7 @@ const StubCodeBin = require('!arraybuffer-loader!./STUB_CODE.bin');
 const BootloaderBin = require('!arraybuffer-loader!./bootloader_qio_80m.bin');
 const BootApp0Bin = require('!arraybuffer-loader!./boot_app0.bin');
 
-//const WlanStatus = [['IDLE_STATUS','NO_SSID_AVAIL','SCAN_COMPLETED','CONNECTED','CONNECT_FAILED','CONNECTION_LOST','DISCONNECTED',],
-//				   ['アイドル中','SSIDが見つかりません','SCAN完了','接続中','接続失敗','切断されました','切断',]];
+//const WlanStatus = ['IDLE_STATUS','NO_SSID_AVAIL','SCAN_COMPLETED','CONNECTED','CONNECT_FAILED','CONNECTION_LOST','DISCONNECTED',],
 
 class comlib {
     constructor(extName, server, SupportCamera) {
