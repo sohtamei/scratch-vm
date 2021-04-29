@@ -4,6 +4,8 @@ const ArgumentType = require('../../extension-support/argument-type');
 const BlockType = require('../../extension-support/block-type');
 const formatMessage = require('format-message');
 const Zlib = require('zlib');
+const BLE = require('../../io/ble');
+const Base64Util = require('../../util/base64-util');
 
 const StubCodeBin = require('!arraybuffer-loader!./STUB_CODE.bin');
 const BootloaderBin = require('!arraybuffer-loader!./bootloader_qio_80m.bin');
@@ -11,60 +13,94 @@ const BootApp0Bin = require('!arraybuffer-loader!./boot_app0.bin');
 
 //const WlanStatus = ['IDLE_STATUS','NO_SSID_AVAIL','SCAN_COMPLETED','CONNECTED','CONNECT_FAILED','CONNECTION_LOST','DISCONNECTED',],
 
+const BLETimeout = 4500;
+const BLESendInterval = 100;
+const BLEDataStoppedError = 'micro:bit extension stopped receiving data';
+
+const BLEUUID = {
+	service:'6e400001-b5a3-f393-e0a9-e50e24dcca9e',
+	txChar: '6e400002-b5a3-f393-e0a9-e50e24dcca9e',	// BLEWriteWithoutResponse
+	rxChar: '6e400003-b5a3-f393-e0a9-e50e24dcca9e',	// BLENotify
+};
+
 class comlib {
-    constructor(extName, server, SupportCamera) {
+	constructor(runtime, extName, SupportCamera) {
+		this._runtime = runtime;
 		this.extName = extName;
-		this.server = server;
 		this.SupportCamera = SupportCamera;
+		this._runtime.registerPeripheralExtension(extName, this);
+
+		let href = location.href.split(':');
+		console.log(href);
+		if(href[1] == '//localhost' || href[0] == 'file') {
+			this.server = 'local';
+		//	this.server = 'https';		// for test
+		//	this.server = 'http';		// for test
+		} else if(href[0] == 'https') {
+			this.server = 'https';
+		} else {
+			this.server = 'http';
+		}
 
 		this.ipadrs = '192.168.1.xx';
 		this.ifType = 'UART';
-		this._locale = 0;
-
-		this.busy = false;
-		this.cueue = [];
-		this.ws = null;
-		this.wsResolve = null;
-		this.wsError = null;
-
-		this.port = null;
-		this.espBurnBusy = false;
-		this.recvResolve = null;
-		this.recvTimeout = null;
-
-		this.statusMessage = document.body.querySelector('#StatusMessage');
-
-		let cookie_ifType = null;
 		let cookies_get = document.cookie.split(';');
 		for(let i = 0; i < cookies_get.length; i++) {
 			let tmp = cookies_get[i].trim().split('=');
 			switch(tmp[0]) {
 			case extName+'_ip':
-				this.ipadrs=tmp[1];
+				this.ipadrs = tmp[1];
 				console.log(tmp[0]+'='+tmp[1]);
 				break;
 			case extName+'_if_type':
-				cookie_ifType=tmp[1];
+				this.ifType = tmp[1];
 				console.log(tmp[0]+'='+tmp[1]);
 				break;
 			}
 		}
 
 		switch(this.server) {
-		case 'local':
-			if(cookie_ifType) this.ifType = cookie_ifType;
-			break;
 		case 'https':		// wlan or webBT
-			this.ifType = 'UART';
+			if(this.ifType == 'WLAN') this.ifType = 'UART';
 			break;
 		case 'http':
 			this.ifType = 'WLAN';
 			break;
+		case 'local':
+			break;
 		}
+
+		this._locale = 0;
+		this.busy = false;
+		this.cueue = [];
+
+		// WS
+		this.ws = null;
+		this.wsResolve = null;
+		this.wsError = null;
+
+		// UART
+		this.port = null;
+		this.espBurnBusy = false;
+		this.recvResolve = null;
+		this.recvTimeout = null;
+		this._closeUart = this._closeUart.bind(this);
+
+		// BLE
+		this._ble = null;
+		this._timeoutID = null;
+		this._busy = false;
+		this._busyTimeoutID = null;
+
+		this._bleReset     = this._bleReset.bind(this);
+		this._bleOnConnect = this._bleOnConnect.bind(this);
+		this._bleOnMessage = this._bleOnMessage.bind(this);
+		this.statusMessage = {innerText:''};	// dummy
     }
 
 	setLocale(locale) {
 		this._locale = locale;
+		this.statusMessage = document.body.querySelector('#StatusMessage');
 	}
 
 	getConfig() {
@@ -90,6 +126,7 @@ class comlib {
 		}
 		this.busy = false;
 		this.cueue = [];
+		this._runtime.emit(this._runtime.constructor.PERIPHERAL_DISCONNECTED);
 
 		if(this.ifType == 'UART') {
 			return ['USB(UART) has been saved.', 'USB(UART)を設定しました'][this._locale];
@@ -99,6 +136,119 @@ class comlib {
 			return this.ifType + ', ' + this.ipadrs + [' has been saved.', 'を設定しました'][this._locale];
 		}
     }
+
+	// for connect menu
+	scan() {
+		console.log('scan');
+		switch(this.ifType) {
+		case 'UART':
+			if(this.port) {
+				this.port.close();
+				this.port = null;
+			}
+			return this._openUart();
+			break;
+		case 'BLE':
+			if(this._ble) this._ble.disconnect();
+			this._ble = new BLE(this._runtime, this.extName,
+							{filters: [{services: [BLEUUID.service]}]},
+							this._bleOnConnect, this._bleReset);
+			break;
+		case 'WLAN':
+			if(this.ws) {
+				this.ws.close();
+				this.ws = null;
+			}
+			return this._openWs();
+			break;
+		}
+	}
+
+	connect(id) {
+		console.log('connect');
+		switch(this.ifType) {
+		case 'UART':
+			break;
+		case 'BLE':
+			if(this._ble) this._ble.connectPeripheral(id);
+			break;
+		case 'WLAN':
+			break;
+		}
+	}
+
+	disconnect() {
+		console.log('disconnect');
+		switch(this.ifType) {
+		case 'UART':
+			this._closeUart();
+			break;
+		case 'BLE':
+			if(this._ble) this._ble.disconnect();
+			this._bleReset();
+			break;
+		case 'WLAN':
+			if(this.ws) {
+				this.ws.close();
+				this.ws = null;
+			}
+			break;
+		}
+	}
+
+	isConnected() {
+		let connected = false;
+		switch(this.ifType) {
+		case 'UART':
+			if(this.port) connected = true;
+			break;
+		case 'BLE':
+			if(this._ble) connected = this._ble.isConnected();
+			break;
+		case 'WLAN':
+			if(this.ws) connected = true;
+			break;
+		}
+	//	if(!connected) console.log('disconnected!');
+		console.log('isconnected='+connected);
+		return connected;
+	}
+
+	// for BLE
+	_bleReset() {
+		console.log('reset');
+	}
+
+	_bleOnConnect() {
+		console.log('connected!');
+		this._ble.read(BLEUUID.service, BLEUUID.rxChar, true/*StartNotify*/, this._bleOnMessage);
+	}
+
+	_bleOnMessage(base64) {
+		const buf = Base64Util.base64ToUint8Array(base64);
+		this._runtime.dev.gotData(buf);
+		console.log(buf);
+	}
+
+	send(message) {
+		if(!this.isConnected()) return;
+		if(this._busy) return;
+
+		this._busy = true;
+		this._busyTimeoutID = setTimeout(() => {
+			this._busy = false;
+		}, 5000);
+
+		const output = new Uint8Array(message);
+		console.log(output);
+
+		this._ble.write(BLEUUID.service, BLEUUID.txChar, Base64Util.uint8ArrayToBase64(output), 'base64', false/*wResp*/)
+		.then(() => {
+			this._busy = false;
+			clearTimeout(this._busyTimeoutID);
+		});
+	}
+
 
 /*
   {'B','B'},		// 0x81:wire_begin     (SDA, SCL)
@@ -301,8 +451,16 @@ class comlib {
 
 		const _this = this;
 		return Promise.resolve().then(() => {
-			if(_this.ifType == 'UART' && _this.port == null)
-				return _this._openUart();
+			switch(_this.ifType) {
+			case 'WLAN':
+				if(_this.ws == null)
+					return _this._openWs();
+				break;
+			case 'UART':
+				if(_this.port == null)
+					return _this._openUart();
+				break;
+			}
 			return;
 		}).then(() => new Promise(resolve => {
 			_this.cueue.push({resolve:resolve, data:data});
@@ -321,9 +479,11 @@ class comlib {
 
 		const {resolve, data} = _this.cueue.pop();
 		console.log('W:'+_this._dumpBuf(data));	// debug
-		if(_this.ifType == 'WLAN')
-			return _this._sendRecvWs(data,resolve);
-		else {
+		switch(_this.ifType) {
+		case 'WLAN':
+			_this.wsResolve = resolve;
+			return _this.ws.send(data);
+		case 'UART':
 			return _this._sendRecvUart(data)
 			.then(tmp => {
 				_this.busy = false;
@@ -335,6 +495,7 @@ class comlib {
 				resolve(err);
 				console.log(err);
 			})
+			break;
 		}
 	}
 
@@ -432,22 +593,33 @@ class comlib {
 		})) // promise
 	}
 
+	_closeUart() {
+		console.log('disconnected');
+		if(this.port) {
+			this.port.close();
+			this.port = null;
+		}
+		this.statusMessage.innerText = ['Disconnected','切断されました'][this._locale];
+		this._runtime.emit(this._runtime.constructor.PERIPHERAL_DISCONNECTED);
+	}
+
 	_openUart() {
 		if(this.port) return;
 
 		const _this = this;
 		this.busy = false;
 		this.cueue = [];
-		let port = null;
+		this._runtime.emit(this._runtime.constructor.PERIPHERAL_DISCONNECTED);
 
-		navigator.serial.ondisconnect = function(e) {
-			console.log('disconnected');
-			_this.port.close();
-			_this.port = null;
-			_this.statusMessage.innerText = ['Disconnected','切断されました'][_this._locale];
-		}
+		let port = null;
+		navigator.serial.ondisconnect = this._closeUart;
 
 		return navigator.serial.requestPort({})
+		.catch(err => {
+			console.log('canceled');
+			_this._runtime.emit(_this._runtime.constructor.PERIPHERAL_SCAN_TIMEOUT);
+			throw err;
+		})
 		.then(result => {
 			port = result;
 			return port.open({ baudRate:115200 });
@@ -496,6 +668,7 @@ class comlib {
 				let tmp = String.fromCharCode.apply(null, recv);
 				_this.statusMessage.innerText = tmp;
 				console.log(tmp);
+				_this._runtime.emit(_this._runtime.constructor.PERIPHERAL_CONNECTED);
 				return;
 			}).catch(err => {
 				if(port) port.close();
@@ -505,73 +678,78 @@ class comlib {
 		})
 	}
 
-	_sendRecvWs(sendBuf,resolve) {
+	_openWs() {
+		if(this.ws) return;
+
 		const _this = this;
-		_this.wsResolve = resolve;
+		this.busy = false;
+		this.cueue = [];
+		this._runtime.emit(this._runtime.constructor.PERIPHERAL_DISCONNECTED);
 
-		if(_this.ws !== null) {
-			_this.ws.send(sendBuf);
-			return;
-		}
+		return new Promise((resolve,reject) => {
+			const ws = new WebSocket('ws://'+_this.ipadrs+':54323');
+			ws.binaryType = 'arraybuffer';
 
-		_this.ws = new WebSocket('ws://'+_this.ipadrs+':54323');
-		_this.ws.binaryType = 'arraybuffer';
+			ws.onopen = function(e) {
+				console.log('connected');
+				_this.ws = ws;
+				_this._runtime.emit(_this._runtime.constructor.PERIPHERAL_CONNECTED);
+				resolve();
+			}
 
-		_this.ws.onopen = function(e) {
-			console.log('open: ' + e);
-			_this.ws.send(sendBuf);
-		}
-
-		_this.ws.onmessage = function(event) {
-			let buf = new Uint8Array(event.data);
-			console.log('R:'+_this._dumpBuf(buf));	// debug
-			let tmp = 0;
-			if(buf[0] == 0xFF && buf[1] == 0x55 && buf[2]+3 == buf.length && buf.length >= 5) {
-				let tmp2 = new DataView(buf.buffer);
-				switch(buf[3]) {
-				case 1: tmp = tmp2.getUint8(4); break;
-				case 2: tmp = tmp2.getInt16(4, true); break;
-				case 3: tmp = tmp2.getInt32(4, true); break;
-				case 4: tmp = tmp2.getFloat32(4, true); break;
-				case 5: tmp = tmp2.getFloat64(4, true); break;
-				case 6: tmp = String.fromCharCode.apply(null, buf.subarray(4)); break;
-				case 7: tmp = buf.slice(5,5+buf[4]); break;
+			ws.onmessage = function(event) {
+				let buf = new Uint8Array(event.data);
+				console.log('R:'+_this._dumpBuf(buf));	// debug
+				let tmp = 0;
+				if(buf[0] == 0xFF && buf[1] == 0x55 && buf[2]+3 == buf.length && buf.length >= 5) {
+					let tmp2 = new DataView(buf.buffer);
+					switch(buf[3]) {
+					case 1: tmp = tmp2.getUint8(4); break;
+					case 2: tmp = tmp2.getInt16(4, true); break;
+					case 3: tmp = tmp2.getInt32(4, true); break;
+					case 4: tmp = tmp2.getFloat32(4, true); break;
+					case 5: tmp = tmp2.getFloat64(4, true); break;
+					case 6: tmp = String.fromCharCode.apply(null, buf.subarray(4)); break;
+					case 7: tmp = buf.slice(5,5+buf[4]); break;
+					}
+				//	console.log(tmp);	// debug
 				}
-			//	console.log(tmp);	// debug
-			}
-			_this.busy = false;
-			_this.wsResolve(tmp);
-			_this.wsResolve = null;
-			if(_this.cueue.length != 0) console.log('-Cueue=' + _this.cueue.length + '->' + (_this.cueue.length-1));
-			_this.checkCueue();
-			return;
-		}
-
-		_this.ws.onclose = function(event) {
-			if (event.wasClean) {
-				console.log(`close: Connection closed cleanly, code=${event.code} reason=${event.reason}`);
-			} else {
-				console.log('close: Connection died');
-			}
-			_this.ws = null;
-			_this.busy = false;
-			if(_this.wsResolve !== null) {
-				_this.wsResolve('error');
+				_this.busy = false;
+				_this.wsResolve(tmp);
 				_this.wsResolve = null;
+				if(_this.cueue.length != 0) console.log('-Cueue=' + _this.cueue.length + '->' + (_this.cueue.length-1));
+				_this.checkCueue();
+				return;
 			}
-		};
 
-		_this.ws.onerror = function(error) {
-			console.log('[error] '+error.message);
-			_this.ws.close();
-			_this.ws = null;
-			_this.statusMessage.innerText = ['cannot connect to ','接続できませんでした：'][_this._locale] + _this.ipadrs;
-			if(_this.wsResolve !== null) {
-				_this.wsResolve(_this.statusMessage.innerText);
-				_this.wsResolve = null;
-			}
-		};
-		return;
+			ws.onclose = function(event) {
+				if (event.wasClean) {
+					console.log(`close: Connection closed cleanly, code=${event.code} reason=${event.reason}`);
+				} else {
+					console.log('close: Connection died');
+				}
+				_this.ws = null;
+				_this.busy = false;
+				_this._runtime.emit(_this._runtime.constructor.PERIPHERAL_DISCONNECTED);
+				if(_this.wsResolve !== null) {
+					_this.wsResolve('error');
+					_this.wsResolve = null;
+				}
+			};
+
+			ws.onerror = function(error) {
+				console.log('[error] '+error.message);
+				ws.close();
+				_this.ws = null;
+				_this.statusMessage.innerText = ['cannot connect to ','接続できませんでした：'][_this._locale] + _this.ipadrs;
+				_this._runtime.emit(_this._runtime.constructor.PERIPHERAL_SCAN_TIMEOUT);
+				reject();
+				if(_this.wsResolve !== null) {
+					_this.wsResolve(_this.statusMessage.innerText);
+					_this.wsResolve = null;
+				}
+			};
+		})
 	}
 
 	burnWlan(flashBin) {

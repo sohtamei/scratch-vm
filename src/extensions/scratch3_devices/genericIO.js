@@ -100,7 +100,7 @@ class Scratch3Blocks {
 					ARG2: { type: ArgumentType.NUMBER, defaultValue:2048 },
 				}},
 
-				{blockType: BlockType.COMMAND, opcode: 'setServo180', text: '[PWM]servo port[ARG1] angle[ARG2]', arguments: {
+				{blockType: BlockType.COMMAND, opcode: 'setServo180', text: '［PWM］servo port[ARG1] angle[ARG2]', arguments: {
 					ARG1: digitalPortArg,
 				    ARG2: { type: ArgumentType.NUMBER, defaultValue:90 },
 				}},

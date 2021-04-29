@@ -12,46 +12,35 @@ const IconURI = require('./tukurutch-small.png');
  * @constructor
  */
 class Scratch3Blocks {
-    constructor (runtime) {
+	constructor (runtime) {
 		runtime.dev = this;
 
-		let href = location.href.split(':');
-		console.log(href);
-		if(href[1] == '//localhost' || href[0] == 'file') {
-			this.server = 'local';
-		//	this.server = 'https';		// for test
-		//	this.server = 'http';		// for test
-		} else if(href[0] == 'https') {
-			this.server = 'https';
-		} else {
-			this.server = 'http';
-		}
-
 		if(typeof SupportCamera === "undefined") SupportCamera = false;
-		this.comlib = new comlib(extName, this.server, SupportCamera);
-    }
+		this.comlib = new comlib(runtime, extName, SupportCamera);
+	}
 
-    getInfo () {
-        this._locale = 0;
-        switch(formatMessage.setup().locale) {
-          case 'ja':
-          case 'ja-Hira':
-            this._locale = 1;
-            break;
-        }
-        this.comlib.setLocale(this._locale);
-        [this.ifType, this.ipadrs] = this.comlib.getConfig();
+	getInfo () {
+		this._locale = 0;
+		switch(formatMessage.setup().locale) {
+		  case 'ja':
+		  case 'ja-Hira':
+			this._locale = 1;
+			break;
+		}
+		this.comlib.setLocale(this._locale);
+		[this.ifType, this.ipadrs] = this.comlib.getConfig();
 
-        return {
-            id: extName,
-            name: extName,
-            //blockIconURI: IconURI,  // Icon png to be displayed at the left edge of each extension block, encoded as a data URI.
-            menuIconURI: IconURI,   // Icon png to be displayed in the blocks category menu, encoded as a data URI.
-            blocks: this.get_blocks(),
-            menus: this.get_menus(),
-        };
-    }
-    
+		return {
+			id: extName,
+			name: extName,
+			//blockIconURI: IconURI,
+			menuIconURI: IconURI,
+			showStatusButton: true,
+			blocks: this.get_blocks(),
+			menus: this.get_menus(),
+		};
+	}
+	
 	get_blocks() {
 		this.flashList = [
 {name:'M5StickC', type:'esp32', baudrate:750000},
@@ -282,7 +271,7 @@ drawString(args,util) { return this.sendRecv(arguments.callee.name, args); }
 fillScreen(args,util) { return this.sendRecv(arguments.callee.name, args); }
 
 	burnFlash(args) {
-		if(this.server=='http') return ['please access via https://','https:// でアクセスして下さい'][this._locale];
+		if(this.comlib.server=='http') return ['please access via https://','https:// でアクセスして下さい'][this._locale];
 
 		let ret = window.confirm(['Burn TuKuRutch firmware to device, sure ?', 'つくるっち用ファームをデバイスに書き込みますか？'][this._locale]);
 		console.log(ret);
@@ -291,7 +280,7 @@ fillScreen(args,util) { return this.sendRecv(arguments.callee.name, args); }
 	}
 
 	connectWifi(args) {
-		if(this.server=='http') return ['please access via https://','https:// でアクセスして下さい'][this._locale];
+		if(this.comlib.server=='http') return ['please access via https://','https:// でアクセスして下さい'][this._locale];
 
 		return this.comlib.connectWifi(args.ARG1, args.ARG2);
 	}
@@ -301,8 +290,8 @@ fillScreen(args,util) { return this.sendRecv(arguments.callee.name, args); }
 	}
 
 	setConfig(args) {
-		if(this.server=='http' && args.ARG1=='UART') return ['please access via https://','https:// でアクセスして下さい'][this._locale];
-		if(this.server=='https' && args.ARG1=='WLAN') return ['please access via http://','http:// でアクセスして下さい'][this._locale];
+		if(this.comlib.server=='http' && args.ARG1!='WLAN') return ['please access via https://','https:// でアクセスして下さい'][this._locale];
+		if(this.comlib.server=='https' && args.ARG1=='WLAN') return ['please access via http://','http:// でアクセスして下さい'][this._locale];
 
 		return this.comlib.setConfig(args.ARG1, args.ARG2);
 	}
