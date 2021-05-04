@@ -176,8 +176,6 @@ class Scratch3Blocks {
 	}
 
 	setConfig(args) {
-		if(this.server=='http') return ['please access via https://','https:// でアクセスして下さい'][this._locale];
-
 		return this.comlib.setConfig(args.ARG1, args.ARG2);
 	}
 
