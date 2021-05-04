@@ -59,16 +59,8 @@ class comlib {
 			}
 		}
 
-		switch(this.server) {
-		case 'https':		// wlan or webBT
-			if(this.ifType == 'WLAN') this.ifType = 'UART';
-			break;
-		case 'http':
-			this.ifType = 'WLAN';
-			break;
-		case 'local':
-			break;
-		}
+		if(this.server=='http' && this.ifType=='UART') this.ifType = 'WLAN';
+		if(this.server=='https' && this.ifType=='WLAN') this.ifType = 'UART';
 
 		this._locale = 0;
 		this.busy = false;
@@ -107,26 +99,25 @@ class comlib {
 			this.disconnect();
 		}
 
+		if(this.server=='http' && ifType=='UART') return ['please access via https://','https:// でアクセスして下さい'][this._locale];
+		if(this.server=='https' && ifType=='WLAN') return ['please access via http://','http:// でアクセスして下さい'][this._locale];
+
 		if(this.ifType != ifType || this.ipadrs != ipadrs) {
 			this.ifType = ifType;
 			this.ipadrs = ipadrs;
-			document.cookie = this.extName+'_if_type=' + this.ifType + '; samesite=lax; expires=Tue, 31-Dec-2037 00:00:00 GMT;';
-			document.cookie = this.extName+'_ip=' + this.ipadrs + '; samesite=lax; expires=Tue, 31-Dec-2037 00:00:00 GMT;';
-			if(this.SupportCamera)
-			  document.cookie = 'Camera_ip=' + this.ipadrs + '; samesite=lax; expires=Tue, 31-Dec-2037 00:00:00 GMT;';
-
 			const message = [' has been saved.', 'を設定しました'][this._locale];
-			switch(this.ifType) {
-			case 'UART':
-				return 'USB(UART)' + message;
-			case 'BLE':
-				return 'BLE' + message;
-			case 'WLAN':
-				if(this.SupportCamera) {
-					return this.ifType + ', ' + this.ipadrs + message + ['(for Robot & Camera)', '(ロボット & カメラ)'][this._locale];
-				} else {
-					return this.ifType + ', ' + this.ipadrs + message;
-				}
+
+			document.cookie = this.extName+'_if_type=' + this.ifType + '; samesite=lax; expires=Tue, 31-Dec-2037 00:00:00 GMT;';
+			if(this.ifType != 'WLAN') {
+				return (this.ifType=='UART' ? 'USB(UART)': 'BLE') + message;
+			}
+
+			document.cookie = this.extName+'_ip=' + this.ipadrs + '; samesite=lax; expires=Tue, 31-Dec-2037 00:00:00 GMT;';
+			if(this.SupportCamera) {
+				document.cookie = 'Camera_ip=' + this.ipadrs + '; samesite=lax; expires=Tue, 31-Dec-2037 00:00:00 GMT;';
+				return this.ifType + ', ' + this.ipadrs + message + ['(for Robot & Camera)', '(ロボット & カメラ)'][this._locale];
+			} else {
+				return this.ifType + ', ' + this.ipadrs + message;
 			}
 		} else if(!connected) {
 			return this.open();
@@ -134,6 +125,8 @@ class comlib {
 	}
 
 	videoToggle(state) {
+		if(this.server=='https') return ['please access via http://','http:// でアクセスして下さい'][this._locale];
+
 		const stage = this._runtime.getTargetForStage();
 		if(stage) stage.videoState = state;
 		switch(state) {

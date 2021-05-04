@@ -225,9 +225,6 @@ getSW(args,util) { return this.sendRecv(arguments.callee.name, args); }
 	}
 
 	setConfig(args) {
-		if(this.comlib.server=='http' && args.ARG1!='WLAN') return ['please access via https://','https:// でアクセスして下さい'][this._locale];
-		if(this.comlib.server=='https' && args.ARG1=='WLAN') return ['please access via http://','http:// でアクセスして下さい'][this._locale];
-
 		return this.comlib.setConfig(args.ARG1, args.ARG2);
 	}
 
