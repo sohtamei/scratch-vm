@@ -58,9 +58,7 @@ class Scratch3Blocks {
 		}
 		this.comlib.setLocale(this._locale);
 
-	//	this.comlib._openUart();	// debug
-		this.intervalFunc = this.intervalFunc.bind(this);
-		this._intervalId = setInterval(this.intervalFunc, 100);	// debug
+		this._intervalId = setInterval(this.intervalFunc.bind(this), 200);	// debug
 
 		return {
 			id:extName,
@@ -69,13 +67,9 @@ class Scratch3Blocks {
 			showStatusButton: true,
 			blocks: [
 				{blockType: BlockType.COMMAND, opcode: 'setConfig',
-				text: ['I/F type','接続方法'][this._locale]+'[ARG1] IP=[ARG2]', arguments: {
+				text: ['con/discon','接続/切断'][this._locale] + '[ARG1] IP=[ARG2]', arguments: {
 					ARG1: { type: ArgumentType.STRING, defaultValue: this.comlib.ifType, menu: 'ifType' },
 					ARG2: { type: ArgumentType.STRING, defaultValue: this.comlib.ipadrs},
-				}},
-				{blockType: BlockType.COMMAND, opcode:'test',
-				text: 'test [ARG1]', arguments: {
-					ARG1: { type: ArgumentType.NUMBER, defaultValue: 0 },
 				}},
 
 				{blockType: BlockType.HAT, opcode:'whenButtonPressed',
@@ -169,13 +163,8 @@ class Scratch3Blocks {
 		};
 	}
 
-	test(args) {
-		this.comlib.send([0xff,0x55,0x05,0x02,0xff,0xff,0xff,0x01]);
-	//	this._microbit.send([args.ARG1*1, 0x00]);
-	}
-
 	intervalFunc() {
-		if(this.comlib.port && !this.comlib.busy) {
+		if(this.comlib.isConnected() && !this.comlib.busy && this.comlib.cueue.length == 0) {
 			const _this = this;
 			let ret = _this.comlib.sendRecv(CMD.GET_DATA, {}, {});
 			if(!(ret instanceof Promise)) return ret;
@@ -269,7 +258,7 @@ class Scratch3Blocks {
 	}
 
 	_getTiltAngle(direction, dontUpdate=false) {
-		if(!dontUpdate && (performance.now()-this.updatedTime) > 20 && (this.comlib.cueue.length == 0 || !this.comlib.port)) {
+		if(!dontUpdate && (performance.now()-this.updatedTime) > 20 && ((!this.comlib.busy && this.comlib.cueue.length == 0) || !this.comlib.isConnected())) {
 			let xy = (direction == 'front' || direction == 'back') ? 1: 0;
 			let ret = this.comlib.sendRecv(CMD.GET_TILT, {ARG1:{type2:'B'}}, {ARG1:xy});
 			if(!(ret instanceof Promise)) {

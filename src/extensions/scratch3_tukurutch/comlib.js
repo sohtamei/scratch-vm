@@ -79,22 +79,15 @@ class comlib {
 		this.wsResolve = null;
 		this.wsError = null;
 
-		// UART
-		this.port = null;
+		this.uart = null;
+		this.ble = null;
+		this.closeReq = false;
+
+		// flash burn
 		this.espBurnBusy = false;
 		this.recvResolve = null;
 		this.recvTimeout = null;
-		this._closeUart = this._closeUart.bind(this);
 
-		// BLE
-		this._ble = null;
-		this._timeoutID = null;
-		this._busy = false;
-		this._busyTimeoutID = null;
-
-		this._bleReset     = this._bleReset.bind(this);
-		this._bleOnConnect = this._bleOnConnect.bind(this);
-		this._bleOnMessage = this._bleOnMessage.bind(this);
 		this.statusMessage = {innerText:''};	// dummy
     }
 
@@ -108,51 +101,89 @@ class comlib {
 	}
 
 	setConfig(ifType, ipadrs) {
-		this.ifType = ifType;
-		this.ipadrs = ipadrs;
-		document.cookie = this.extName+'_if_type=' + this.ifType + '; samesite=lax; expires=Tue, 31-Dec-2037 00:00:00 GMT;';
-		document.cookie = this.extName+'_ip=' + this.ipadrs + '; samesite=lax; expires=Tue, 31-Dec-2037 00:00:00 GMT;';
-		if(this.SupportCamera)
-		  document.cookie = 'Camera_ip=' + this.ipadrs + '; samesite=lax; expires=Tue, 31-Dec-2037 00:00:00 GMT;';
-
-		if(this.port) {
-			this.port.close();
-			this.port = null;
+		const connected = this.isConnected();
+		if(connected) {
+			if(this.SupportCamera) this.videoToggle('off');
+			this.disconnect();
 		}
 
-		if(this.ws) {
-			this.ws.close();
-			this.ws = null;
-		}
-		this.busy = false;
-		this.cueue = [];
-		this._runtime.emit(this._runtime.constructor.PERIPHERAL_DISCONNECTED);
+		if(this.ifType != ifType || this.ipadrs != ipadrs) {
+			this.ifType = ifType;
+			this.ipadrs = ipadrs;
+			document.cookie = this.extName+'_if_type=' + this.ifType + '; samesite=lax; expires=Tue, 31-Dec-2037 00:00:00 GMT;';
+			document.cookie = this.extName+'_ip=' + this.ipadrs + '; samesite=lax; expires=Tue, 31-Dec-2037 00:00:00 GMT;';
+			if(this.SupportCamera)
+			  document.cookie = 'Camera_ip=' + this.ipadrs + '; samesite=lax; expires=Tue, 31-Dec-2037 00:00:00 GMT;';
 
-		if(this.ifType == 'UART') {
-			return ['USB(UART) has been saved.', 'USB(UART)を設定しました'][this._locale];
-		} else if(this.SupportCamera) {
-			return this.ifType + ', ' + this.ipadrs + [' has been saved (for Robot & Camera).', 'を設定しました(ロボット & カメラ)'][this._locale];
-		} else {
-			return this.ifType + ', ' + this.ipadrs + [' has been saved.', 'を設定しました'][this._locale];
+			const message = [' has been saved.', 'を設定しました'][this._locale];
+			switch(this.ifType) {
+			case 'UART':
+				return 'USB(UART)' + message;
+			case 'BLE':
+				return 'BLE' + message;
+			case 'WLAN':
+				if(this.SupportCamera) {
+					return this.ifType + ', ' + this.ipadrs + message + ['(for Robot & Camera)', '(ロボット & カメラ)'][this._locale];
+				} else {
+					return this.ifType + ', ' + this.ipadrs + message;
+				}
+			}
+		} else if(!connected) {
+			return this.open();
 		}
-    }
+	}
 
-	// for connect menu
+	videoToggle(state) {
+		const stage = this._runtime.getTargetForStage();
+		if(stage) stage.videoState = state;
+		switch(state) {
+		case 'off':
+			this._runtime.ioDevices.video.disableVideo();
+			break;
+		case 'on':
+			this._runtime.ioDevices.video.enableVideo();
+			this._runtime.ioDevices.video.mirror = true;
+			break;
+		case 'on_flipped':
+			this._runtime.ioDevices.video.enableVideo();
+			this._runtime.ioDevices.video.mirror = false;
+			break;
+		}
+	}
+
+	// for connect menu ---------------------------
+
+	isConnected() {
+		let connected = false;
+		switch(this.ifType) {
+		case 'UART':
+			if(this.uart && !this.closeReq) connected = true;
+			break;
+		case 'BLE':
+			if(this.ble) connected = this.ble.isConnected();
+			break;
+		case 'WLAN':
+			if(this.ws) connected = true;
+			break;
+		}
+	//	if(!connected) console.log('disconnected!');
+	//	console.log('isconnected='+connected);
+		return connected;
+	}
+
 	scan() {
 		console.log('scan');
 		switch(this.ifType) {
 		case 'UART':
-			if(this.port) {
-				this.port.close();
-				this.port = null;
-			}
+			this._closeUart();
 			return this._openUart();
 			break;
 		case 'BLE':
-			if(this._ble) this._ble.disconnect();
-			this._ble = new BLE(this._runtime, this.extName,
-							{filters: [{services: [BLEUUID.service]}]},
-							this._bleOnConnect, this._bleReset);
+			if(this.ble) {
+				this.ble.disconnect();
+				this.ble = null;
+			}
+			return this._openBle();
 			break;
 		case 'WLAN':
 			if(this.ws) {
@@ -170,7 +201,7 @@ class comlib {
 		case 'UART':
 			break;
 		case 'BLE':
-			if(this._ble) this._ble.connectPeripheral(id);
+			if(this.ble) this.ble.connectPeripheral(id);
 			break;
 		case 'WLAN':
 			break;
@@ -184,8 +215,10 @@ class comlib {
 			this._closeUart();
 			break;
 		case 'BLE':
-			if(this._ble) this._ble.disconnect();
-			this._bleReset();
+			if(this.ble) {
+				this.ble.disconnect();
+				this.ble = null;
+			}
 			break;
 		case 'WLAN':
 			if(this.ws) {
@@ -194,62 +227,10 @@ class comlib {
 			}
 			break;
 		}
+		this._runtime.emit(this._runtime.constructor.PERIPHERAL_DISCONNECTED);
 	}
 
-	isConnected() {
-		let connected = false;
-		switch(this.ifType) {
-		case 'UART':
-			if(this.port) connected = true;
-			break;
-		case 'BLE':
-			if(this._ble) connected = this._ble.isConnected();
-			break;
-		case 'WLAN':
-			if(this.ws) connected = true;
-			break;
-		}
-	//	if(!connected) console.log('disconnected!');
-		console.log('isconnected='+connected);
-		return connected;
-	}
-
-	// for BLE
-	_bleReset() {
-		console.log('reset');
-	}
-
-	_bleOnConnect() {
-		console.log('connected!');
-		this._ble.read(BLEUUID.service, BLEUUID.rxChar, true/*StartNotify*/, this._bleOnMessage);
-	}
-
-	_bleOnMessage(base64) {
-		const buf = Base64Util.base64ToUint8Array(base64);
-		this._runtime.dev.gotData(buf);
-		console.log(buf);
-	}
-
-	send(message) {
-		if(!this.isConnected()) return;
-		if(this._busy) return;
-
-		this._busy = true;
-		this._busyTimeoutID = setTimeout(() => {
-			this._busy = false;
-		}, 5000);
-
-		const output = new Uint8Array(message);
-		console.log(output);
-
-		this._ble.write(BLEUUID.service, BLEUUID.txChar, Base64Util.uint8ArrayToBase64(output), 'base64', false/*wResp*/)
-		.then(() => {
-			this._busy = false;
-			clearTimeout(this._busyTimeoutID);
-		});
-	}
-
-
+	// common command --------------------------------------------
 /*
   {'B','B'},		// 0x81:wire_begin     (SDA, SCL)
   {'B','b'},		// 0x82:wire_write     (adrs, [DATA])          ret:0-OK
@@ -357,26 +338,6 @@ class comlib {
 		})
 	}
 
-	_statusWifi() {
-		const _this = this;
-		const _defs = {};
-		const _args = {};
-		return this.sendRecv(0xFB,_defs,_args)
-		.then(result => {
-			const status = result.split('\t');
-
-			status[0] = parseInt(status[0], 10);
-			if(status[0] == 3) {
-				_this.ipadrs = status[2];
-				document.cookie = _this.extName+'_ip=' + _this.ipadrs + '; samesite=lax; expires=Tue, 31-Dec-2037 00:00:00 GMT;';
-				if(_this.SupportCamera)
-				  document.cookie = 'Camera_ip=' + _this.ipadrs + '; samesite=lax; expires=Tue, 31-Dec-2037 00:00:00 GMT;';
-			}
-			console.log(status);
-			return status;
-		})
-	}
-
 	scanWifi() {
 		const _defs = {};
 		const _args = {};
@@ -404,6 +365,28 @@ class comlib {
 			return ['connected','接続しました'][_this._locale] + ' ('+status[2]+')';
 		})
 	}
+
+	_statusWifi() {
+		const _this = this;
+		const _defs = {};
+		const _args = {};
+		return this.sendRecv(0xFB,_defs,_args)
+		.then(result => {
+			const status = result.split('\t');
+
+			status[0] = parseInt(status[0], 10);
+			if(status[0] == 3) {
+				_this.ipadrs = status[2];
+				document.cookie = _this.extName+'_ip=' + _this.ipadrs + '; samesite=lax; expires=Tue, 31-Dec-2037 00:00:00 GMT;';
+				if(_this.SupportCamera)
+				  document.cookie = 'Camera_ip=' + _this.ipadrs + '; samesite=lax; expires=Tue, 31-Dec-2037 00:00:00 GMT;';
+			}
+			console.log(status);
+			return status;
+		})
+	}
+
+	// sendRecv --------------------------------------------
 
 	sendRecv(cmd, argsDef, args) {
 		this.statusMessage.innerText = '';
@@ -450,19 +433,8 @@ class comlib {
 		if(this.cueue.length >= 5) return 'error';
 
 		const _this = this;
-		return Promise.resolve().then(() => {
-			switch(_this.ifType) {
-			case 'WLAN':
-				if(_this.ws == null)
-					return _this._openWs();
-				break;
-			case 'UART':
-				if(_this.port == null)
-					return _this._openUart();
-				break;
-			}
-			return;
-		}).then(() => new Promise(resolve => {
+		return _this.open()
+		.then(() => new Promise(resolve => {
 			_this.cueue.push({resolve:resolve, data:data});
 			_this.checkCueue();
 		}))
@@ -480,11 +452,9 @@ class comlib {
 		const {resolve, data} = _this.cueue.pop();
 		console.log('W:'+_this._dumpBuf(data));	// debug
 		switch(_this.ifType) {
-		case 'WLAN':
-			_this.wsResolve = resolve;
-			return _this.ws.send(data);
 		case 'UART':
-			return _this._sendRecvUart(data)
+		case 'BLE':
+			return ((_this.ifType=='UART')? _this._sendRecvUart(data): _this._sendRecvBle(data))
 			.then(tmp => {
 				_this.busy = false;
 				resolve(tmp);
@@ -496,19 +466,22 @@ class comlib {
 				console.log(err);
 			})
 			break;
+		case 'WLAN':
+			_this.wsResolve = resolve;
+			return _this.ws.send(data);
 		}
 	}
 
 	_sendRecvUart(sendBuf) {
 		const _this = this;
 
-		if(!_this.port.writable || !_this.port.readable) {
+		if(!_this.uart.writable || !_this.uart.readable) {
 			throw 'error';
 			return;
 		}
 
-		const writer = _this.port.writable.getWriter();
-		const reader = _this.port.readable.getReader();
+		const writer = _this.uart.writable.getWriter();
+		const reader = _this.uart.readable.getReader();
 		let count = 0;
 		let size = 3;
 		let buf = new Uint8Array(256);
@@ -522,7 +495,7 @@ class comlib {
 					hTimeout = setTimeout(resolve2, 3000);
 				}).then(() => {
 					console.log('timeout !');
-					if(_this.port && _this.port.readable) {
+					if(_this.uart && _this.uart.readable) {
 						// for no resp
 						reader.cancel();
 					} else {
@@ -537,6 +510,11 @@ class comlib {
 					if(result.done) {
 						writer.releaseLock();
 						reader.releaseLock();
+						if(_this.closeReq) {
+							_this.closeReq = false;
+							_this.uart.close();
+							_this.uart = null
+						}
 						reject('timeout');
 						return;
 					}
@@ -561,22 +539,16 @@ class comlib {
 						buf[count] = result.value[i];
 						count++;
 						if(count >= size) {
-							console.log('R:'+_this._dumpBuf(buf.slice(0,size)));	// debug
-							let tmp = 0;
-							if(size >= 5) {
-								let tmp2 = new DataView(buf.buffer);
-								switch(buf[3]) {
-								case 1: tmp = tmp2.getUint8(4); break;
-								case 2: tmp = tmp2.getInt16(4, true); break;
-								case 3: tmp = tmp2.getInt32(4, true); break;
-								case 4: tmp = tmp2.getFloat32(4, true); break;
-								case 5: tmp = tmp2.getFloat64(4, true); break;
-								case 6: tmp = String.fromCharCode.apply(null, buf.slice(4,size)); break;
-								case 7: tmp = buf.slice(5,5+buf[4]); break;
-								}
-							}
+							buf = buf.slice(0,size);
+							console.log('R:'+_this._dumpBuf(buf));	// debug
+							let tmp = _this._parseRecv(buf);
 							writer.releaseLock();
 							reader.releaseLock();
+							if(_this.closeReq) {
+								_this.closeReq = false;
+								_this.uart.close();
+								_this.uart = null
+							}
 							resolve(tmp);
 							return;
 						}
@@ -586,6 +558,11 @@ class comlib {
 					// for disconnect. releaseLock -> port.close -> reject
 					writer.releaseLock();
 					reader.releaseLock();
+					if(_this.closeReq) {
+						_this.closeReq = false;
+						_this.uart.close();
+						_this.uart = null
+					}
 					console.log('error');
 				//	reject('error');
 				})
@@ -593,26 +570,93 @@ class comlib {
 		})) // promise
 	}
 
-	_closeUart() {
-		console.log('disconnected');
-		if(this.port) {
-			this.port.close();
-			this.port = null;
+	_sendRecvBle(sendBuf) {
+		const _this = this;
+		let hTimeout = null;
+		return new Promise((resolve,reject) => {
+			hTimeout = setTimeout(reject, 3000);
+
+			return _this.ble.startNotifications(BLEUUID.service, BLEUUID.rxChar, resolve)
+			.then(() => _this.ble.write(BLEUUID.service, BLEUUID.txChar, Base64Util.uint8ArrayToBase64(sendBuf), 'base64', false/*wResp*/))
+		}).then(base64 => {
+			clearTimeout(hTimeout);
+			const buf = Base64Util.base64ToUint8Array(base64);
+			console.log('R:'+_this._dumpBuf(buf));	// debug
+			return _this._parseRecv(buf);
+		}).catch(() => {
+			console.log('timeout !');
+			throw 'timeout';
+		})
+	}
+
+	_parseRecv(buf) {
+		if(buf[0] == 0xFF && buf[1] == 0x55 && buf[2]+3 == buf.length && buf.length >= 5) {
+			let tmp = null;
+			let tmp2 = new DataView(buf.buffer);
+			switch(buf[3]) {
+			case 1: tmp = tmp2.getUint8(4); break;
+			case 2: tmp = tmp2.getInt16(4, true); break;
+			case 3: tmp = tmp2.getInt32(4, true); break;
+			case 4: tmp = tmp2.getFloat32(4, true); break;
+			case 5: tmp = tmp2.getFloat64(4, true); break;
+			case 6: tmp = String.fromCharCode.apply(null, buf.slice(4)); break;
+			case 7: tmp = buf.slice(5,5+buf[4]); break;
+			}
+			return tmp;
 		}
-		this.statusMessage.innerText = ['Disconnected','切断されました'][this._locale];
-		this._runtime.emit(this._runtime.constructor.PERIPHERAL_DISCONNECTED);
+		return;
+	}
+
+	// Open --------------------------------------------
+
+	open() {
+		const _this = this;
+		return Promise.resolve().then(() => {
+			switch(_this.ifType) {
+			case 'UART':
+				if(_this.uart == null)
+					return _this._openUart();
+				break;
+			case 'BLE':
+				if(_this.ble == null)
+					return ['press "！"','"！" を押して下さい'][_this._locale];
+				break;
+			case 'WLAN':
+				if(_this.ws == null)
+					return _this._openWs();
+				break;
+			}
+			return;
+		})
+	}
+
+	_closeUart() {
+		if(this.uart) {
+			const _this = this;
+			console.log('disconnected');
+			this.closeReq = true;
+			return this.uart.close()
+			.then(() => {
+				_this.closeReq = false;
+				_this.uart = null;
+			})
+		}
 	}
 
 	_openUart() {
-		if(this.port) return;
+		if(this.uart) return;
 
 		const _this = this;
 		this.busy = false;
 		this.cueue = [];
 		this._runtime.emit(this._runtime.constructor.PERIPHERAL_DISCONNECTED);
 
-		let port = null;
-		navigator.serial.ondisconnect = this._closeUart;
+		let uart = null;
+		navigator.serial.ondisconnect = function() {
+			_this._closeUart();
+			_this.statusMessage.innerText = ['Disconnected','切断されました'][_this._locale];
+			_this._runtime.emit(_this._runtime.constructor.PERIPHERAL_DISCONNECTED);
+		}
 
 		return navigator.serial.requestPort({})
 		.catch(err => {
@@ -621,11 +665,11 @@ class comlib {
 			throw err;
 		})
 		.then(result => {
-			port = result;
-			return port.open({ baudRate:115200 });
+			uart = result;
+			return uart.open({ baudRate:(_this.extName=='microbit'?19200:115200) });
 		}).then(() => {
-			const writer = port.writable.getWriter();
-			const reader = port.readable.getReader();
+			const writer = uart.writable.getWriter();
+			const reader = uart.readable.getReader();
 			let count = 0;
 			let buf = new Uint8Array(256);
 			
@@ -647,6 +691,7 @@ class comlib {
 						if(result.done) {
 							writer.releaseLock();
 							reader.releaseLock();
+							_this._runtime.emit(_this._runtime.constructor.PERIPHERAL_SCAN_TIMEOUT);
 							reject('timeout');
 							return;
 						}
@@ -664,18 +709,36 @@ class comlib {
 					})
 				} // loop
 			})).then(recv => {
-				_this.port = port;
+				_this.uart = uart;
 				let tmp = String.fromCharCode.apply(null, recv);
 				_this.statusMessage.innerText = tmp;
 				console.log(tmp);
 				_this._runtime.emit(_this._runtime.constructor.PERIPHERAL_CONNECTED);
 				return;
 			}).catch(err => {
-				if(port) port.close();
-				_this.port = null;
+				if(uart) uart.close();
+				_this.uart = null;
 				throw err;
 			})
 		})
+	}
+
+	_openBle() {
+		this.busy = false;
+		this.cueue = [];
+		function _bleReset() {
+			console.log('reset');
+		}
+
+		function _bleOnConnect() {
+			console.log('connected!');
+		}
+
+		this.ble = new BLE(this._runtime, this.extName,
+					{filters: [{services: [BLEUUID.service]}]},
+					_bleOnConnect.bind(this),
+					_bleReset.bind(this));
+		return;
 	}
 
 	_openWs() {
@@ -700,20 +763,7 @@ class comlib {
 			ws.onmessage = function(event) {
 				let buf = new Uint8Array(event.data);
 				console.log('R:'+_this._dumpBuf(buf));	// debug
-				let tmp = 0;
-				if(buf[0] == 0xFF && buf[1] == 0x55 && buf[2]+3 == buf.length && buf.length >= 5) {
-					let tmp2 = new DataView(buf.buffer);
-					switch(buf[3]) {
-					case 1: tmp = tmp2.getUint8(4); break;
-					case 2: tmp = tmp2.getInt16(4, true); break;
-					case 3: tmp = tmp2.getInt32(4, true); break;
-					case 4: tmp = tmp2.getFloat32(4, true); break;
-					case 5: tmp = tmp2.getFloat64(4, true); break;
-					case 6: tmp = String.fromCharCode.apply(null, buf.subarray(4)); break;
-					case 7: tmp = buf.slice(5,5+buf[4]); break;
-					}
-				//	console.log(tmp);	// debug
-				}
+				let tmp = _this._parseRecv(buf);
 				_this.busy = false;
 				_this.wsResolve(tmp);
 				_this.wsResolve = null;
@@ -769,9 +819,9 @@ class comlib {
 		this.statusMessage.innerText = '';
 
 		const _this = this;
-		if(this.port) {
-			this.port.close();
-			this.port = null;
+		if(this.uart) {
+			this.uart.close();
+			this.uart = null;
 		}
 		let flashBinImage = new Uint8Array(0x10000);
 		flashBinImage.fill(0xff);
@@ -780,8 +830,8 @@ class comlib {
 
 		return navigator.serial.requestPort({})
 		.then(result => {
-			_this.port = result;
-			return _this.port.open({ baudRate:115200 });
+			_this.uart = result;
+			return _this.uart.open({ baudRate:115200 });
 		}).then(() => fetch('static/extensions/'+flashBin.name+'.hex'))
 		.then(response => response.blob())
 		.then(blob => new Promise((resolve,reject) => {
@@ -849,9 +899,9 @@ class comlib {
 			console.log(err);
 			throw 'error';
 		}).finally(result => {
-			if(_this.port) {
-				_this.port.close();
-				_this.port = null;
+			if(_this.uart) {
+				_this.uart.close();
+				_this.uart = null;
 			}
 			_this.espBurnBusy = false;
 			return result;
@@ -865,11 +915,11 @@ class comlib {
 			loop();
 			function loop(){
 				// DTR=1 -> 0- > 1
-				return      _this.port.setSignals({ dataTerminalReady: false})
+				return      _this.uart.setSignals({ dataTerminalReady: false})
 				.then(() => new Promise(resolve => setTimeout(resolve, 110)))
-				.then(() => _this.port.setSignals({ dataTerminalReady: true}))
+				.then(() => _this.uart.setSignals({ dataTerminalReady: true}))
 				.then(() => new Promise(resolve => setTimeout(resolve, 100)))
-				.then(() => _this.port.setSignals({ dataTerminalReady: false}))
+				.then(() => _this.uart.setSignals({ dataTerminalReady: false}))
 				.then(() => new Promise(resolve => setTimeout(resolve, 100)))
 
 				.then(() => _this._SendRecvAvrBurn([0x30], 0))	// SYNC
@@ -880,8 +930,8 @@ class comlib {
 					console.log(i);
 					i++;
 					if(i < 10) {
-						return _this.port.close()
-						.then(() => _this.port.open({ baudRate:115200 }))
+						return _this.uart.close()
+						.then(() => _this.uart.open({ baudRate:115200 }))
 						.then(() => loop())
 					} else {
 						reject1();
@@ -900,8 +950,8 @@ class comlib {
 		_send[sendBuf.length] = 0x20;
 	//	console.log('W:'+_this._dumpBuf(_send));	// debug
 
-		const writer = _this.port.writable.getWriter();
-		const reader = _this.port.readable.getReader();
+		const writer = _this.uart.writable.getWriter();
+		const reader = _this.uart.readable.getReader();
 		let count = 0;
 		let size = 2+recvNum;
 		let buf = new Uint8Array(size);
@@ -978,18 +1028,18 @@ class comlib {
 
 		const _this = this;
 		let reader = null;
-		if(this.port) {
-			this.port.close();
-			this.port = null;
+		if(this.uart) {
+			this.uart.close();
+			this.uart = null;
 		}
 		let flashBinPart = null;
 		let flashBinImage = null;
 
 		return navigator.serial.requestPort({})
 		.then(result => {
-			_this.port = result;
+			_this.uart = result;
 
-			return _this.port.open({ baudRate:115200 });
+			return _this.uart.open({ baudRate:115200 });
 		}).then(() => {
 			_this.statusMessage.innerText = UpdateMsg+'0%';
 
@@ -1015,7 +1065,7 @@ class comlib {
 				return _reader.readAsArrayBuffer(blob);
 			}))
 		}).then(() => {
-			reader = _this.port.readable.getReader();
+			reader = _this.uart.readable.getReader();
 			_this._RecvEspBurn(reader);
 
 			return _this._syncEspBurn();
@@ -1065,11 +1115,11 @@ class comlib {
 
 		// close/open
 		.then(rcvParam => reader.cancel())
-		.then(() => _this.port.close())
+		.then(() => _this.uart.close())
 	//	.then(() => new Promise(resolve => setTimeout(resolve, 100)))
-		.then(() => _this.port.open({ baudRate:flashBin.baudrate }))
+		.then(() => _this.uart.open({ baudRate:flashBin.baudrate }))
 		.then(() => {
-			reader = _this.port.readable.getReader();
+			reader = _this.uart.readable.getReader();
 			_this._RecvEspBurn(reader);
 
 			// write_reg省略
@@ -1095,9 +1145,9 @@ class comlib {
 
 		// DTR=1 RTS=0 IO0=1 EN=0
 		// DTR=1 RTS=1 IO0=1 EN=1
-		.then(rcvParam => _this.port.setSignals({ dataTerminalReady: false, requestToSend: true }))
+		.then(rcvParam => _this.uart.setSignals({ dataTerminalReady: false, requestToSend: true }))
 		.then(() => new Promise(resolve => setTimeout(resolve, 100)))
-		.then(() => _this.port.setSignals({ dataTerminalReady: false, requestToSend: false }))
+		.then(() => _this.uart.setSignals({ dataTerminalReady: false, requestToSend: false }))
 		.then(() => {
 			_this.statusMessage.innerText = ['Finished', '書き込み完了'][_this._locale];
 			console.log('OK');
@@ -1111,9 +1161,9 @@ class comlib {
 				reader.cancel();
 				reader.releaseLock();
 			}
-			if(_this.port) {
-				_this.port.close();
-				_this.port = null;
+			if(_this.uart) {
+				_this.uart.close();
+				_this.uart = null;
 			}
 			_this.espBurnBusy = false;
 			return result;
@@ -1207,7 +1257,7 @@ class comlib {
 		}
 		sendBuf2[j++] = 0xC0;
 
-		const writer = this.port.writable.getWriter();
+		const writer = this.uart.writable.getWriter();
 	//	console.log('W:'+this._dumpBuf(sendBuf2.slice(0,j)));	// debug
 		writer.write(sendBuf2.slice(0,j));
 		writer.releaseLock();
@@ -1231,11 +1281,11 @@ class comlib {
 				// DTR=1 RTS=0 IO0=1 EN=0
 				// DTR=0 RTS=1 IO0=0 EN=1(delay)
 				// DTR=1 RTS=1 IO0=1 EN=1
-				return      _this.port.setSignals({ dataTerminalReady: false, requestToSend: true })
+				return      _this.uart.setSignals({ dataTerminalReady: false, requestToSend: true })
 				.then(() => new Promise(resolve => setTimeout(resolve, (i&1)? 1300: 110)))
-				.then(() => _this.port.setSignals({ dataTerminalReady: true,  requestToSend: false }))
+				.then(() => _this.uart.setSignals({ dataTerminalReady: true,  requestToSend: false }))
 				.then(() => new Promise(resolve => setTimeout(resolve, (i&1)? 460: 60)))
-				.then(() => _this.port.setSignals({ dataTerminalReady: false, requestToSend: false }))
+				.then(() => _this.uart.setSignals({ dataTerminalReady: false, requestToSend: false }))
 				.then(() => {
 					let hTimeout = null;
 					let j = 0;
@@ -1274,7 +1324,7 @@ class comlib {
 	}
 
 	_RecvEspBurn(reader) {
-	//	const reader = this.port.readable.getReader();
+	//	const reader = this.uart.readable.getReader();
 		let count = 0;
 		let rcvBuf = new Uint8Array((8 + 1024) * 2);
 

@@ -28,7 +28,6 @@ class Scratch3Blocks {
 			break;
 		}
 		this.comlib.setLocale(this._locale);
-		[this.ifType, this.ipadrs] = this.comlib.getConfig();
 
 		return {
 			id: extName,
@@ -47,9 +46,18 @@ class Scratch3Blocks {
 {name:'generic_ESP32', type:'esp32', baudrate:921600},
 		];
 
-		this.blockOffset = 5;
+		this.blockOffset = 6;
 
 		this._blocks = [
+{blockType: BlockType.COMMAND, opcode: 'setConfig', text: ['con/discon','接続/切断'][this._locale] + '[ARG1] IP=[ARG2]', arguments: {
+	ARG1: { type: ArgumentType.STRING, defaultValue: this.comlib.ifType, menu: 'ifType' },
+	ARG2: { type: ArgumentType.STRING, defaultValue: this.comlib.ipadrs},
+}},
+
+{blockType: BlockType.COMMAND, opcode: 'videoToggle', text: 'turn video [ARG1]', arguments: {
+	ARG1: { type: ArgumentType.STRING, defaultValue: 'on', menu: 'videoState' },
+}, hideFromPalette: (SupportCamera==false)},
+
 {blockType: BlockType.COMMAND, opcode: 'burnFlash', text: [
     'burn [ARG1]',
     '[ARG1]書き込み',
@@ -63,11 +71,6 @@ class Scratch3Blocks {
 }},
 
 {blockType: BlockType.REPORTER, opcode: 'statusWifi', text: ['WiFi status','WiFi接続状態'][this._locale], disableMonitor:true, arguments: {
-}},
-
-{blockType: BlockType.COMMAND, opcode: 'setConfig', text: ['I/F type','接続方法'][this._locale]+'[ARG1] IP=[ARG2]', arguments: {
-	ARG1: { type: ArgumentType.STRING, defaultValue: this.ifType, menu: 'ifType' },
-	ARG2: { type: ArgumentType.STRING, defaultValue: this.ipadrs},
 }},
 
 '---',
@@ -117,6 +120,8 @@ ifType: { acceptReporters: true, items: [
 	{ text: 'USB', value: 'UART' },
 	{ text: 'WiFi', value: 'WLAN' },
 ]},
+
+videoState: { acceptReporters: true, items: ['off','on','on_flipped']},
 
 flashList: { acceptReporters: true, items: this.flashItems },
 
@@ -224,6 +229,10 @@ getSW(args,util) { return this.sendRecv(arguments.callee.name, args); }
 		if(this.comlib.server=='https' && args.ARG1=='WLAN') return ['please access via http://','http:// でアクセスして下さい'][this._locale];
 
 		return this.comlib.setConfig(args.ARG1, args.ARG2);
+	}
+
+	videoToggle(args) {
+		return this.comlib.videoToggle(args.ARG1);
 	}
 
 	sendRecv(opcode,args) {
