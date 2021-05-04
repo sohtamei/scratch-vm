@@ -18,6 +18,7 @@ const builtinExtensions = {
     // These are the non-core built-in extensions.
     uno: () => require('../extensions/scratch3_tukurutch/uno.js'),
     GroveBeginnerKit: () => require('../extensions/scratch3_tukurutch/GroveBeginnerKit.js'),
+    M5Camera: () => require('../extensions/scratch3_tukurutch/M5Camera.js'),
     M5CameraCar: () => require('../extensions/scratch3_tukurutch/M5CameraCar.js'),
     M5Series: () => require('../extensions/scratch3_tukurutch/M5Series.js'),
     QuadCrawlerAI: () => require('../extensions/scratch3_tukurutch/QuadCrawlerAI.js'),
@@ -28,6 +29,7 @@ const builtinExtensions = {
     servoCar: () => require('../extensions/scratch3_devices/servoCar.js'),
     motorCar: () => require('../extensions/scratch3_devices/motorCar.js'),
     M5RoverC: () => require('../extensions/scratch3_devices/M5RoverC.js'),
+    maqueen: () => require('../extensions/scratch3_devices/maqueen.js'),
     uiParts: () => require('../extensions/scratch3_devices/uiParts.js'),
 
     ml2scratch: () => require('../extensions/scratch3_ml2scratch'),
