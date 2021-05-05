@@ -37,8 +37,6 @@ class Scratch3Blocks {
 		this.analogPorts = ['0','1','2','3','4','10',];
 
 		runtime.dev = this;
-
-		this.gotData = this.gotData.bind(this);
 		this.comlib = new comlib(runtime, extName, false);
 
 		this.events = 0;

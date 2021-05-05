@@ -215,8 +215,14 @@ class comlib {
 			break;
 		case 'WLAN':
 			if(this.ws) {
-				this.ws.close();
-				this.ws = null;
+				const _this = this;
+				this.ws.send(new Uint8Array([0xff,0x55,0x01,0xff]));	// reset
+				return new Promise(resolve => setTimeout(resolve, 100))
+				.then(() => {
+					_this.ws.close();
+					_this.ws = null;
+					_this._runtime.emit(_this._runtime.constructor.PERIPHERAL_DISCONNECTED);
+				})
 			}
 			break;
 		}
