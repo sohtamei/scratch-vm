@@ -27,7 +27,7 @@ class Scratch3Blocks {
 		let digitalPortArg;
 		if(this.runtime.hasOwnProperty('dev') && this.runtime.dev.hasOwnProperty('digitalPorts')) {
 			digitalPorts = this.runtime.dev.digitalPorts;
-			digitalPortArg = {type: ArgumentType.NUMBER, defaultValue:this.runtime.dev.digitalPorts[0], menu:'digitalPorts'};
+			digitalPortArg = {type: ArgumentType.STRING, defaultValue:this.runtime.dev.digitalPorts[0], menu:'digitalPorts'};
 		} else {
 			digitalPorts = [];
 			digitalPortArg = {type: ArgumentType.NUMBER, defaultValue:1};
@@ -37,7 +37,7 @@ class Scratch3Blocks {
 		let analogPortArg;
 		if(this.runtime.hasOwnProperty('dev') && this.runtime.dev.hasOwnProperty('analogPorts')) {
 			analogPorts = this.runtime.dev.analogPorts;
-			analogPortArg = {type: ArgumentType.NUMBER, defaultValue:this.runtime.dev.analogPorts[0], menu:'analogPorts'};
+			analogPortArg = {type: ArgumentType.STRING, defaultValue:this.runtime.dev.analogPorts[0], menu:'analogPorts'};
 		} else {
 			analogPorts = [];
 			analogPortArg = {type: ArgumentType.NUMBER, defaultValue:1};
@@ -50,18 +50,18 @@ class Scratch3Blocks {
 
 			blocks: [
 				{blockType: BlockType.COMMAND, opcode: 'wire_write', text: '［I2C］send adrs[ARG1] data[ARG2] (hex)', arguments: {
-					ARG1: { type: ArgumentType.STRING, defaultValue:"1F" },
-					ARG2: { type: ArgumentType.STRING, defaultValue:"1A2B3C" },
+					ARG1: { type: ArgumentType.STRING, defaultValue:'1F' },
+					ARG2: { type: ArgumentType.STRING, defaultValue:'1A2B3C' },
 				}},
 
 				{blockType: BlockType.REPORTER, opcode: 'wire_read', text: '［I2C］receive adrs[ARG1] [ARG2]bytes', arguments: {
-					ARG1: { type: ArgumentType.STRING, defaultValue:"1F" },
+					ARG1: { type: ArgumentType.STRING, defaultValue:'1F' },
 					ARG2: { type: ArgumentType.NUMBER, defaultValue:1 },
 				}},
 
 				{blockType: BlockType.REPORTER, opcode: 'wire_writeRead', text: '［I2C］send&receive adrs[ARG1] data[ARG2] [ARG3]bytes', arguments: {
-					ARG1: { type: ArgumentType.STRING, defaultValue:"1F" },
-					ARG2: { type: ArgumentType.STRING, defaultValue:"1A2B3C" },
+					ARG1: { type: ArgumentType.STRING, defaultValue:'1F' },
+					ARG2: { type: ArgumentType.STRING, defaultValue:'1A2B3C' },
 					ARG3: { type: ArgumentType.NUMBER, defaultValue:1 },
 				}},
 
@@ -91,8 +91,8 @@ class Scratch3Blocks {
 					ARG1: digitalPortArg,
 				//	ARG2: { type: ArgumentType.NOTE, defaultValue:24},
 				//	ARG3: { type: ArgumentType.NUMBER, defaultValue:500 },
-					ARG2: { type: ArgumentType.NUMBER, defaultValue:262, menu:'noteJ2'},
-					ARG3: { type: ArgumentType.NUMBER, defaultValue:500, menu:'beats' },
+					ARG2: { type: ArgumentType.STRING, defaultValue:'262', menu:'noteJ2'},
+					ARG3: { type: ArgumentType.STRING, defaultValue:'500', menu:'beats' },
 				}},
 
 				{blockType: BlockType.COMMAND, opcode: 'setPwms', text: '［PWM］port[ARG1] level[ARG2]', arguments: {
@@ -107,7 +107,7 @@ class Scratch3Blocks {
 
 				'---',
 				{blockType: BlockType.REPORTER, opcode: 'hex2dec', text: '［UTIL］hex[ARG1] (up[ARG2] low[ARG3]) to number', arguments: {
-					ARG1: { type: ArgumentType.STRING, defaultValue:"FF0001" },
+					ARG1: { type: ArgumentType.STRING, defaultValue:'FF0001' },
 					ARG2: { type: ArgumentType.NUMBER, defaultValue:2 },
 					ARG3: { type: ArgumentType.NUMBER, defaultValue:1 },
 				}},
@@ -124,30 +124,30 @@ class Scratch3Blocks {
 				]},
 				digitalPorts: { acceptReporters: true, items: digitalPorts },
 				analogPorts: { acceptReporters: true, items: analogPorts },
-					
+
 				beats: { acceptReporters: true, items: [
-				{ text: ['Half','2分音符'][this._locale], value: 500 },
-				{ text: ['Quarter','4分音符'][this._locale], value: 250 },
-				{ text: ['Eighth','8分音符'][this._locale], value: 125 },
-				{ text: ['Whole','全音符'][this._locale], value: 1000 },
-				{ text: ['Double','倍全音符'][this._locale], value: 2000 },
+				{ text: ['Half','2分音符'][this._locale], value: '500' },
+				{ text: ['Quarter','4分音符'][this._locale], value: '250' },
+				{ text: ['Eighth','8分音符'][this._locale], value: '125' },
+				{ text: ['Whole','全音符'][this._locale], value: '1000' },
+				{ text: ['Double','倍全音符'][this._locale], value: '2000' },
 				]},
 
 				noteJ2: { acceptReporters: true, items: [
-				{ text: ['C4','ド4'][this._locale], value: 262 },
-				{ text: ['D4','レ4'][this._locale], value: 294 },
-				{ text: ['E4','ミ4'][this._locale], value: 330 },
-				{ text: ['F4','ファ4'][this._locale], value: 349 },
-				{ text: ['G4','ソ4'][this._locale], value: 392 },
-				{ text: ['A4','ラ4'][this._locale], value: 440 },
-				{ text: ['B4','シ4'][this._locale], value: 494 },
-				{ text: ['C5','ド5'][this._locale], value: 523 },
-				{ text: ['D5','レ5'][this._locale], value: 587 },
-				{ text: ['E5','ミ5'][this._locale], value: 659 },
-				{ text: ['F5','ファ5'][this._locale], value: 698 },
-				{ text: ['G5','ソ5'][this._locale], value: 784 },
-				{ text: ['A5','ラ5'][this._locale], value: 880 },
-				{ text: ['B5','シ5'][this._locale], value: 988 },
+				{ text: ['C4','ド4'][this._locale], value: '262' },
+				{ text: ['D4','レ4'][this._locale], value: '294' },
+				{ text: ['E4','ミ4'][this._locale], value: '330' },
+				{ text: ['F4','ファ4'][this._locale], value: '349' },
+				{ text: ['G4','ソ4'][this._locale], value: '392' },
+				{ text: ['A4','ラ4'][this._locale], value: '440' },
+				{ text: ['B4','シ4'][this._locale], value: '494' },
+				{ text: ['C5','ド5'][this._locale], value: '523' },
+				{ text: ['D5','レ5'][this._locale], value: '587' },
+				{ text: ['E5','ミ5'][this._locale], value: '659' },
+				{ text: ['F5','ファ5'][this._locale], value: '698' },
+				{ text: ['G5','ソ5'][this._locale], value: '784' },
+				{ text: ['A5','ラ5'][this._locale], value: '880' },
+				{ text: ['B5','シ5'][this._locale], value: '988' },
 				]},
 
 			},
@@ -184,7 +184,7 @@ class Scratch3Blocks {
 		return this.runtime.dev.comlib.wire_begin(this.port[0], this.port[1])
 			.then(() => _this.runtime.dev.comlib.wire_read(adrs, size))
 			.then(function(data) {
-				let str = "";
+				let str = '';
 				for(let i = 0; i < data.length; i++)
 					str += ('0' + data[i].toString(16)).substr(-2);
 				return str;
@@ -205,7 +205,7 @@ class Scratch3Blocks {
 		return this.runtime.dev.comlib.wire_begin(this.port[0], this.port[1])
 			.then(() => _this.runtime.dev.comlib.wire_writeRead(adrs, buf, sizeR))
 			.then(function(data) {
-				let str = "";
+				let str = '';
 				for(let i = 0; i < data.length; i++)
 					str += ('0' + data[i].toString(16)).substr(-2);
 				return str;
@@ -217,7 +217,7 @@ class Scratch3Blocks {
 		return this.runtime.dev.comlib.wire_begin(this.port[0], this.port[1])
 			.then(() => _this.runtime.dev.comlib.wire_scan())
 			.then(function(data) {
-				let str = "";
+				let str = '';
 				for(let i = 0; i < data.length; i++)
 					str += ('0' + data[i].toString(16)).substr(-2) + ' ';
 				return str;

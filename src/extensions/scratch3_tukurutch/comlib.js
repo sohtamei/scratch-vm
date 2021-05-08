@@ -43,17 +43,22 @@ class comlib {
 		}
 
 		this.ipadrs = '192.168.1.xx';
+		this.ipCamera = '';
 		this.ifType = 'UART';
 		let cookies_get = document.cookie.split(';');
 		for(let i = 0; i < cookies_get.length; i++) {
 			let tmp = cookies_get[i].trim().split('=');
 			switch(tmp[0]) {
+			case extName+'_if_type':
+				this.ifType = tmp[1];
+				console.log(tmp[0]+'='+tmp[1]);
+				break;
 			case extName+'_ip':
 				this.ipadrs = tmp[1];
 				console.log(tmp[0]+'='+tmp[1]);
 				break;
-			case extName+'_if_type':
-				this.ifType = tmp[1];
+			case 'Camera_ip':
+				this.ipCamera = tmp[1];
 				console.log(tmp[0]+'='+tmp[1]);
 				break;
 			}
@@ -102,7 +107,7 @@ class comlib {
 		if(this.server=='http' && ifType=='UART') return ['please access via https://','https:// でアクセスして下さい'][this._locale];
 		if(this.server=='https' && ifType=='WLAN') return ['please access via http://','http:// でアクセスして下さい'][this._locale];
 
-		if(this.ifType != ifType || this.ipadrs != ipadrs) {
+		if(this.ifType != ifType || this.ipadrs != ipadrs || (this.SupportCamera && this.ipCamera != ipadrs)) {
 			this.ifType = ifType;
 			this.ipadrs = ipadrs;
 			const message = [' has been saved.', 'を設定しました'][this._locale];
@@ -120,7 +125,11 @@ class comlib {
 				return this.ifType + ', ' + this.ipadrs + message;
 			}
 		} else if(!connected) {
-			return this.open();
+			const _this = this;
+			return this.open()
+			.then(() => {
+				if(_this.SupportCamera && _this.ifType=='WLAN') _this.videoToggle('on');
+			})
 		}
 	}
 

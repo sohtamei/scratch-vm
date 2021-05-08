@@ -15,10 +15,6 @@ class Scratch3Blocks {
 		//	L_in1:13, L_in2:12, L_en :18, R_in1:14, R_in2:15, R_en :19,
 			L_in1:2,  L_in2:16, L_en :15, R_in1:12, R_in2:13, R_en :0,
 		};
-
-		this.stickX = 0;
-		this.stickY = 0;
-		this.stickR = 0;
 	}
 
 	getInfo () {
@@ -56,18 +52,11 @@ class Scratch3Blocks {
 				}},
 
 				{blockType: BlockType.COMMAND, opcode: 'setCar', text: '[ARG1] at speed [ARG2]', arguments: {
-				    ARG1: { type: ArgumentType.STRING, defaultValue:1, menu: 'direction' },
+				    ARG1: { type: ArgumentType.STRING, defaultValue:'1', menu: 'direction' },
 				    ARG2: { type: ArgumentType.NUMBER, defaultValue:100 },
 				}},
 
 				{blockType: BlockType.COMMAND, opcode: 'stopCar', text: 'stop', arguments: {
-				}},
-
-				{blockType: BlockType.COMMAND, opcode: 'setupStick', text: ['setup stick, size[ARG1]','スティック設定 サイズ[ARG1]'][this._locale], arguments: {
-				    ARG1: { type: ArgumentType.NUMBER, defaultValue:50 },
-				}},
-
-				{blockType: BlockType.BOOLEAN, opcode: 'updateStick', text: ['finish of stick operation','スティック操作完了'][this._locale], arguments: {
 				}},
 
 				{blockType: BlockType.COMMAND, opcode: 'setMotor', text: 'set motor L[ARG1] R[ARG2]', arguments: {
@@ -76,7 +65,7 @@ class Scratch3Blocks {
 				}},
 
 				{blockType: BlockType.REPORTER, opcode: 'enumDirection', text: '[ARG1] .', arguments: {
-				    ARG1: { type: ArgumentType.STRING, defaultValue:1, menu: 'direction' },
+				    ARG1: { type: ArgumentType.STRING, defaultValue:'1', menu: 'direction' },
 				}},
 			],
 
@@ -160,38 +149,6 @@ class Scratch3Blocks {
 
 	stopCar(args) {
 		return this.setMotor({ARG1:0, ARG2:0});
-	}
-
-	setupStick(args, util) {
-		this.stickX = util.target.x;
-		this.stickY = util.target.y;
-		this.stickR = args.ARG1*1;
-	}
-
-	updateStick(args, util) {
-		let mouseX = util.ioQuery('mouse', 'getScratchX');
-		let mouseY = util.ioQuery('mouse', 'getScratchY');
-		let mouseDown = util.ioQuery('mouse', 'getIsDown');
-		let dX = mouseX - this.stickX;
-		let dY = mouseY - this.stickY;
-
-		if(!mouseDown) {
-			util.target.setXY(this.stickX, this.stickY);
-			return this.stopCar(args)
-			.then(() => true)
-		}
-
-		let a = Math.sqrt(dX*dX + dY*dY);
-		if(a > this.stickR) {
-			dX = dX * this.stickR/a;
-			dY = dY * this.stickR/a;
-			util.target.setXY(dX+this.stickX, dY+this.stickY);
-		} else {
-			util.target.setXY(mouseX, mouseY);
-		}
-
-		return this.setMotor({ARG1:(dX+dY)*2, ARG2:(dY-dX)*2})
-		.then(() => false)
 	}
 
 	enumDirection(args, util, blockInfo) { return args.ARG1; }

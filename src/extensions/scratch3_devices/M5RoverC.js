@@ -42,58 +42,81 @@ class Scratch3Blocks {
 				}},
 
 				{blockType: BlockType.COMMAND, opcode: 'moveRoverC', text: 'dir [ARG1] speed [ARG2]', arguments: {
-				    ARG1: { type: ArgumentType.NUMBER, type2:'B', defaultValue:2, menu: 'roverDir' },
-				    ARG2: { type: ArgumentType.NUMBER, type2:'B', defaultValue:100 },
+					ARG1: { type: ArgumentType.STRING, defaultValue:'2', menu: 'roverDir' },
+					ARG2: { type: ArgumentType.NUMBER, defaultValue:100 },
 				}},
 
 				{blockType: BlockType.COMMAND, opcode: 'stopCar', text: 'stop', arguments: {
 				}},
 
 				{blockType: BlockType.COMMAND, opcode: 'setupStickXY', text: ['setup XY-stick, size[ARG1]','XYスティック設定 サイズ[ARG1]'][this._locale], arguments: {
-				    ARG1: { type: ArgumentType.NUMBER, defaultValue:50 },
+					ARG1: { type: ArgumentType.NUMBER, defaultValue:50 },
 				}},
 
 				{blockType: BlockType.BOOLEAN, opcode: 'updateStickXY', text: ['finish of XY-stick operation','XYスティック操作完了'][this._locale], arguments: {
 				}},
 
 				{blockType: BlockType.COMMAND, opcode: 'setupStickR', text: ['setup Role-stick, size[ARG1]','Roleスティック設定 サイズ[ARG1]'][this._locale], arguments: {
-				    ARG1: { type: ArgumentType.NUMBER, defaultValue:50 },
+					ARG1: { type: ArgumentType.NUMBER, defaultValue:50 },
 				}},
 
 				{blockType: BlockType.BOOLEAN, opcode: 'updateStickR', text: ['finish of Role-stick operation','Roleスティック操作完了'][this._locale], arguments: {
 				}},
 
 				{blockType: BlockType.COMMAND, opcode: 'setRoverC_XYR', text: 'x [ARG1] y [ARG2] role [ARG3]', arguments: {
-				    ARG1: { type: ArgumentType.NUMBER, type2:'S', defaultValue:0 },
-				    ARG2: { type: ArgumentType.NUMBER, type2:'S', defaultValue:0 },
-				    ARG3: { type: ArgumentType.NUMBER, type2:'S', defaultValue:0 },
+					ARG1: { type: ArgumentType.NUMBER, defaultValue:0 },
+					ARG2: { type: ArgumentType.NUMBER, defaultValue:0 },
+					ARG3: { type: ArgumentType.NUMBER, defaultValue:0 },
 				}},
 
 				{blockType: BlockType.COMMAND, opcode: 'setRoverC', text: 'FL [ARG1] FR [ARG2] RL [ARG3] RR [ARG4]', arguments: {
-				    ARG1: { type: ArgumentType.NUMBER, type2:'S', defaultValue:0 },
-				    ARG2: { type: ArgumentType.NUMBER, type2:'S', defaultValue:0 },
-				    ARG3: { type: ArgumentType.NUMBER, type2:'S', defaultValue:0 },
-				    ARG4: { type: ArgumentType.NUMBER, type2:'S', defaultValue:0 },
+					ARG1: { type: ArgumentType.NUMBER, defaultValue:0 },
+					ARG2: { type: ArgumentType.NUMBER, defaultValue:0 },
+					ARG3: { type: ArgumentType.NUMBER, defaultValue:0 },
+					ARG4: { type: ArgumentType.NUMBER, defaultValue:0 },
+				}},
+
+				{blockType: BlockType.COMMAND, opcode: 'setMotor', text: '[ARG1] speed[ARG2]', arguments: {
+					ARG1: { type: ArgumentType.STRING, defaultValue:'0', menu: 'ch' },
+					ARG2: { type: ArgumentType.NUMBER, defaultValue:255 },
+				}},
+
+				{blockType: BlockType.COMMAND, opcode: 'setMotorLR', text: '[ARG1] L[ARG2] R[ARG3]', arguments: {
+					ARG1: { type: ArgumentType.STRING, defaultValue:'0', menu: 'chLR' },
+					ARG2: { type: ArgumentType.NUMBER, defaultValue:255 },
+					ARG3: { type: ArgumentType.NUMBER, defaultValue:255 },
 				}},
 
 				{blockType: BlockType.REPORTER, opcode: 'enumRoverDir', text: '[ARG1] .', arguments: {
-				    ARG1: { type: ArgumentType.NUMBER, type2:'B', defaultValue:2, menu: 'roverDir' },
+					ARG1: { type: ArgumentType.STRING, defaultValue:'2', menu: 'roverDir' },
 				}},
 			],
 
 			menus: {
+				ch: { acceptReporters: true, items: [
+					{ text: 'F_L', value: '0' },
+					{ text: 'F_R', value: '1' },
+					{ text: 'R_L', value: '2' },
+					{ text: 'R_R', value: '3' },
+				]},
+
+				chLR: { acceptReporters: true, items: [
+					{ text: 'F', value: '0' },
+					{ text: 'R', value: '2' },
+				]},
+
 				roverDir: { acceptReporters: true, items: [
-					{ text: 'STOP', value: 0 },
-					{ text: 'UP_R', value: 1 },
-					{ text: 'UP', value: 2 },
-					{ text: 'UP_L', value: 3 },
-					{ text: 'RIGHT', value: 4 },
-					{ text: 'LEFT', value: 5 },
-					{ text: 'DOWN_R', value: 6 },
-					{ text: 'DOWN', value: 7 },
-					{ text: 'DOWN_L', value: 8 },
-					{ text: 'ROLL_R', value: 9 },
-					{ text: 'ROLL_L', value: 10 },
+					{ text: 'STOP', value: '0' },
+					{ text: 'UP_R', value: '1' },
+					{ text: 'UP', value: '2' },
+					{ text: 'UP_L', value: '3' },
+					{ text: 'RIGHT', value: '4' },
+					{ text: 'LEFT', value: '5' },
+					{ text: 'DOWN_R', value: '6' },
+					{ text: 'DOWN', value: '7' },
+					{ text: 'DOWN_L', value: '8' },
+					{ text: 'ROLL_R', value: '9' },
+					{ text: 'ROLL_L', value: '10' },
 				]},
 
 				i2cPort: { acceptReporters: true, items: [
@@ -114,8 +137,7 @@ class Scratch3Blocks {
 	
 	enumRoverDir(args) { return args.ARG1; }
 
-	setRoverC(args)
-	{
+	setRoverC(args) {
 		let F_L = args.ARG1*1;
 		let F_R = args.ARG2*1;
 		let R_L = args.ARG3*1;
@@ -137,8 +159,7 @@ class Scratch3Blocks {
 		}
 	}
 
-	setRoverC_XYR(args)
-	{
+	setRoverC_XYR(args) {
 		let x = args.ARG1*1;
 		let y = args.ARG2*1;
 		let role = args.ARG3*1;
@@ -158,8 +179,7 @@ class Scratch3Blocks {
 		return this.setRoverC({ARG1:left+role, ARG2:right-role, ARG3:right+role, ARG4:left-role});
 	}
 
-	moveRoverC(args)
-	{
+	moveRoverC(args) {
 		let dir = args.ARG1*1;
 		let speed = args.ARG2*1;
 		const rdir_table = [
@@ -182,6 +202,34 @@ class Scratch3Blocks {
 
 	stopCar(args) {
 		return this.runtime.dev.comlib.wire_write(ROVER_ADDRESS, new Uint8Array([0x00,0,0,0,0]));
+	}
+
+	setMotor(args) {
+		let speed = args.ARG2*1;
+		speed = Math.min(100, Math.max(-100, speed));
+		const _this = this;
+		if(!this.initWire) {
+			this.initWire = true;
+			return this.runtime.dev.comlib.wire_begin(this.port[0], this.port[1])
+			.then(() => _this.runtime.dev.comlib.wire_write(ROVER_ADDRESS, new Uint8Array([args.ARG1*1, speed])));
+		} else {
+			return _this.runtime.dev.comlib.wire_write(ROVER_ADDRESS, new Uint8Array([args.ARG1*1, speed]));
+		}
+	}
+
+	setMotorLR(args) {
+		let L = args.ARG2*1;
+		let R = args.ARG3*1;
+		L = Math.min(100, Math.max(-100, L));
+		R = Math.min(100, Math.max(-100, R));
+		const _this = this;
+		if(!this.initWire) {
+			this.initWire = true;
+			return this.runtime.dev.comlib.wire_begin(this.port[0], this.port[1])
+			.then(() => _this.runtime.dev.comlib.wire_write(ROVER_ADDRESS, new Uint8Array([args.ARG1*1, L, R])));
+		} else {
+			return _this.runtime.dev.comlib.wire_write(ROVER_ADDRESS, new Uint8Array([args.ARG1*1, L, R]));
+		}
 	}
 
 	setupStickXY(args, util) {
