@@ -110,6 +110,7 @@ class comlib {
 		if(this.ifType != ifType || this.ipadrs != ipadrs || (this.SupportCamera && this.ipCamera != ipadrs)) {
 			this.ifType = ifType;
 			this.ipadrs = ipadrs;
+			if(this.SupportCamera) this.ipCamera = ipadrs;
 			const message = [' has been saved.', 'を設定しました'][this._locale];
 
 			document.cookie = this.extName+'_if_type=' + this.ifType + '; samesite=lax; expires=Tue, 31-Dec-2037 00:00:00 GMT;';
