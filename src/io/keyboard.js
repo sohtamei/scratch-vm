@@ -118,12 +118,13 @@ class Keyboard {
         if (scratchKey === '') return;
         const index = this._keysPressed.indexOf(scratchKey);
         if (data.isDown) {
-            this.runtime.emit('KEY_PRESSED', scratchKey);
             // If not already present, add to the list.
             if (index < 0) {
+                this.runtime.emit('KEY_PRESSED', scratchKey);
                 this._keysPressed.push(scratchKey);
             }
         } else if (index > -1) {
+            this.runtime.emit('KEY_RELEASED', scratchKey);
             // If already present, remove from the list.
             this._keysPressed.splice(index, 1);
         }

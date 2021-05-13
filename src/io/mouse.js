@@ -73,6 +73,15 @@ class Mouse {
                 180
             ));
         }
+        
+        if (data.x > 0 && data.x < data.canvasWidth &&
+            data.y > 0 && data.y < data.canvasHeight) {
+            if(typeof data.isDown !== 'undefined')
+                this.runtime.emit('MOUSE', {event:(data.isDown?'down':'up'), x:this._scratchX, y:this._scratchY});
+            else if(this._isDown)
+                this.runtime.emit('MOUSE', {event:'', x:this._scratchX, y:this._scratchY});
+        }
+
         if (typeof data.isDown !== 'undefined') {
             const previousDownState = this._isDown;
             this._isDown = data.isDown;
