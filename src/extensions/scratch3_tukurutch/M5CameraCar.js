@@ -95,22 +95,8 @@ class Scratch3Blocks {
     ARG4: { type: ArgumentType.NUMBER, type2:'S', defaultValue:0 },
 }},
 
-{blockType: BlockType.COMMAND, opcode: 'setServo', text: [
-    'set servo [ARG1] [ARG2]',
-    'サーボ [ARG1] の角度を [ARG2] にする',
-][this._locale], arguments: {
-    ARG1: { type: ArgumentType.STRING, type2:'B', defaultValue:'0', menu: 'servoch' },
-    ARG2: { type: ArgumentType.NUMBER, type2:'B', defaultValue:90 },
-}},
-
-{blockType: BlockType.COMMAND, opcode: 'setPwm', text: [
-    'set motor [ARG1] pwm [ARG2]',
-    'サーボ [ARG1] にPWM [ARG2] を設定',
-][this._locale], arguments: {
-    ARG1: { type: ArgumentType.STRING, type2:'B', defaultValue:'0', menu: 'servoch' },
-    ARG2: { type: ArgumentType.NUMBER, type2:'S', defaultValue:307 },
-}},
-
+'---',
+'---',
 {blockType: BlockType.COMMAND, opcode: 'stopCar', text: [
     'stop',
     'ストップ',
@@ -177,8 +163,6 @@ onoff: { acceptReporters: true, items: [
 { text: 'Off', value: '0' },
 ]},
 
-servoch: { acceptReporters: true, items: ['0','1',]},
-
 speed: { acceptReporters: true, items: ['4','2','1','0','-1','-2','-4',]},
 
 	  };
@@ -186,8 +170,6 @@ speed: { acceptReporters: true, items: ['4','2','1','0','-1','-2','-4',]},
 
 setCar(args,util) { return this.sendRecv(arguments.callee.name, args); }
 setMotor(args,util) { return this.sendRecv(arguments.callee.name, args); }
-setServo(args,util) { return this.sendRecv(arguments.callee.name, args); }
-setPwm(args,util) { return this.sendRecv(arguments.callee.name, args); }
 stopCar(args,util) { return this.sendRecv(arguments.callee.name, args); }
 enumDirection(args) { return args.ARG1; }
 setLED(args,util) { return this.sendRecv(arguments.callee.name, args); }

@@ -129,10 +129,12 @@ class Scratch3Blocks {
 			throw 'error';
 		}
 		this.runtime.dev.RadioRecvCB = this.RadioRecv.bind(this);
+		this.serial = 0;
+		this.startTime = 0;
 
 		this.events = [];
-		this.radioNumber = 0;
-		this.radioString = '';
+		this.recv = {number:0, string:'', serial:0};
+		this.recvSaved = Object.assign({}, this.recv);
 	}
 
 	getInfo() {
@@ -149,10 +151,11 @@ class Scratch3Blocks {
 			name:'micro:bit Radio',
 			menuIconURI: IconURI,
 			blocks: [
-				{blockType: BlockType.COMMAND, opcode:'enableRadio', text: 'enable Radio  group[ARG1] frequency[ARG2] power[ARG3]', arguments: {
+			{blockType: BlockType.COMMAND, opcode:'enableRadio', text: 'enable Radio  group[ARG1] frequency[ARG2] power[ARG3] serial[ARG4]', arguments: {
 					ARG1: {type:ArgumentType.NUMBER, defaultValue: 1},
 					ARG2: {type:ArgumentType.NUMBER, defaultValue: 7},
 					ARG3: {type:ArgumentType.NUMBER, defaultValue: 6},
+					ARG4: {type:ArgumentType.NUMBER, defaultValue: 0},
 				}},
 				{blockType: BlockType.COMMAND, opcode:'sendNum', text: 'send number[ARG1]', arguments: {
 					ARG1: {type:ArgumentType.NUMBER, defaultValue: 1},
@@ -167,10 +170,9 @@ class Scratch3Blocks {
 				{blockType: BlockType.HAT, opcode:'whenRecv', text: 'receive[ARG1]', arguments: {
 					ARG1: {type:ArgumentType.STRING, menu:'radioRecv', defaultValue:'number'}
 				}},
-				{blockType: BlockType.REPORTER, opcode:'getNumber', text: 'number', arguments: {
-				}},
-				{blockType: BlockType.REPORTER, opcode:'getString', text: 'string', arguments: {
-				}},
+				{blockType: BlockType.REPORTER, opcode:'getNumber', text: 'number' },
+				{blockType: BlockType.REPORTER, opcode:'getString', text: 'string' },
+				{blockType: BlockType.REPORTER, opcode:'getSerial', text: 'serial' },
 
 				{blockType: BlockType.COMMAND, opcode: 'sendEvent', text: 'send event[ARG1] [ARG2]', arguments: {
 					ARG1: { type: ArgumentType.STRING, defaultValue: 'MICROBIT_ID_BUTTON_A', menu: 'EvtId' },
@@ -290,13 +292,14 @@ class Scratch3Blocks {
 		let event = ''
 		if(data[3] == 1) {
 			let strOfs = 0;
+			this.recv.serial = dv.getUint32(9, true);
 			switch(data[4]) {
 			case 0:
-				this.radioNumber = dv.getInt32(13, true);
+				this.recv.number = dv.getInt32(13, true);
 				event = 'number';
 				break;
 			case 4:
-				this.radioNumber = dv.getFloat64(13, true);
+				this.recv.number = dv.getFloat64(13, true);
 				event = 'number';
 				break;
 			case 1:
@@ -304,21 +307,21 @@ class Scratch3Blocks {
 				event = 'string';
 				break;
 			case 2:
-				this.radioNumber = dv.getInt32(13, true);
+				this.recv.number = dv.getInt32(13, true);
 				strOfs = 13+4;
 				event = 'stringNumber';
 				break;
 			case 5:
-				this.radioNumber = dv.getFloat64(13, true);
+				this.recv.number = dv.getFloat64(13, true);
 				strOfs = 13+8;
 				event = 'stringNumber';
 				break;
 			}
 			if(strOfs) {
 				console.log(data.slice(strOfs+1, data[strOfs]));
-				this.radioString = String.fromCharCode.apply(null, data.slice(strOfs+1, data[strOfs]));
+				this.recv.string = String.fromCharCode.apply(null, data.slice(strOfs+1, data[strOfs]));
 			}
-			console.log(event + ':' + this.radioString + ',' + this.radioNumber);
+			console.log(event + ':' + this.recv.string + ',' + this.recv.number);
 
 			const index = this.events.indexOf(event);
 			if(index < 0) this.events.push(event);
@@ -348,6 +351,7 @@ class Scratch3Blocks {
 		const index = this.events.indexOf(args.ARG1);
 		if (index > -1) {
 			this.events.splice(index, 1);
+			this.recvSaved = Object.assign({}, this.recv);
 			return true;
 		}
 		return false;
@@ -357,7 +361,13 @@ class Scratch3Blocks {
 		if(this.runtime.dev.comlib.ifType != 'UART')
 			return ['Please connect with USB','USBで接続して下さい'][this._locale];
 
-		return this.runtime.dev.comlib.sendRecv(CMD.RadioEnable, {ARG1:{type2:'B'},ARG2:{type2:'B'},ARG3:{type2:'B'}}, args);
+		this.serial = args.ARG4*1;
+		let date = new Date();
+		this.startTime = date.getTime();
+
+		return this.runtime.dev.comlib.sendRecv(CMD.RadioEnable, 
+												{ARG1:{type2:'B'},ARG2:{type2:'B'},ARG3:{type2:'B'}},
+												{ARG1:args.ARG1, ARG2:args.ARG2, ARG3:args.ARG3});
 	}
 
 	sendStr(args) {
@@ -366,8 +376,8 @@ class Scratch3Blocks {
 
 		data.set([data.length-1,1,0,1,2], 0);
 		let date = new Date();
-		dv.setUint32(5, date.getTime()&0xFFFFFFFF, true);
-	//	dv.setUint32(9, serial, true);
+		dv.setUint32(5, (date.getTime()-this.startTime)&0xFFFFFFFF, true);
+		dv.setUint32(9, this.serial, true);
 
 		let str = args.ARG1.slice(0,18);
 		data[13] = str.length;
@@ -394,8 +404,8 @@ class Scratch3Blocks {
 			dv.setFloat64(13, num, true);
 		}
 		let date = new Date();
-		dv.setUint32(5, date.getTime()&0xFFFFFFFF, true);
-	//	dv.setUint32(9, serial, true);
+		dv.setUint32(5, (date.getTime()-this.startTime)&0xFFFFFFFF, true);
+		dv.setUint32(9, this.serial, true);
 
 		return this.runtime.dev.comlib.sendRecv(CMD.RadioSend, {ARG1:{type2:'b'}}, {ARG1:data});
 	}
@@ -419,8 +429,8 @@ class Scratch3Blocks {
 			ofs = 13+8;
 		}
 		let date = new Date();
-		dv.setUint32(5, date.getTime()&0xFFFFFFFF, true);
-	//	dv.setUint32(9, serial, true);
+		dv.setUint32(5, (date.getTime()-this.startTime)&0xFFFFFFFF, true);
+		dv.setUint32(9, this.serial, true);
 
 		let str = args.ARG1.slice(0,8);
 		data[ofs+0] = str.length;
@@ -431,8 +441,9 @@ class Scratch3Blocks {
 		return this.runtime.dev.comlib.sendRecv(CMD.RadioSend, {ARG1:{type2:'b'}}, {ARG1:data});
 	}
 
-	getNumber() { return this.radioNumber; }
-	getString() { return this.radioString; }
+	getNumber() { return this.recvSaved.number; }
+	getString() { return this.recvSaved.string; }
+	getSerial() { return this.recvSaved.serial; }
 
 	sendEvent(args) {
 		if(!EvtId.hasOwnProperty(args.ARG1)) return 'error';
@@ -449,9 +460,9 @@ class Scratch3Blocks {
 		data.set([data.length-1,1,0,2], 0);
 		dv.setUint16(4, id, true);
 		dv.setUint16(6, value, true);
-	//	dv.setUint32(8, serial, true);
+		dv.setUint32(8, this.serial, true);
 		let date = new Date();
-		dv.setUint32(12, (date.getTime()*1000)&0xFFFFFFFF, true);
+		dv.setUint32(12, ((date.getTime()-this.startTime)*1000)&0xFFFFFFFF, true);
 
 		return this.runtime.dev.comlib.sendRecv(CMD.RadioSend, {ARG1:{type2:'b'}}, {ARG1:data});
 	}
