@@ -32,6 +32,9 @@ const builtinExtensions = {
     maqueen: () => require('../extensions/scratch3_devices/maqueen.js'),
     uiParts: () => require('../extensions/scratch3_devices/uiParts.js'),
 
+    microbit: () => require('../extensions/scratch3_microbit/microbit.js'),
+    microbitRadio: () => require('../extensions/scratch3_microbit/microbitRadio.js'),
+
     ml2scratch: () => require('../extensions/scratch3_ml2scratch'),
     facemesh2scratch: () => require('../extensions/scratch3_facemesh2scratch'),
     handpose2scratch: () => require('../extensions/scratch3_handpose2scratch'),
@@ -43,7 +46,6 @@ const builtinExtensions = {
     pen: () => require('../extensions/scratch3_pen'),
     wedo2: () => require('../extensions/scratch3_wedo2'),
     music: () => require('../extensions/scratch3_music'),
-    microbit: () => require('../extensions/scratch3_microbit'),
     text2speech: () => require('../extensions/scratch3_text2speech'),
     translate: () => require('../extensions/scratch3_translate'),
     videoSensing: () => require('../extensions/scratch3_video_sensing'),

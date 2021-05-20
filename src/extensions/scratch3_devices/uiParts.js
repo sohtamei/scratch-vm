@@ -77,18 +77,18 @@ class Scratch3Blocks {
 				'---',
 
 				{blockType: BlockType.COMMAND, opcode: 'plot1', text: 'plot ch[ARG1]', arguments: {
-					ARG1: { type: ArgumentType.NUMBER, defaultValue:1 },
+					ARG1: { type: ArgumentType.NUMBER, defaultValue: 1 },
 				}},
 
 				{blockType: BlockType.COMMAND, opcode: 'plot2', text: 'plot ch[ARG1] [ARG2]', arguments: {
-					ARG1: { type: ArgumentType.NUMBER, defaultValue:1 },
-					ARG2: { type: ArgumentType.NUMBER, defaultValue:2 },
+					ARG1: { type: ArgumentType.NUMBER, defaultValue: 1 },
+					ARG2: { type: ArgumentType.NUMBER, defaultValue: 2 },
 				}},
 
 				{blockType: BlockType.COMMAND, opcode: 'plot3', text: 'plot ch[ARG1] [ARG2] [ARG3]', arguments: {
-					ARG1: { type: ArgumentType.NUMBER, defaultValue:1 },
-					ARG2: { type: ArgumentType.NUMBER, defaultValue:2 },
-					ARG3: { type: ArgumentType.NUMBER, defaultValue:3 },
+					ARG1: { type: ArgumentType.NUMBER, defaultValue: 1 },
+					ARG2: { type: ArgumentType.NUMBER, defaultValue: 2 },
+					ARG3: { type: ArgumentType.NUMBER, defaultValue: 3 },
 				}},
 
 				'---',
@@ -104,10 +104,6 @@ class Scratch3Blocks {
 				'---',
 
 				{blockType: BlockType.HAT, opcode: 'eventMouse', text: 'When Mouse[ARG1]', arguments: {
-					ARG1: { type: ArgumentType.STRING, defaultValue: 'down', menu: 'mouseEvent' },
-				}},
-
-				{blockType: BlockType.BOOLEAN, opcode: 'isMouseDown', text: 'x is Mouse[ARG1]', arguments: {
 					ARG1: { type: ArgumentType.STRING, defaultValue: 'down', menu: 'mouseEvent' },
 				}},
 

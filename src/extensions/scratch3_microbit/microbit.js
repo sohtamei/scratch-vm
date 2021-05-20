@@ -8,23 +8,13 @@ const comlib = require('../scratch3_tukurutch/comlib.js');
 const IconURI = require('./microbit.png');
 
 const CMD = {
-	DISPLAY_TEXT: 1,
-	DISPLAY_LED: 2,
-	GET_DATA: 3,
-	GET_TILT: 4,
-};
-
-const EVENT = {
-	PORT0		: (1<<0),
-	PORT1		: (1<<1),
-	PORT2		: (1<<2),
-
-	BUTTONA		: (1<<3),
-	BUTTONB		: (1<<4),
-	BUTTONANY	: (0b11<<3),
-
-	MOVED		: (1<<5),
-	SHAKEN		: (1<<6),
+	displayText: 1,
+	displayLed: 2,
+	getData: 3,
+	getTilt: 4,
+	RadioEnable: 5,
+	RadioSend: 6,
+	RadioRecv: 7,
 };
 
 const TILT_THRESHOLD = 15.0;
@@ -39,11 +29,15 @@ class Scratch3Blocks {
 		runtime.dev = this;
 		this.comlib = new comlib(runtime, extName, false);
 
-		this.events = 0;
+		// gotData
+		this.dataFlag = false;
+		this.events = [];
 		this.button = 0;
 		this.tiltX = 0;
 		this.tiltY = 0;
 		this.updatedTime = 0;
+
+		this.RadioRecvCB = null;
 	}
 
 	getInfo() {
@@ -65,9 +59,8 @@ class Scratch3Blocks {
 			showStatusButton: true,
 			blocks: [
 				{blockType: BlockType.COMMAND, opcode: 'setConfig',
-				text: ['con/discon','接続/切断'][this._locale] + '[ARG1] IP=[ARG2]', arguments: {
+				text: ['con/discon','接続/切断'][this._locale] + '[ARG1]', arguments: {
 					ARG1: { type: ArgumentType.STRING, defaultValue: this.comlib.ifType, menu: 'ifType' },
-					ARG2: { type: ArgumentType.STRING, defaultValue: this.comlib.ipadrs},
 				}},
 
 				{blockType: BlockType.HAT, opcode:'whenButtonPressed',
@@ -155,8 +148,7 @@ class Scratch3Blocks {
 					{ text: formatMessage({id:'microbit.tiltDirectionMenu.right', default:'right'}), value:'right'},
 					{ text: formatMessage({id:'microbit.tiltDirectionMenu.any', default:'any'}), value:'any'},
 				]},
-				touchPins: { acceptReporters: true, items: ['0', '1', '2']
-				}
+				touchPins: { acceptReporters: true, items: ['0', '1', '2'] },
 			}
 		};
 	}
@@ -164,7 +156,9 @@ class Scratch3Blocks {
 	intervalFunc() {
 		if(this.comlib.isConnected() && !this.comlib.busy && this.comlib.cueue.length == 0) {
 			const _this = this;
-			let ret = _this.comlib.sendRecv(CMD.GET_DATA, {}, {});
+
+			if(!this.dataFlag) return;
+			let ret = _this.comlib.sendRecv(CMD.getData, {}, {});
 			if(!(ret instanceof Promise)) return ret;
 
 			return ret.then(data => {
@@ -174,17 +168,22 @@ class Scratch3Blocks {
 	}
 
 	setConfig(args) {
-		return this.comlib.setConfig(args.ARG1, args.ARG2);
+		return this.comlib.setConfig(args.ARG1, null);
+	}
+
+	checkEvent(event) {
+		const index = this.events.indexOf(event);
+		if (index > -1) {
+			this.events.splice(index, 1);
+			return true;
+		}
+		return false;
 	}
 
 	whenButtonPressed(args) {
-		let ret = 0;
-		switch(args.BTN) {
-		case 'A':   ret = this.events & EVENT.BUTTONA; this.events &= ~EVENT.BUTTONA; break;
-		case 'B':   ret = this.events & EVENT.BUTTONB; this.events &= ~EVENT.BUTTONB; break;
-		case 'any': ret = this.events & EVENT.BUTTONANY; this.events &= ~EVENT.BUTTONANY; break;
-		}
-		return ret ? true:false;
+		this.dataFlag = true;
+		if(args.BTN == 'any') return this.checkEvent('A') || this.checkEvent('B');
+		return this.checkEvent(args.BTN);
 	}
 
 	isButtonPressed(args) {
@@ -198,20 +197,15 @@ class Scratch3Blocks {
 	}
 
 	whenGesture(args) {
-		let ret = 0;
-		switch(args.GESTURE) {
-		case 'shaken': ret = this.events & EVENT.SHAKEN; this.events &= ~EVENT.SHAKEN; break;
-	//	case 'jumped': ret = this.events & EVENT.JUMPED; this.events &= ~EVENT.JUMPED; break;
-		case 'moved':  ret = this.events & EVENT.MOVED; this.events &= ~EVENT.MOVED; break;
-		}
-		return ret;
+		this.dataFlag = true;
+		return this.checkEvent(args.GESTURE);
 	}
 
 	displayText(args) {
 		const text = args.TEXT.substring(0, 19);
 		if(text.length <= 0) return '';
 
-		return this.comlib.sendRecv(CMD.DISPLAY_TEXT, {ARG1:{type2:'s'}}, {ARG1:text});
+		return this.comlib.sendRecv(CMD.displayText, {ARG1:{type2:'s'}}, {ARG1:text});
 	}
 
 	displaySymbol(args) {
@@ -224,14 +218,15 @@ class Scratch3Blocks {
 		const hex = symbol.split('').reduce(reducer, 0);
 		if(hex === null) return;
 
-		return this.comlib.sendRecv(CMD.DISPLAY_LED, {ARG1:{type2:'L'}}, {ARG1:hex});
+		return this.comlib.sendRecv(CMD.displayLed, {ARG1:{type2:'L'}}, {ARG1:hex});
 	}
 
 	displayClear() {
-		return this.comlib.sendRecv(CMD.DISPLAY_LED, {ARG1:{type2:'L'}}, {ARG1:0x00000000});
+		return this.comlib.sendRecv(CMD.displayLed, {ARG1:{type2:'L'}}, {ARG1:0x00000000});
 	}
 
 	whenTilted(args) {
+		this.dataFlag = true;
 		return this._isTilted(args.DIRECTION, dontUpdate=true);
 	}
 
@@ -256,7 +251,7 @@ class Scratch3Blocks {
 	_getTiltAngle(direction, dontUpdate=false) {
 		if(!dontUpdate && (performance.now()-this.updatedTime) > 20 && ((!this.comlib.busy && this.comlib.cueue.length == 0) || !this.comlib.isConnected())) {
 			let xy = (direction == 'front' || direction == 'back') ? 1: 0;
-			let ret = this.comlib.sendRecv(CMD.GET_TILT, {ARG1:{type2:'B'}}, {ARG1:xy});
+			let ret = this.comlib.sendRecv(CMD.getTilt, {ARG1:{type2:'B'}}, {ARG1:xy});
 			if(!(ret instanceof Promise)) {
 				this.updatedTime = performance.now();
 				return this._getTiltAngle(direction, true);
@@ -283,17 +278,20 @@ class Scratch3Blocks {
 	}
 
 	whenPinConnected(args) {
-		let ret = 0;
-		switch(args.PIN) {
-		case '0': ret = this.events & EVENT.PORT0; this.events &= ~EVENT.PORT0; break;
-		case '1': ret = this.events & EVENT.PORT1; this.events &= ~EVENT.PORT1; break;
-		case '2': ret = this.events & EVENT.PORT2; this.events &= ~EVENT.PORT2; break;
-		}
-		return ret ? true:false;
+		this.dataFlag = true;
+		return this.checkEvent(args.PIN);
 	}
 
 	gotData(data) {
-		this.events |= data[0] | (data[1]<<8);
+		let events = data[0] | (data[1]<<8);
+		const eventName = ['0','1','2','A','B','moved','shaken'];
+		for(let i = 0; i < eventName.length; i++) {
+			if(events & (1<<i)) {
+				const index = this.events.indexOf(eventName[i]);
+				if(index < 0) this.events.push(eventName[i]);
+			}
+		}
+
 		this.button = data[2];
 
 		this.tiltX = data[4] | (data[5]<<8);
@@ -301,6 +299,11 @@ class Scratch3Blocks {
 
 		this.tiltY = data[6] | (data[7]<<8);
 		if(this.tiltY > (1<<15)) this.tiltY -= (1<<16);
+
+		if(data.length > 8 && this.RadioRecvCB) {
+			this.RadioRecvCB(data.slice(8));
+		}
+
 		this.updatedTime = performance.now();
 	}
 }

@@ -98,40 +98,50 @@ class comlib {
 	}
 
 	setConfig(ifType, ipadrs) {
+		this.statusMessage.innerText = '';
 		const connected = this.isConnected();
-		if(connected) {
-			if(this.SupportCamera) this.videoToggle('off');
-			this.disconnect();
-		}
 
-		if(this.server=='http' && ifType=='UART') return ['please access via https://','https:// でアクセスして下さい'][this._locale];
-		if(this.server=='https' && ifType=='WLAN') return ['please access via http://','http:// でアクセスして下さい'][this._locale];
+		const _this = this;
+		return Promise.resolve().then(() => {
+			if(connected) {
+				if(_this.SupportCamera) _this.videoToggle('off');
+				return _this.disconnect();
+			}
+		}).then(() => {
+			if(_this.server=='http' && ifType=='UART') return ['please access via https://','https:// でアクセスして下さい'][_this._locale];
+			if(_this.server=='https' && ifType=='WLAN') return ['please access via http://','http:// でアクセスして下さい'][_this._locale];
 
-		if(this.ifType != ifType || this.ipadrs != ipadrs || (this.SupportCamera && this.ipCamera != ipadrs)) {
-			this.ifType = ifType;
-			this.ipadrs = ipadrs;
-			if(this.SupportCamera) this.ipCamera = ipadrs;
-			const message = [' has been saved.', 'を設定しました'][this._locale];
-
-			document.cookie = this.extName+'_if_type=' + this.ifType + '; samesite=lax; expires=Tue, 31-Dec-2037 00:00:00 GMT;';
-			if(this.ifType != 'WLAN') {
-				return (this.ifType=='UART' ? 'USB(UART)': 'BLE') + message;
+			let updated = false;
+			if(_this.ifType != ifType) {
+				_this.ifType = ifType;
+				document.cookie = _this.extName+'_if_type=' + _this.ifType + '; samesite=lax; expires=Tue, 31-Dec-2037 00:00:00 GMT;';
+				updated = true;
 			}
 
-			document.cookie = this.extName+'_ip=' + this.ipadrs + '; samesite=lax; expires=Tue, 31-Dec-2037 00:00:00 GMT;';
-			if(this.SupportCamera) {
-				document.cookie = 'Camera_ip=' + this.ipadrs + '; samesite=lax; expires=Tue, 31-Dec-2037 00:00:00 GMT;';
-				return this.ifType + ', ' + this.ipadrs + message + ['(for Robot & Camera)', '(ロボット & カメラ)'][this._locale];
-			} else {
-				return this.ifType + ', ' + this.ipadrs + message;
+			if(_this.ifType == 'WLAN' && _this.ipadrs != ipadrs) {
+				_this.ipadrs = ipadrs;
+				document.cookie = _this.extName+'_ip=' + _this.ipadrs + '; samesite=lax; expires=Tue, 31-Dec-2037 00:00:00 GMT;';
+				updated = true;
 			}
-		} else if(!connected) {
-			const _this = this;
-			return this.open()
-			.then(() => {
-				if(_this.SupportCamera && _this.ifType=='WLAN') _this.videoToggle('on');
-			})
-		}
+
+			if(_this.ifType == 'WLAN' && _this.SupportCamera && _this.ipCamera != ipadrs) {
+				_this.ipCamera = ipadrs;
+				document.cookie = 'Camera_ip=' + _this.ipadrs + '; samesite=lax; expires=Tue, 31-Dec-2037 00:00:00 GMT;';
+				updated = true;
+			}
+
+			if(updated) return ['Saved !', '保存しました'][_this._locale];
+
+			if(!connected) {
+				return _this.open()
+				.then(result => {
+					if(_this.SupportCamera && _this.ifType=='WLAN') _this.videoToggle('on');
+					return result;
+				}).catch(result => {
+					return result;
+				})
+			}
+		})
 	}
 
 	videoToggle(state) {
@@ -226,12 +236,21 @@ class comlib {
 		case 'WLAN':
 			if(this.ws) {
 				const _this = this;
+				let hTimeout = null;
 				this.ws.send(new Uint8Array([0xff,0x55,0x01,0xff]));	// reset
 				return new Promise(resolve => setTimeout(resolve, 100))
-				.then(() => {
+				.then(() => new Promise((resolve,reject) => {
+					hTimeout = setTimeout(reject, 5000);
+					_this.wsResolve = resolve;
 					_this.ws.close();
+				})).then(() => {
+					clearTimeout(hTimeout);
+				}).catch(() => {
+					console.log('timeout !');
 					_this.ws = null;
+					_this.busy = false;
 					_this._runtime.emit(_this._runtime.constructor.PERIPHERAL_DISCONNECTED);
+					_this.wsResolve = null;
 				})
 			}
 			break;
@@ -800,9 +819,10 @@ class comlib {
 				console.log('[error] '+error.message);
 				ws.close();
 				_this.ws = null;
-				_this.statusMessage.innerText = ['cannot connect to ','接続できませんでした：'][_this._locale] + _this.ipadrs;
+				_this.busy = false;
 				_this._runtime.emit(_this._runtime.constructor.PERIPHERAL_SCAN_TIMEOUT);
-				reject();
+				_this.statusMessage.innerText = ['cannot connect to ','接続できませんでした：'][_this._locale] + _this.ipadrs;
+				reject(_this.statusMessage.innerText);
 				if(_this.wsResolve !== null) {
 					_this.wsResolve(_this.statusMessage.innerText);
 					_this.wsResolve = null;
