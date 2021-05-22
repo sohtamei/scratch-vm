@@ -123,12 +123,7 @@ class Scratch3Blocks {
 
 	constructor(runtime) {
 		this.runtime = runtime;
-		if(typeof this.runtime.dev === 'undefined'
-		|| typeof this.runtime.dev.RadioRecvCB === 'undefined') {
-			alert('Please load micro:bit extension.');
-			throw 'error';
-		}
-		this.runtime.dev.RadioRecvCB = this.RadioRecv.bind(this);
+
 		this.serial = 0;
 		this.startTime = 0;
 
@@ -357,6 +352,12 @@ class Scratch3Blocks {
 	}
 
 	enableRadio(args) {
+		if(typeof this.runtime.dev === 'undefined'
+		|| typeof this.runtime.dev.RadioRecvCB === 'undefined')
+			return ['Please load micro:bit extension.','micro:bit拡張をloadして下さい'][this._locale];
+
+		this.runtime.dev.RadioRecvCB = this.RadioRecv.bind(this);
+
 		if(this.runtime.dev.comlib.ifType != 'UART')
 			return ['Please connect with USB','USBで接続して下さい'][this._locale];
 
