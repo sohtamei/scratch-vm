@@ -303,10 +303,6 @@ class Scratch3Blocks {
 				event = 'number';
 				break;
 			case 1:
-				strOfs = 13;
-				event = 'string';
-				break;
-			case 2:
 				this.recv.number = dv.getInt32(13, true);
 				strOfs = 13+4;
 				event = 'stringNumber';
@@ -316,10 +312,13 @@ class Scratch3Blocks {
 				strOfs = 13+8;
 				event = 'stringNumber';
 				break;
+			case 2:
+				strOfs = 13;
+				event = 'string';
+				break;
 			}
 			if(strOfs) {
-				console.log(data.slice(strOfs+1, data[strOfs]));
-				this.recv.string = String.fromCharCode.apply(null, data.slice(strOfs+1, data[strOfs]));
+				this.recv.string = String.fromCharCode.apply(null, data.slice(strOfs+1, strOfs+1+data[strOfs]));
 			}
 			console.log(event + ':' + this.recv.string + ',' + this.recv.number);
 
