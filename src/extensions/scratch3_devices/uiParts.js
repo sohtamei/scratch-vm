@@ -12,12 +12,6 @@ const attributes = [{ color4f: [1,0,0,1], diameter: 1 },	// R
 					{ color4f: [0,0,1,1], diameter: 1 },	// B
 					{ color4f: [0,1,0,1], diameter: 1 }];	// G
 
-const BtnEvent = {
-	STOP: 0,
-	L_UP: 1, L_DOWN:2, L_LEFT:3, L_RIGHT:4,
-	R_UP: 5, R_DOWN:6, R_LEFT:7, R_RIGHT:8,
-};
-
 class Scratch3Blocks {
 	constructor (runtime) {
 		this.runtime = runtime;
@@ -48,12 +42,21 @@ class Scratch3Blocks {
 		this.mouseEvent = [];
 		this.mouseX = 0;
 		this.mouseY = 0;
-		this.PadX = 0;
-		this.PadY = 0;
-		this.BtnStatus = 0;
-		this.BtnEvent = 0;
 
 		this.runtime.on('MOUSE', event => this.gotMouse(event));
+
+		this.gamepadTimerMilliSec = 1000/30;
+		this.gamepadTimerId = null;
+		this.gamepadIndex = -1;
+
+		this.padButton = 0;
+		this.gamepadButtons = new Array(12);
+		this.gamepadHat = 'center';
+		this.buttonEvent = [];
+
+		this.PadX = 0;
+		this.PadY = 0;
+		this.gamepadAxes = [0,0,0,0];
 	}
 
 	getInfo () {
@@ -64,6 +67,7 @@ class Scratch3Blocks {
 			this._locale = 1;
 			break;
 		}
+		this.initGamepad();
 
 		return {
 			id: 'uiParts',
@@ -113,11 +117,17 @@ class Scratch3Blocks {
 
 				'---',
 
+				{blockType: BlockType.REPORTER, opcode: 'getGamepadAxes', text: 'gamepad stick[ARG1]', arguments: {
+					ARG1: { type: ArgumentType.STRING, defaultValue: '1', menu: 'gamepadAxes' },
+				}},
+
+				'---',
+
 				{blockType: BlockType.REPORTER, opcode: 'xxx', text: ['↓ use "PAD" stage','↓ "PAD" ステージを使って下さい'][this._locale], disableMonitor: true, arguments: {
 				}},
 
 				{blockType: BlockType.HAT, opcode: 'eventButton', text: 'button Event[ARG1]', arguments: {
-					ARG1: { type: ArgumentType.STRING, defaultValue: '1', menu: 'buttonEvent' },
+					ARG1: { type: ArgumentType.STRING, defaultValue: 'button1', menu: 'buttonEvent' },
 				}},
 
 				{blockType: BlockType.REPORTER, opcode: 'getPadX', text: 'pad X', arguments: {
@@ -128,18 +138,6 @@ class Scratch3Blocks {
 			],
 			menus: {
 				mouseEvent: { acceptReporters: true, items: ['down', 'up']},
-
-				buttonEvent: { acceptReporters: true, items: [
-				{ text: 'stop', value: '0' },
-				{ text: '↑', value: '1' },
-				{ text: '←', value: '3' },
-				{ text: '→', value: '4' },
-				{ text: '↓', value: '2' },
-				{ text: 'UP', value: '5' },
-				{ text: 'LEFT', value: '7' },
-				{ text: 'RIGHT', value: '8' },
-				{ text: 'DOWN', value: '6' },
-				]},
 
 				keyEvent:{ acceptReporters: true, items: [
 				{ text: formatMessage({id: 'makeymakey.spaceKey'}), value: 'space' },
@@ -185,6 +183,23 @@ class Scratch3Blocks {
 				{ text: '8', value: '8' },
 				{ text: '9', value: '9' },
 				]},
+					
+				buttonEvent: { acceptReporters: true, items: [
+				'center',
+				{ text: 'up left',		value: 'UL' },
+				{ text: 'up',			value: 'U' },
+				{ text: 'up right',		value: 'UR' },
+				{ text: 'left',			value: 'L' },
+				{ text: 'right',		value: 'R' },
+				{ text: 'down left',	value: 'DL' },
+				{ text: 'down',			value: 'D' },
+				{ text: 'down right',	value: 'DR' },
+				'noButton',
+				'button1','button2','button3','button4','button5','button6',
+				'button7','button8','button9','button10','button11','button12',
+				]},
+
+				gamepadAxes: { acceptReporters: true, items: ['1','2','3','4']},
 			}
 		};
 	}
@@ -231,7 +246,7 @@ class Scratch3Blocks {
 			}
 		} else {
 			const index = this._keysPressed.indexOf(args.KEY);
-			if (index > -1) {
+			if(index > -1) {
 				this._keysPressed.splice(index, 1);
 				return true;
 			}
@@ -247,7 +262,7 @@ class Scratch3Blocks {
 			}
 		} else {
 			const index = this._keysReleased.indexOf(args.KEY);
-			if (index > -1) {
+			if(index > -1) {
 				this._keysReleased.splice(index, 1);
 				return true;
 			}
@@ -266,7 +281,7 @@ class Scratch3Blocks {
 		const L_CENTER_X = -120;
 		const L_CENTER_Y = -60;
 		const GRID_SIZE = 60;
-		let BtnStatus = BtnEvent.STOP;
+		let padButton = 'center';
 		if(this.mouseState == 'down') {
 			this.mouseX = event.x;
 			this.mouseY = event.y;
@@ -277,22 +292,26 @@ class Scratch3Blocks {
 			switch(gridY) {
 			case -1:
 				switch(gridX) {
-				case 0: BtnStatus = BtnEvent.L_DOWN; break;
-				case 4: BtnStatus = BtnEvent.R_DOWN; break;
+				case -1: padButton = 'DL'; break;
+				case  0: padButton = 'D'; break;
+				case  1: padButton = 'DR'; break;
+				case  4: padButton = 'button1'; break;
 				}
 				break;
 			case 0:
 				switch(gridX) {
-				case -1: BtnStatus = BtnEvent.L_LEFT; break;
-				case 1: BtnStatus = BtnEvent.L_RIGHT; break;
-				case 3: BtnStatus = BtnEvent.R_LEFT; break;
-				case 5: BtnStatus = BtnEvent.R_RIGHT; break;
+				case -1: padButton = 'L'; break;
+				case  1: padButton = 'R'; break;
+				case  3: padButton = 'button3'; break;
+				case  5: padButton = 'button2'; break;
 				}
 				break;
 			case 1:
 				switch(gridX) {
-				case 0: BtnStatus = BtnEvent.L_UP; break;
-				case 4: BtnStatus = BtnEvent.R_UP; break;
+				case -1: padButton = 'UL'; break;
+				case  0: padButton = 'U'; break;
+				case  1: padButton = 'UR'; break;
+				case  4: padButton = 'button4'; break;
 				}
 				break;
 			}
@@ -304,16 +323,18 @@ class Scratch3Blocks {
 				this.PadY = 0;
 			}
 		}
-		if(this.BtnStatus != BtnStatus) {
-			this.BtnEvent |= (1<<BtnStatus);
-			this.BtnStatus = BtnStatus;
+		if(this.padButton != padButton) {
+			this.padButton = padButton;
+			console.log(padButton);
+			const index = this.buttonEvent.indexOf(padButton);
+			if(index < 0) this.buttonEvent.push(padButton);
 		}
 		return;
 	}
 
 	eventMouse(args) {
 		const index = this.mouseEvent.indexOf(args.ARG1);
-		if (index > -1) {
+		if(index > -1) {
 			this.mouseEvent.splice(index, 1);
 			return true;
 		}
@@ -325,12 +346,144 @@ class Scratch3Blocks {
 	}
 	
 	eventButton(args) {
-		let result = (this.BtnEvent & (1<<args.ARG1*1)) ? true: false;
-		this.BtnEvent &= ~(1<<args.ARG1*1);
-		return result;
+		const index = this.buttonEvent.indexOf(args.ARG1);
+		if(index > -1) {
+			this.buttonEvent.splice(index, 1);
+			return true;
+		}
+		return false;
 	}
 
 	getPadX(args) { return this.PadX; }
 	getPadY(args) { return this.PadY; }
+
+/*
+	axes: (10)
+		0: 0.003921627998352051		// stickL-R
+		1: 0.003921627998352051		// stickL-D
+		2: 0.13725495338439941		// stickR-R
+		3: 0
+		4: 0
+		5: 0.003921627998352051		// stickR-D
+		6: 0
+		7: 0
+		8: 0
+		9: 3.2857141494750977		// hat
+	buttons: (12)
+		0: GamepadButton {pressed: false, touched: false, value: 0}
+		1: GamepadButton {pressed: false, touched: false, value: 0}
+		2: GamepadButton {pressed: false, touched: false, value: 0}
+		3: GamepadButton {pressed: false, touched: false, value: 0}
+		4: GamepadButton {pressed: false, touched: false, value: 0}
+		5: GamepadButton {pressed: false, touched: false, value: 0}
+		6: GamepadButton {pressed: false, touched: false, value: 0}
+		7: GamepadButton {pressed: false, touched: false, value: 0}
+		8: GamepadButton {pressed: false, touched: false, value: 0}
+		9: GamepadButton {pressed: false, touched: false, value: 0}
+		10: GamepadButton {pressed: false, touched: false, value: 0}
+		11: GamepadButton {pressed: false, touched: false, value: 0}
+	connected: true
+	id: 'PC Game Controller        (Vendor: 11ff Product: 3331)'
+	index: 0
+	mapping: ''
+	timestamp: 650764.1150000272
+	vibrationActuator: null
+*/
+
+	getGamepadAxes(args) {
+		return this.gamepadAxes[args.ARG1*1-1];
+	}
+
+	gamepadTimerCallback(){
+		this.gamepadTimerId = setTimeout(this.gamepadTimerCallback.bind(this), this.gamepadTimerMilliSec);
+		if(!this.gamepadIndex < 0 || !navigator.getGamepads) return;
+		const gamepad = navigator.getGamepads()[this.gamepadIndex];
+		let i;
+		if(gamepad.buttons.length >= 12) {
+			let noButton = true;
+			for(i = 0; i < 12; i++) {
+				let pressed = gamepad.buttons[i].pressed;
+				if(!this.gamepadButtons[i] && pressed) {
+					console.log('button'+(i+1));
+					const index = this.buttonEvent.indexOf('button'+(i+1));
+					if(index < 0) this.buttonEvent.push('button'+(i+1));
+				}
+				this.gamepadButtons[i] = pressed;
+				if(pressed) noButton = false;
+			}
+			if(!this.noButton && noButton) {
+				console.log('noButton');
+				const index = this.buttonEvent.indexOf('noButton');
+				if(index < 0) this.buttonEvent.push('noButton');
+			}
+			this.noButton = noButton;
+		}
+
+		if(gamepad.axes.length >= 4) {
+			this.gamepadAxes = [gamepad.axes[0]*100,gamepad.axes[1]*100,gamepad.axes[2]*100,gamepad.axes[3]*100];
+		}
+
+		let hat = 'center';
+		let tmp = 0;
+		if(gamepad.buttons.length >= 16) {
+			for(i = 0; i < 4; i++)
+				tmp |= (gamepad.buttons[i+12].pressed<<i);
+			const hats1 = ['center',	// 0000
+							'U',		// 0001
+							'D',		// 0010
+							'center',	// 0011
+							'L',		// 0100
+							'UL',		// 0101
+							'DL',		// 0110
+							'center',	// 0111
+							'R',		// 1000
+							'UR',		// 1001
+							'DR',		// 1010
+							];
+			if(tmp < hats1.length)
+				hat = hats1[tmp];
+		} else if(gamepad.axes.length >= 10) {
+			if(gamepad.axes[3] == 0 && gamepad.axes[5])
+				this.gamepadAxes[3] = gamepad.axes[5]*100;
+			tmp = Math.round((gamepad.axes[9]+1)*3.5);	// 単位1/8回転、-1～1が0～7/8回転になる。centerのとき15/8回転
+
+			const hats2 = ['U','UR','R','DR','D','DL','L','UL'];
+			if(tmp >= 0 && tmp < hats2.length)
+				hat = hats2[tmp];
+		}
+		if(this.gamepadHat != hat) {
+			console.log(hat);
+			const index = this.buttonEvent.indexOf(hat);
+			if(index < 0) this.buttonEvent.push(hat);
+		}
+		this.gamepadHat = hat;
+	}
+
+	initGamepad(){
+		if(!navigator.getGamepads) return;
+
+		window.addEventListener('gamepadconnected',function(e){
+			let gamepad = e.gamepad;
+			if(!gamepad) return;
+			console.log('connected:('+gamepad.index+')'+gamepad.id);
+			console.log(gamepad);
+			this.gamepadIndex = gamepad.index;
+			clearTimeout(this.gamepadTimerId);
+			this.gamepadTimerId = null;
+			this.gamepadTimerCallback();
+		}.bind(this));
+
+		window.addEventListener('gamepaddisconnected',function(e){
+			let gamepad = e.gamepad;
+			if(!gamepad) return;
+			console.log('disconnected:('+gamepad.index+')'+gamepad.id);
+			if(this.gamepadIndex == gamepad.index) {
+				this.gamepadIndex = -1;
+				clearTimeout(this.gamepadTimerId);
+				this.gamepadTimerId = null;
+			}
+		}.bind(this));
+	}
+
 }
 module.exports = Scratch3Blocks;
