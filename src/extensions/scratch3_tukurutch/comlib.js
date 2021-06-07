@@ -13,10 +13,6 @@ const BootApp0Bin = require('!arraybuffer-loader!./boot_app0.bin');
 
 //const WlanStatus = ['IDLE_STATUS','NO_SSID_AVAIL','SCAN_COMPLETED','CONNECTED','CONNECT_FAILED','CONNECTION_LOST','DISCONNECTED',],
 
-const BLETimeout = 4500;
-const BLESendInterval = 100;
-const BLEDataStoppedError = 'micro:bit extension stopped receiving data';
-
 const BLEUUID = {
 	service:'6e400001-b5a3-f393-e0a9-e50e24dcca9e',
 	txChar: '6e400002-b5a3-f393-e0a9-e50e24dcca9e',	// BLEWriteWithoutResponse
@@ -190,21 +186,18 @@ class comlib {
 		case 'UART':
 			this._closeUart();
 			return this._openUart();
-			break;
 		case 'BLE':
 			if(this.ble) {
 				this.ble.disconnect();
 				this.ble = null;
 			}
 			return this._openBle();
-			break;
 		case 'WLAN':
 			if(this.ws) {
 				this.ws.close();
 				this.ws = null;
 			}
 			return this._openWs();
-			break;
 		}
 	}
 
@@ -477,21 +470,20 @@ class comlib {
 		}
 		_this.busy = true;
 
-		const {resolve, data} = _this.cueue.pop();
+		const {resolve, data} = _this.cueue.shift();
 		console.log('W:'+_this._dumpBuf(data));	// debug
 		switch(_this.ifType) {
 		case 'UART':
 		case 'BLE':
 			return ((_this.ifType=='UART')? _this._sendRecvUart(data): _this._sendRecvBle(data))
-			.then(tmp => {
+			.catch(err => {
+				console.log(err);
+				return err;
+			}).then(tmp => {
 				_this.busy = false;
 				resolve(tmp);
 				if(_this.cueue.length != 0) console.log('-Cueue=' + _this.cueue.length + '->' + (_this.cueue.length-1));
 				_this.checkCueue();
-			}).catch(err => {
-				_this.busy = false;
-				resolve(err);
-				console.log(err);
 			})
 			break;
 		case 'WLAN':

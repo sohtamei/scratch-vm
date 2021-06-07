@@ -75,7 +75,7 @@ class Scratch3Blocks {
 				'---',
 				{blockType: BlockType.COMMAND, opcode: 'digiWrite', text: '［GPIO］output port[ARG1] level[ARG2]', arguments: {
 					ARG1: digitalPortArg,
-					ARG2: { type: ArgumentType.NUMBER, defaultValue:0 },
+					ARG2: { type: ArgumentType.STRING, defaultValue:'1', menu: 'onoff' },
 				}},
 
 				{blockType: BlockType.REPORTER, opcode: 'digiRead', text: '［GPIO］input port[ARG1]', arguments: {
@@ -114,6 +114,8 @@ class Scratch3Blocks {
 			],
 
 			menus: {
+				onoff: { acceptReporters: true, items: ['1','0'] },
+
 				i2cPort: { acceptReporters: true, items: [
 				{ text: 'd21 c22 default', value: '21_22', },
 				{ text: 'd32 c33 M5StickC', value: '32_33', },

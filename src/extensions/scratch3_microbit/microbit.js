@@ -22,7 +22,7 @@ const TILT_THRESHOLD = 15.0;
 class Scratch3Blocks {
 
 	constructor(runtime) {
-		this.digitalPorts = ['0','1','2','3','4','5','6','7','8','9','10','11','13','14','15','16',];
+		this.digitalPorts = ['0','1','2','3','4','5','6','7','8','9','10','11','12','13','14','15','16',];
 	//	this.digitalPorts = ['2','3','4','5','6','7','8','9','10','11','12','13',{text:'A0',value:14},{text:'A1',value:15},{text:'A2',value:16},{text:'A3',value:17},{text:'A4',value:18},{text:'A5',value:19},];
 		this.analogPorts = ['0','1','2','3','4','10',];
 
