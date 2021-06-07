@@ -30,6 +30,7 @@ const builtinExtensions = {
     motorCar: () => require('../extensions/scratch3_devices/motorCar.js'),
     M5RoverC: () => require('../extensions/scratch3_devices/M5RoverC.js'),
     maqueen: () => require('../extensions/scratch3_devices/maqueen.js'),
+    folo: () => require('../extensions/scratch3_devices/folo.js'),
     uiParts: () => require('../extensions/scratch3_devices/uiParts.js'),
 
     microbit: () => require('../extensions/scratch3_microbit/microbit.js'),
