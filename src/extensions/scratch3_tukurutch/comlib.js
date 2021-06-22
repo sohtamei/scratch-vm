@@ -40,7 +40,7 @@ class comlib {
 
 		this.ipadrs = '192.168.1.xx';
 		this.ipCamera = '';
-		this.ifType = 'UART';
+		this.ifType = (extName=='microbit') ? 'BLE':'UART';
 		let cookies_get = document.cookie.split(';');
 		for(let i = 0; i < cookies_get.length; i++) {
 			let tmp = cookies_get[i].trim().split('=');

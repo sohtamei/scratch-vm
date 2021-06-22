@@ -317,7 +317,7 @@ class ExtensionManager {
     _prepareExtensionInfo (serviceName, extensionInfo) {
         extensionInfo = Object.assign({}, extensionInfo);
         if (!/^[a-z0-9]+$/i.test(extensionInfo.id)) {
-            throw new Error('Invalid extension id');
+            throw new Error('Invalid extension id. Id should be a-z and 0-9');
         }
         extensionInfo.name = extensionInfo.name || extensionInfo.id;
         extensionInfo.blocks = extensionInfo.blocks || [];

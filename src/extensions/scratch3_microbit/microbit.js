@@ -155,12 +155,12 @@ class Scratch3Blocks {
 
 	intervalFunc() {
 		if(this.comlib.isConnected() && !this.comlib.busy && this.comlib.cueue.length == 0) {
-			const _this = this;
 
 			if(!this.dataFlag) return;
-			let ret = _this.comlib.sendRecv(CMD.getData, {}, {});
+			let ret = this.comlib.sendRecv(CMD.getData, {}, {});
 			if(!(ret instanceof Promise)) return ret;
 
+			const _this = this;
 			return ret.then(data => {
 				if(data.length >= 8) _this.gotData(data);
 			});
@@ -250,18 +250,19 @@ class Scratch3Blocks {
 
 	_getTiltAngle(direction, dontUpdate=false) {
 		if(!dontUpdate && (performance.now()-this.updatedTime) > 20 && ((!this.comlib.busy && this.comlib.cueue.length == 0) || !this.comlib.isConnected())) {
-			let xy = (direction == 'front' || direction == 'back') ? 1: 0;
-			let ret = this.comlib.sendRecv(CMD.getTilt, {ARG1:{type2:'B'}}, {ARG1:xy});
+		//	let xy = (direction == 'front' || direction == 'back') ? 1: 0;
+		//	let ret = this.comlib.sendRecv(CMD.getTilt, {ARG1:{type2:'B'}}, {ARG1:xy});
+			let ret = this.comlib.sendRecv(CMD.getData, {}, {});
 			if(!(ret instanceof Promise)) {
-				this.updatedTime = performance.now();
 				return this._getTiltAngle(direction, true);
 			}
 
 			const _this = this;
 			return ret.then(data => {
 				_this.updatedTime = performance.now();
-				if(xy == 1) _this.tiltY = data;
-				else        _this.tiltX = data;
+			//	if(xy == 1) _this.tiltY = data;
+			//	else        _this.tiltX = data;
+				if(data.length >= 8) _this.gotData(data);
 				return _this._getTiltAngle(direction, true);
 			})
 		}
