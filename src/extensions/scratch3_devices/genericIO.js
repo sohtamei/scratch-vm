@@ -172,7 +172,7 @@ class Scratch3Blocks {
 		const _this = this;
 		return this.runtime.dev.comlib.wire_begin(this.port[0], this.port[1])
 			.then(() => _this.runtime.dev.comlib.wire_write(adrs, buf))
-			.then(function(data) {
+			.then(data => {
 				if(data==0) return;
 				else return 'error';
 			});
