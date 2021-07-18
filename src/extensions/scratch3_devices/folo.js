@@ -22,7 +22,7 @@ class Scratch3Blocks {
 
 		return {
 			id: extName,
-			name: extName,
+			name: [extName,'フォロ'][this._locale],
 			menuIconURI: IconURI,   // Icon png to be displayed in the blocks category menu, encoded as a data URI.
 
 			blocks: [
@@ -30,18 +30,18 @@ class Scratch3Blocks {
 				    ARG1: { type: ArgumentType.STRING, defaultValue:'1', menu: 'direction' },
 				}},
 
-				{blockType: BlockType.COMMAND, opcode: 'stopCar', text: 'stop', arguments: {
+				{blockType: BlockType.COMMAND, opcode: 'stopCar', text: ['stop','ストップ'][this._locale], arguments: {
 				}},
 
-				{blockType: BlockType.COMMAND, opcode: 'setLED', text: 'IR LED[ARG1]', arguments: {
+				{blockType: BlockType.COMMAND, opcode: 'setLED', text: ['IR LED[ARG1]','赤外線LED[ARG1]'][this._locale], arguments: {
 				    ARG1: { type: ArgumentType.STRING, defaultValue:'1', menu: 'onoff' },
 				}},
 						
-				{blockType: BlockType.REPORTER, opcode: 'getSensorL', text: 'sensor Left'},
-				{blockType: BlockType.REPORTER, opcode: 'getSensorR', text: 'sensor Right'},
+				{blockType: BlockType.REPORTER, opcode: 'getSensorL', text: ['sensor Left','左センサ'][this._locale]},
+				{blockType: BlockType.REPORTER, opcode: 'getSensorR', text: ['sensor Right','右センサ'][this._locale]},
 					
-				{blockType: BlockType.REPORTER, opcode: 'getSensorAnalogL', text: 'sensor Left(analog)'},
-				{blockType: BlockType.REPORTER, opcode: 'getSensorAnalogR', text: 'sensor Right(analog)'},
+				{blockType: BlockType.REPORTER, opcode: 'getSensorAnalogL', text: ['sensor Left(analog)','左センサ (アナログ)'][this._locale]},
+				{blockType: BlockType.REPORTER, opcode: 'getSensorAnalogR', text: ['sensor Right(analog)','右センサ (アナログ)'][this._locale]},
 			],
 
 			menus: {
@@ -51,13 +51,13 @@ class Scratch3Blocks {
 				]},
 				
 				direction: { acceptReporters: true, items: [
-					{ text: 'stop', value: '0' },
-					{ text: 'run forward', value: '1' },
-					{ text: 'turn left', value: '2' },
-					{ text: 'turn right', value: '3' },
-					{ text: 'run backward', value: '4' },
-					{ text: 'rotate left', value: '5' },
-					{ text: 'rotate right', value: '6' },
+					{ text: ['stop','ストップ'][this._locale], value: '0' },
+					{ text: ['run forward','前'][this._locale], value: '1' },
+					{ text: ['turn left','左'][this._locale], value: '2' },
+					{ text: ['turn right','右'][this._locale], value: '3' },
+					{ text: ['run backward','後'][this._locale], value: '4' },
+					{ text: ['rotate left','左旋回'][this._locale], value: '5' },
+					{ text: ['rotate right','右旋回'][this._locale], value: '6' },
 				]},
 			},
 		};
@@ -86,9 +86,29 @@ class Scratch3Blocks {
 		return this.runtime.dev.comlib.digiWrite([{port:12, level:args.ARG1*1}]);
 	}
 
-	getSensorL(args) { return this.runtime.dev.comlib.digiRead(2); }
-	getSensorR(args) { return this.runtime.dev.comlib.digiRead(1); }
-	getSensorAnalogL(args) { return this.runtime.dev.comlib.anaRead(2,1); }
-	getSensorAnalogR(args) { return this.runtime.dev.comlib.anaRead(1,1); }
+	getSensorL(args) {
+		if(this.runtime.dev.comlib.isConnected())
+			return this.runtime.dev.comlib.digiRead(2);
+		else
+			return;
+	}
+	getSensorR(args) {
+		if(this.runtime.dev.comlib.isConnected())
+			return this.runtime.dev.comlib.digiRead(1);
+		else
+			return;
+	}
+	getSensorAnalogL(args) {
+		if(this.runtime.dev.comlib.isConnected())
+			return this.runtime.dev.comlib.anaRead(2,1);
+		else
+			return;
+	}
+	getSensorAnalogR(args) {
+		if(this.runtime.dev.comlib.isConnected())
+			return this.runtime.dev.comlib.anaRead(1,1);
+		else
+			return;
+	}
 }
 module.exports = Scratch3Blocks;

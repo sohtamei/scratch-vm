@@ -74,22 +74,22 @@ class Scratch3Blocks {
 			name: ['UI parts','UIパーツ'][this._locale],
 			menuIconURI: IconURI,
 			blocks: [
-				{blockType: BlockType.COMMAND, opcode: 'setVideoTransparency', text: ['video transparency','ビデオ透明度'][this._locale] + '[ARG1]', arguments: {
+				{blockType: BlockType.COMMAND, opcode: 'setVideoTransparency', text: ['video transparency','ビデオ透明度'][this._locale]+'[ARG1]', arguments: {
 					ARG1: { type: ArgumentType.NUMBER, defaultValue: 20 },
 				}},
 
 				'---',
 
-				{blockType: BlockType.COMMAND, opcode: 'plot1', text: 'plot ch[ARG1]', arguments: {
+				{blockType: BlockType.COMMAND, opcode: 'plot1', text: ['graph ch','グラフ チャンネル'][this._locale]+'[ARG1]', arguments: {
 					ARG1: { type: ArgumentType.NUMBER, defaultValue: 1 },
 				}},
 
-				{blockType: BlockType.COMMAND, opcode: 'plot2', text: 'plot ch[ARG1] [ARG2]', arguments: {
+				{blockType: BlockType.COMMAND, opcode: 'plot2', text: ['graph ch','グラフ チャンネル'][this._locale]+'[ARG1] [ARG2]', arguments: {
 					ARG1: { type: ArgumentType.NUMBER, defaultValue: 1 },
 					ARG2: { type: ArgumentType.NUMBER, defaultValue: 2 },
 				}},
 
-				{blockType: BlockType.COMMAND, opcode: 'plot3', text: 'plot ch[ARG1] [ARG2] [ARG3]', arguments: {
+				{blockType: BlockType.COMMAND, opcode: 'plot3', text: ['graph ch','グラフ チャンネル'][this._locale]+'[ARG1] [ARG2] [ARG3]', arguments: {
 					ARG1: { type: ArgumentType.NUMBER, defaultValue: 1 },
 					ARG2: { type: ArgumentType.NUMBER, defaultValue: 2 },
 					ARG3: { type: ArgumentType.NUMBER, defaultValue: 3 },
@@ -107,17 +107,17 @@ class Scratch3Blocks {
 
 				'---',
 
-				{blockType: BlockType.HAT, opcode: 'eventMouse', text: 'When Mouse[ARG1]', arguments: {
+				{blockType: BlockType.HAT, opcode: 'eventMouse', text: ['When Mouse[ARG1]','マウス[ARG1]たとき'][this._locale], arguments: {
 					ARG1: { type: ArgumentType.STRING, defaultValue: 'down', menu: 'mouseEvent' },
 				}},
 
-				{blockType: BlockType.BOOLEAN, opcode: 'isMouse', text: 'is Mouse[ARG1]', arguments: {
+				{blockType: BlockType.BOOLEAN, opcode: 'isMouse', text: ['is Mouse[ARG1]','マウス[ARG1]ている'][this._locale], arguments: {
 					ARG1: { type: ArgumentType.STRING, defaultValue: 'down', menu: 'mouseEvent' },
 				}},
 
 				'---',
 
-				{blockType: BlockType.REPORTER, opcode: 'getGamepadAxes', text: 'gamepad stick[ARG1]', arguments: {
+				{blockType: BlockType.REPORTER, opcode: 'getGamepadAxes', text: ['gamepad stick','ゲームパッドスティック'][this._locale]+'[ARG1]', arguments: {
 					ARG1: { type: ArgumentType.STRING, defaultValue: '1', menu: 'gamepadAxes' },
 				}},
 
@@ -126,20 +126,23 @@ class Scratch3Blocks {
 				{blockType: BlockType.REPORTER, opcode: 'xxx', text: ['↓ use "PAD" stage','↓ "PAD" ステージを使って下さい'][this._locale], disableMonitor: true, arguments: {
 				}},
 
-				{blockType: BlockType.HAT, opcode: 'eventButton', text: 'button Event[ARG1]', arguments: {
+				{blockType: BlockType.HAT, opcode: 'eventButton', text: ['button Event[ARG1]','[ARG1]が押されたとき'][this._locale], arguments: {
 					ARG1: { type: ArgumentType.STRING, defaultValue: 'button1', menu: 'buttonEvent' },
 				}},
 
-				{blockType: BlockType.REPORTER, opcode: 'getPadX', text: 'pad X', arguments: {
+				{blockType: BlockType.REPORTER, opcode: 'getPadX', text: ['pad X','パッドX'][this._locale], arguments: {
 				}},
 
-				{blockType: BlockType.REPORTER, opcode: 'getPadY', text: 'pad Y', arguments: {
+				{blockType: BlockType.REPORTER, opcode: 'getPadY', text: ['pad Y','パッドY'][this._locale], arguments: {
 				}},
 			],
 			menus: {
-				mouseEvent: { acceptReporters: true, items: ['down', 'up']},
+				mouseEvent: { acceptReporters: true, items: [
+				{ text: ['down','下げ'][this._locale], value: 'down'},
+				{ text: ['up','上げ'][this._locale], value: 'up'},
+				]},
 
-				keyEvent:{ acceptReporters: true, items: [
+				keyEvent: { acceptReporters: true, items: [
 				{ text: formatMessage({id: 'makeymakey.spaceKey'}), value: 'space' },
 				{ text: formatMessage({id: 'makeymakey.upArrow'}), value: 'up arrow' },
 				{ text: formatMessage({id: 'makeymakey.downArrow'}), value: 'down arrow' },
@@ -185,18 +188,28 @@ class Scratch3Blocks {
 				]},
 					
 				buttonEvent: { acceptReporters: true, items: [
-				'center',
-				{ text: 'up left',		value: 'UL' },
-				{ text: 'up',			value: 'U' },
-				{ text: 'up right',		value: 'UR' },
-				{ text: 'left',			value: 'L' },
-				{ text: 'right',		value: 'R' },
-				{ text: 'down left',	value: 'DL' },
-				{ text: 'down',			value: 'D' },
-				{ text: 'down right',	value: 'DR' },
-				'noButton',
-				'button1','button2','button3','button4','button5','button6',
-				'button7','button8','button9','button10','button11','button12',
+				{ text: ['center','センター'][this._locale],	value: 'center' },
+				{ text: ['up left','左上'][this._locale],		value: 'UL' },
+				{ text: ['up','上'][this._locale],				value: 'U' },
+				{ text: ['up right','右上'][this._locale],		value: 'UR' },
+				{ text: ['left','左'][this._locale],			value: 'L' },
+				{ text: ['right','右'][this._locale],			value: 'R' },
+				{ text: ['down left','左下'][this._locale],		value: 'DL' },
+				{ text: ['down','下'][this._locale],			value: 'D' },
+				{ text: ['down right','右下'][this._locale],	value: 'DR' },
+				{ text: ['noButton','なし'][this._locale],		value: 'noButton' },
+				{ text: ['button1','ボタン1'][this._locale],	value: 'button1' },
+				{ text: ['button2','ボタン2'][this._locale],	value: 'button2' },
+				{ text: ['button3','ボタン3'][this._locale],	value: 'button3' },
+				{ text: ['button4','ボタン4'][this._locale],	value: 'button4' },
+				{ text: ['button5','ボタン5'][this._locale],	value: 'button5' },
+				{ text: ['button6','ボタン6'][this._locale],	value: 'button6' },
+				{ text: ['button7','ボタン7'][this._locale],	value: 'button7' },
+				{ text: ['button8','ボタン8'][this._locale],	value: 'button8' },
+				{ text: ['button9','ボタン9'][this._locale],	value: 'button9' },
+				{ text: ['button10','ボタン10'][this._locale],	value: 'button10' },
+				{ text: ['button11','ボタン11'][this._locale],	value: 'button11' },
+				{ text: ['button12','ボタン12'][this._locale],	value: 'button12' },
 				]},
 
 				gamepadAxes: { acceptReporters: true, items: ['1','2','3','4']},

@@ -106,7 +106,7 @@ class comlib {
 				return _this.disconnect();
 			}
 		}).then(() => {
-			if(_this.server=='http' && ifType=='UART') return ['please access via https://','https:// でアクセスして下さい'][_this._locale];
+			if(_this.server=='http' && (ifType=='UART'||ifType=='BLE')) return ['please access via https://','https:// でアクセスして下さい'][_this._locale];
 			if(_this.server=='https' && ifType=='WLAN') return ['please access via http://','http:// でアクセスして下さい'][_this._locale];
 
 			let updated = false;
@@ -600,13 +600,13 @@ class comlib {
 			hTimeout = setTimeout(reject, 3000);
 			_this.bleRxChar.addEventListener('characteristicvaluechanged', resolve);
 			return _this.bleTxChar.writeValue(sendBuf);
-		//	return _this.ble.startNotifications(BLEUUID.service, BLEUUID.rxChar, resolve)
-		//	.then(() => _this.ble.write(BLEUUID.service, BLEUUID.txChar, Base64Util.uint8ArrayToBase64(sendBuf), 'base64', false/*wResp*/))
-		//}).then(base64 => {
+	//		return _this.ble.startNotifications(BLEUUID.service, BLEUUID.rxChar, resolve)
+	//		.then(() => _this.ble.write(BLEUUID.service, BLEUUID.txChar, Base64Util.uint8ArrayToBase64(sendBuf), 'base64', false/*wResp*/))
+	//	}).then(base64 => {
 		}).then(event => {
 			clearTimeout(hTimeout);
-		//	const buf = Base64Util.base64ToUint8Array(base64);
 			const buf = new Uint8Array(event.target.value.buffer);
+	//		const buf = Base64Util.base64ToUint8Array(base64);
 			console.log('R:'+_this._dumpBuf(buf));	// debug
 			return _this._parseRecv(buf);
 		}).catch(() => {
