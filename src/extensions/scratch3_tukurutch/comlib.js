@@ -74,6 +74,8 @@ class comlib {
 
 		this.uart = null;
 		this.ble = null;
+		this.bleTxChar = null;
+		this.bleRxChar = null;
 		this.closeReq = false;
 
 		// flash burn
@@ -169,7 +171,8 @@ class comlib {
 			if(this.uart && !this.closeReq) connected = true;
 			break;
 		case 'BLE':
-			if(this.ble) connected = this.ble.isConnected();
+		//	if(this.ble) connected = this.ble.isConnected();
+			if(this.ble) connected = this.ble.connected;
 			break;
 		case 'WLAN':
 			if(this.ws) connected = true;
@@ -207,7 +210,7 @@ class comlib {
 		case 'UART':
 			break;
 		case 'BLE':
-			if(this.ble) this.ble.connectPeripheral(id);
+		//	if(this.ble) this.ble.connectPeripheral(id);
 			break;
 		case 'WLAN':
 			break;
@@ -595,12 +598,15 @@ class comlib {
 		let hTimeout = null;
 		return new Promise((resolve,reject) => {
 			hTimeout = setTimeout(reject, 3000);
-
-			return _this.ble.startNotifications(BLEUUID.service, BLEUUID.rxChar, resolve)
-			.then(() => _this.ble.write(BLEUUID.service, BLEUUID.txChar, Base64Util.uint8ArrayToBase64(sendBuf), 'base64', false/*wResp*/))
-		}).then(base64 => {
+			_this.bleRxChar.addEventListener('characteristicvaluechanged', resolve);
+			return _this.bleTxChar.writeValue(sendBuf);
+		//	return _this.ble.startNotifications(BLEUUID.service, BLEUUID.rxChar, resolve)
+		//	.then(() => _this.ble.write(BLEUUID.service, BLEUUID.txChar, Base64Util.uint8ArrayToBase64(sendBuf), 'base64', false/*wResp*/))
+		//}).then(base64 => {
+		}).then(event => {
 			clearTimeout(hTimeout);
-			const buf = Base64Util.base64ToUint8Array(base64);
+		//	const buf = Base64Util.base64ToUint8Array(base64);
+			const buf = new Uint8Array(event.target.value.buffer);
 			console.log('R:'+_this._dumpBuf(buf));	// debug
 			return _this._parseRecv(buf);
 		}).catch(() => {
@@ -639,7 +645,8 @@ class comlib {
 				break;
 			case 'BLE':
 				if(_this.ble == null)
-					return ['press "！"','"！" を押して下さい'][_this._locale];
+					return _this._openBle();
+				//	return ['press "！"','"！" を押して下さい'][_this._locale];
 				break;
 			case 'WLAN':
 				if(_this.ws == null)
@@ -746,6 +753,40 @@ class comlib {
 	_openBle() {
 		this.busy = false;
 		this.cueue = [];
+
+		let _this = this;
+		let options = {
+			filters: [{namePrefix: 'microbit'}],
+		//	acceptAllDevices: true,
+			optionalServices: [BLEUUID.service]
+		};
+		let _service = null
+		return navigator.bluetooth.requestDevice(options)
+		.catch(err => {
+			console.log('canceled');
+			_this._runtime.emit(_this._runtime.constructor.PERIPHERAL_SCAN_TIMEOUT);
+			throw err;
+		}).then(device => device.gatt.connect()
+		).then(gatt => {
+			_this.ble = gatt;
+			return gatt.getPrimaryService(BLEUUID.service);
+		}).then(service => {
+			_service = service;
+			return _service.getCharacteristic(BLEUUID.txChar);
+		}).then(char => {
+			_this.bleTxChar = char;
+			return _service.getCharacteristic(BLEUUID.rxChar);
+		}).then(char => {
+			_this.bleRxChar = char;
+			return _this.bleRxChar.startNotifications();
+		}).then(() => {
+			console.log('connected!');
+			_this._runtime.emit(_this._runtime.constructor.PERIPHERAL_CONNECTED);
+			return;
+		}).catch(err => {
+			throw err;
+		})
+/*
 		function _bleReset() {
 			console.log('reset');
 		}
@@ -758,6 +799,7 @@ class comlib {
 					{filters: [{services: [BLEUUID.service]}]},
 					_bleOnConnect.bind(this),
 					_bleReset.bind(this));
+*/
 		return;
 	}
 
