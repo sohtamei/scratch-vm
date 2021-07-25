@@ -5,6 +5,7 @@ const maybeFormatMessage = require('../util/maybe-format-message');
 const BlockType = require('./block-type');
 const ArgumentType = require('./argument-type');
 const formatMessage = require('format-message');
+const comlib = require('../extensions/scratch3_tukurutch/comlib.js');
 
 // These extensions are currently built into the VM repository but should not be loaded at startup.
 // TODO: move these out into a separate repository?
@@ -183,7 +184,8 @@ class ExtensionManager {
                 eval(text);   // var ext = class { ..
                 builtinExtensions[extensionURL] = function() { return ext };
                 resolve();
-			}).catch(function(err) {
+			}).catch(err => {
+				console.log(err);
 				reject(err);
 			})
 		}).then(function(){
