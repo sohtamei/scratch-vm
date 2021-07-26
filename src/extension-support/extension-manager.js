@@ -175,12 +175,51 @@ class ExtensionManager {
         //let _extensionURL = extensionURL.replace(/[\/\.<"&]/g, '_');
         const _this = this;
         return new Promise((resolve, reject) => {
-            if (builtinExtensions.hasOwnProperty(extensionURL)) {
+            if (builtinExtensions.hasOwnProperty(extensionURL) && extensionURL != 'loadExt') {
                 resolve();
                 return;
             }
 
-            return fetch(extensionURL, {mode: 'cors'}).then(response => response.text()).then(text => {
+			let width = 480;
+			let height = 100;
+			let left = window.innerWidth / 2;
+			let top = window.innerHeight / 2;
+			let x = left - (width / 2);
+			let y = top - (height / 2);
+			uploadWindow = window.open('', null, 'top=' + y + ',left=' + x + ',width=' + width + ',height=' + height);
+			uploadWindow.document.open();
+			uploadWindow.document.write('<html><head><title>Load extension file</title></head><body>'
+										+'<p>Please select extension file.</p>'
+										+'<input type="file" id="upload-files">'
+										+'<input type="button" value="load" id="upload-button">'
+										+'</body></html>');
+			uploadWindow.document.close();
+			uploadWindow.document.getElementById("upload-button").onclick = function() {
+				let files = uploadWindow.document.getElementById('upload-files').files;
+				if (files.length <= 0) {
+					alert('Please select extension file.');
+					reject();
+				}
+
+				let fr = new FileReader();
+				fr.onload = function(e) {
+					eval(e.target.result);   // var ext = class { ..
+					extensionURL = extName;
+					builtinExtensions[extensionURL] = function() { return ext };
+					resolve();
+				}
+
+				fr.onloadend = function(e) {
+					uploadWindow.document.getElementById('upload-files').value = "";
+				}
+
+				fr.readAsText(files.item(0));
+				uploadWindow.close();
+			}
+/*
+            return fetch(extensionURL, {mode: 'cors'})
+            .then(response => response.text())
+            .then(text => {
                 eval(text);   // var ext = class { ..
                 builtinExtensions[extensionURL] = function() { return ext };
                 resolve();
@@ -188,7 +227,8 @@ class ExtensionManager {
 				console.log(err);
 				reject(err);
 			})
-		}).then(function(){
+*/
+		}).then(() =>{
             /** @TODO dupe handling for non-builtin extensions. See commit 670e51d33580e8a2e852b3b038bb3afc282f81b9 */
             if (_this.isExtensionLoaded(extensionURL)) {
                 const message = `Rejecting attempt to load a second extension with ID ${extensionURL}`;

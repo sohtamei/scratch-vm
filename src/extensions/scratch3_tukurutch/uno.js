@@ -1,4 +1,4 @@
-const extName = 'uno';
+var extName = 'uno';
 
 const ArgumentType = require('../../extension-support/argument-type');
 const BlockType = require('../../extension-support/block-type');
