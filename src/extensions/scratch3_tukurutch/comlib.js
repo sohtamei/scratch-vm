@@ -706,7 +706,7 @@ class comlib {
 				loop();
 				function loop(){
 					new Promise(resolve2 => {
-						hTimeout = setTimeout(resolve2, 1000);
+						hTimeout = setTimeout(resolve2, 3000);
 					}).then(() => {
 						console.log('timeout !');
 						reader.cancel();
