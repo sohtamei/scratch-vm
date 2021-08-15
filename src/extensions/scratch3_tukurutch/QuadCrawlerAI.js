@@ -164,8 +164,15 @@ var ext = class {
 {blockType: BlockType.REPORTER, opcode: 'getVbat', text: 'get VBAT', arguments: {
 }},
 
-'---',
-'---',
+{blockType: BlockType.COMMAND, opcode: 'setDigital', text: 'set digital pin [ARG1] output as [ARG2]', arguments: {
+    ARG1: { type: ArgumentType.NUMBER, type2:'B', defaultValue:0 },
+    ARG2: { type: ArgumentType.STRING, type2:'B', defaultValue:'1', menu: 'digital' },
+}},
+
+{blockType: BlockType.BOOLEAN, opcode: 'getDigital', text: 'read digital pin [ARG1]', arguments: {
+    ARG1: { type: ArgumentType.NUMBER, type2:'B', defaultValue:0 },
+}},
+
 {blockType: BlockType.COMMAND, opcode: 'setPWM', text: 'set PWM ch [ARG1] data [ARG2]', arguments: {
     ARG1: { type: ArgumentType.NUMBER, type2:'B', defaultValue:8 },
     ARG2: { type: ArgumentType.NUMBER, type2:'S', defaultValue:320 },
@@ -363,6 +370,8 @@ setRainbow(args,util) { return this.sendRecv('setRainbow', args); }
 BuzzerJ2(args,util) { return this.sendRecv('BuzzerJ2', args); }
 getSonner(args,util) { return this.sendRecv('getSonner', args); }
 getVbat(args,util) { return this.sendRecv('getVbat', args); }
+setDigital(args,util) { return this.sendRecv('setDigital', args); }
+getDigital(args,util) { return this.sendRecv('getDigital', args); }
 setPWM(args,util) { return this.sendRecv('setPWM', args); }
 setLED(args,util) { return this.sendRecv('setLED', args); }
 getLidar(args,util) { return this.sendRecv('getLidar', args); }
