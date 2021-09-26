@@ -120,6 +120,10 @@ class Video {
         return null;
     }
 
+    get element () {
+        return this.provider.video;
+    }
+
     /**
      * Set the preview ghost effect
      * @param {number} ghost from 0 (visible) to 100 (invisible) - ghost effect

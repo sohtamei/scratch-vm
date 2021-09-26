@@ -34,6 +34,7 @@ const builtinExtensions = {
     folo: () => require('../extensions/scratch3_devices/folo.js'),
     foloCamera: () => require('../extensions/scratch3_devices/foloCamera.js'),
     uiParts: () => require('../extensions/scratch3_devices/uiParts.js'),
+    tracking: () => require('../extensions/scratch3_devices/trackingBlock.js'),
 
     microbit: () => require('../extensions/scratch3_microbit/microbit.js'),
     microbitRadio: () => require('../extensions/scratch3_microbit/microbitRadio.js'),
