@@ -267,6 +267,8 @@ class comlib {
   {'B','S'},		// 0x88:anaRead        (port, count)           ret:level(int16)
   {'B','S','S'},	// 0x89:tone           (port,freq,ms)
   {'b'},			// 0x8a:setPwms        (LIST[port,data])
+  {},				// 0x8b:neoPixcel      ()
+  {'B','B'},		// 0x8c:setCameraMode  (mode,gain)
 
   {},				// 0xFB:statusWifi     ()                      ret:wlanStatus SSID ip
   {},				// 0xFC:scanWifi       ()                      ret:SSID1 SSID2 SSID3 ..
@@ -347,6 +349,12 @@ class comlib {
 		const _defs = {ARG1:{type2:'b'}};
 		const _args = {ARG1:buf};
 		return this.sendRecv(0x8A,_defs,_args);
+	}
+
+	setCameraMode(mode,gain) {
+		const _defs = {ARG1:{type2:'B'},ARG2:{type2:'B'}};
+		const _args = {ARG1:mode, ARG2:gain};
+		return this.sendRecv(0x8c,_defs,_args);
 	}
 
 	statusWifi() {

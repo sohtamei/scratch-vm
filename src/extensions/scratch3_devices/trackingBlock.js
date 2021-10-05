@@ -14,9 +14,9 @@ require('./tracking.js');
 const WIDTH = 480;
 const HEIGHT = 360;
 
-const penAttr = [{ color4f: [1,0,0,1], diameter: 1 },	// R
-				{ color4f: [0,0,1,1], diameter: 1 },	// B
-				{ color4f: [0,1,0,1], diameter: 1 }];	// G
+const attrRed   = { color4f: [1,0,0,1], diameter: 1 };	// R
+const attrBlue  = { color4f: [0,0,1,1], diameter: 1 };	// B
+const attrGreen = { color4f: [0,1,0,1], diameter: 1 };	// G
 
 class Scratch3Blocks {
 	constructor (runtime) {
@@ -29,6 +29,8 @@ class Scratch3Blocks {
 		this.tracker = null;
 		this._targetRGB = {r:0, g:0, b:0};
 		this._tolerance = 100;
+		this._areaX = [-240,240];
+		this._areaY = [-180,180];
 
 		this._isDetected = false;
 		this._detectX = 0;
@@ -58,24 +60,49 @@ class Scratch3Blocks {
 
 	get_blocks() {
 		return [
-			{blockType: BlockType.COMMAND, opcode: 'startDetection', text: ['Start Detectection [ARG1] tolerance[ARG2]', '検出開始 色[ARG1] 許容範囲[ARG2]'][this._locale],
+			{blockType: BlockType.COMMAND, opcode: 'startDetection', text: [
+					'Start detection color[ARG1] tolerance[ARG2]',
+					'検出開始 色[ARG1] 誤差範囲[ARG2]'][this._locale],
 			arguments: {
 				ARG1: {type:ArgumentType.COLOR, defaultValue:'#ff0000'},
-				ARG2: {type:ArgumentType.NUMBER, defaultValue:50},
+				ARG2: {type:ArgumentType.NUMBER, defaultValue:50 },
 			}},
 
 			{blockType: BlockType.COMMAND, opcode: 'stopDetection', text: ['Stop Detection', '検出停止'][this._locale] },
+
+			{blockType: BlockType.COMMAND, opcode: 'setArea', text: [
+					'Area ([ARG1],[ARG3]) - ([ARG2],[ARG4])',
+					'領域指定 ([ARG1],[ARG3]) - ([ARG2],[ARG4])'][this._locale],
+			arguments: {
+				ARG1: {type:ArgumentType.NUMBER, defaultValue:-240 },
+				ARG2: {type:ArgumentType.NUMBER, defaultValue: 240 },
+				ARG3: {type:ArgumentType.NUMBER, defaultValue:-180 },
+				ARG4: {type:ArgumentType.NUMBER, defaultValue: 180 },
+			}},
+
+			{blockType: BlockType.COMMAND, opcode: 'setCameraMode', text: [
+					'Set camera mode[ARG1] gain[ARG2]',
+					'カメラモード[ARG1] ゲイン[ARG2]'][this._locale],
+			arguments: {
+				ARG1: {type:ArgumentType.STRING, defaultValue:'1', menu: 'cameraMode' },
+				ARG2: {type:ArgumentType.NUMBER, defaultValue: 2 },
+			}},
 
 			{blockType: BlockType.BOOLEAN, opcode: 'isDetected', text: ['Is detected', '検出'][this._locale] },
 			{blockType: BlockType.REPORTER, opcode: 'detectX', text: ['X axis', 'x座標'][this._locale] },
 			{blockType: BlockType.REPORTER, opcode: 'detectY', text: ['Y axis', 'y座標'][this._locale] },
 			{blockType: BlockType.REPORTER, opcode: 'detectWidth', text: ['Width', '幅'][this._locale] },
-			{blockType: BlockType.REPORTER, opcode: 'detectHight', text: ['Height', '高さ'][this._locale] },
+			{blockType: BlockType.REPORTER, opcode: 'detectHeight', text: ['Height', '高さ'][this._locale] },
 		];
 	}
 
 	get_menus() {
-		return {};
+		return {
+			cameraMode: { acceptReporters: true, items: [
+				{ text: ['normal','通常'][this._locale], value: '0' },
+				{ text: ['color detect','色検出'][this._locale], value: '1' },
+			]},
+		};
 	}
 
 	startDetection(args, util) {
@@ -83,6 +110,8 @@ class Scratch3Blocks {
 		this._tolerance = args.ARG2*1;
 
 		const _this = this;
+
+		if(!this.tracker) this.stopDetection(null);
 
 		this.runtime.ioDevices.video.enableVideo();
 		this.runtime.ioDevices.video.mirror = true;
@@ -97,46 +126,70 @@ class Scratch3Blocks {
 			});
 
 			_this.tracker = new window.tracking.ColorTracker(['color1']);
+			_this.tracker.minDimension = 5;
 			window.tracking.track(_this.runtime.ioDevices.video.element, _this.tracker);
 
 			_this.tracker.on('track', function(event) {
-				_this.runtime.renderer.penClear(_this._penSkinId);
+				_this._drawArea();
 
-				if(event.data.length == 0) {
+				if(event.data.length == 0 || !_this.tracker) {
 					_this._isDetected = false;
 				} else {
 					_this._isDetected = true;
-					let maxIdx = 0;
+					let maxIdx = -1;
 					let maxSize = 0;
 					let rect;
 					for(let i = 0; i < event.data.length; i++) {
 						rect = event.data[i];
-						if(maxSize < rect.width+rect.height) {
-							maxSize = rect.width+rect.height;
-							maxIdx = i;
+						const x = 240 - (rect.x + rect.width/2);
+						const y = 180 - (rect.y + rect.height/2);
+						
+						if(_this._areaEnabled()
+						&& (x < _this._areaX[0] || x > _this._areaX[1] || y < _this._areaY[0] || y > _this._areaY[1])) {
+							;
+						} else {
+console.log(_this._areaX[0], ',', _this._areaX[1], ',', x, ',', _this._areaY[0], ',', _this._areaY[1], ',', y);
+							if(maxSize < rect.width+rect.height) {
+								maxSize = rect.width+rect.height;
+								maxIdx = i;
+							}
 						}
 					}
+					if(maxIdx != -1) {
 					rect = event.data[maxIdx];
-					const x1 = 240 - rect.x;
-					const x2 = 240 - (rect.x + rect.width);
-					const y1 = 180 - rect.y;
-					const y2 = 180 - (rect.y + rect.height);
-					_this.runtime.renderer.penLine(_this._penSkinId, penAttr[0], x1, y1, x2, y1);
-					_this.runtime.renderer.penLine(_this._penSkinId, penAttr[0], x1, y1, x1, y2);
-					_this.runtime.renderer.penLine(_this._penSkinId, penAttr[0], x1, y2, x2, y2);
-					_this.runtime.renderer.penLine(_this._penSkinId, penAttr[0], x2, y1, x2, y2);
-
-					_this._detectX = (x1+x2) / 2;
-					_this._detectY = (y1+y2) / 2;
+					const xs = [240 - rect.x, 240 - (rect.x + rect.width)];
+					const ys = [180 - rect.y, 180 - (rect.y + rect.height)];
+					_this._drawRect(xs, ys, attrRed);
+					_this._detectX = (xs[0] + xs[1]) / 2;
+					_this._detectY = (ys[0] + ys[1]) / 2;
 					_this._detectWidth = rect.width;
 					_this._detectHeight = rect.height;
+					}
 				}
 			});
 		})
 	}
 
 	stopDetection(args) {
+		if(!this.tracker) return;
+		this._drawArea();
 		this.tracker.removeAllListeners();
+		delete this.tracker;
+	}
+
+	setArea(args) {
+		this._areaX[0] = Math.min(args.ARG1*1, args.ARG2*1);
+		this._areaX[1] = Math.max(args.ARG1*1, args.ARG2*1);
+		this._areaY[0] = Math.min(args.ARG3*1, args.ARG4*1);
+		this._areaY[1] = Math.max(args.ARG3*1, args.ARG4*1);
+
+		this._drawArea();
+	}
+
+	setCameraMode(args) {
+		const mode = args.ARG1*1;
+		const gain = args.ARG2*1;
+		return this.runtime.dev.comlib.setCameraMode(mode, gain);
 	}
 
 	isDetected(args)   { return this._isDetected; }
@@ -144,5 +197,36 @@ class Scratch3Blocks {
 	detectY(args)      { return this._detectY; }
 	detectWidth(args)  { return this._detectWidth; }
 	detectHeight(args) { return this._detectHeight; }
+
+
+	_areaEnabled() {
+		if( this._areaX[0] == -240 && this._areaX[1] == 240
+		 && this._areaY[0] == -180 && this._areaY[1] == 180 )
+		    return false;
+
+		if( this._areaX[0] == this._areaX[1]
+		 || this._areaY[0] == this._areaY[1] )
+		    return false;
+
+		return true;
+	}
+
+	_drawArea() {
+		this.runtime.renderer.penClear(this._penSkinId);
+		if(this._areaEnabled())
+			this._drawRect(this._areaX, this._areaY, attrBlue);
+	}
+
+	_drawRect(xs, ys, attr) {
+		const x0 = Math.max(xs[0], -240);
+		const x1 = Math.min(xs[1],  239);
+		const y0 = Math.max(ys[0], -180);
+		const y1 = Math.min(ys[1],  179);
+
+		this.runtime.renderer.penLine(this._penSkinId, attr, x0, y0, x1, y0);
+		this.runtime.renderer.penLine(this._penSkinId, attr, x0, y0, x0, y1);
+		this.runtime.renderer.penLine(this._penSkinId, attr, x0, y1, x1, y1);
+		this.runtime.renderer.penLine(this._penSkinId, attr, x1, y0, x1, y1);
+	}
 }
 module.exports = Scratch3Blocks;

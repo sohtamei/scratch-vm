@@ -186,15 +186,18 @@ var ext = class {
     ARG1: { type: ArgumentType.STRING, type2:'B', defaultValue:'1', menu: 'onoff' },
 }},
 
-{blockType: BlockType.REPORTER, opcode: 'getLidar', text: 'get Lidar', arguments: {
-}},
-
 {blockType: BlockType.REPORTER, opcode: 'enumColor', text: '[ARG1] .', arguments: {
     ARG1: { type: ArgumentType.STRING, type2:'B', defaultValue:'1', menu: 'color' },
 }},
 
 {blockType: BlockType.REPORTER, opcode: 'enumWalkcmd', text: '[ARG1] .', arguments: {
     ARG1: { type: ArgumentType.STRING, type2:'B', defaultValue:'1', menu: 'walkcmd' },
+}},
+
+{blockType: BlockType.COMMAND, opcode: 'setSpeedXY', text: 'set [ARG1] [ARG2] [ARG3]', arguments: {
+    ARG1: { type: ArgumentType.STRING, type2:'S', defaultValue:'200', menu: 'speed' },
+    ARG2: { type: ArgumentType.NUMBER, type2:'S', defaultValue:0 },
+    ARG3: { type: ArgumentType.NUMBER, type2:'S', defaultValue:100 },
 }},
 
 		];
@@ -374,9 +377,9 @@ setDigital(args,util) { return this.sendRecv('setDigital', args); }
 getDigital(args,util) { return this.sendRecv('getDigital', args); }
 setPWM(args,util) { return this.sendRecv('setPWM', args); }
 setLED(args,util) { return this.sendRecv('setLED', args); }
-getLidar(args,util) { return this.sendRecv('getLidar', args); }
 enumColor(args) { return args.ARG1; }
 enumWalkcmd(args) { return args.ARG1; }
+setSpeedXY(args,util) { return this.sendRecv('setSpeedXY', args); }
 
 	burnFlash(args) {
 		if(this.comlib.server=='http') return ['please access via https://','https:// でアクセスして下さい'][this._locale];
