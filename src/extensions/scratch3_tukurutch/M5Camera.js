@@ -43,6 +43,8 @@ var ext = class {
 	get_blocks() {
 		this.flashList = [
 {name:'M5Camera', type:'esp32', baudrate:921600},
+{name:'ESP32_CAM', type:'esp32', baudrate:921600},
+{name:'UnitCam', type:'esp32', baudrate:921600},
 {name:'M5TimerCam', type:'esp32', baudrate:1500000},
 		];
 

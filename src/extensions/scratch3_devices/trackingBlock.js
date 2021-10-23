@@ -20,6 +20,7 @@ const attrGreen = { color4f: [0,1,0,1], diameter: 1 };	// G
 
 class Scratch3Blocks {
 	constructor (runtime) {
+		runtime.tracking = this;
 		this.runtime = runtime;
 
 		this._penSkinId = this.runtime.renderer.createPenSkin();
@@ -27,12 +28,13 @@ class Scratch3Blocks {
 		this.runtime.renderer.updateDrawableSkinId(this._penDrawableId, this._penSkinId);
 
 		this.tracker = null;
-		this._targetRGB = {r:0, g:0, b:0};
-		this._tolerance = 100;
-		this._areaX = [-240,240];
-		this._areaY = [-180,180];
+		this.areaX = [-240,240];
+		this.areaY = [-180,180];
 
-		this._isDetected = false;
+		this._targetRGB = [{r:0, g:0, b:0},{r:0, g:0, b:0},{r:0, g:0, b:0}];
+		this._tolerance = [100,100,100];
+
+		this.isDetected = false;
 		this._detectX = 0;
 		this._detectY = 0;
 		this._detectWidth = 0;
@@ -93,6 +95,16 @@ class Scratch3Blocks {
 			{blockType: BlockType.REPORTER, opcode: 'detectY', text: ['Y axis', 'y座標'][this._locale] },
 			{blockType: BlockType.REPORTER, opcode: 'detectWidth', text: ['Width', '幅'][this._locale] },
 			{blockType: BlockType.REPORTER, opcode: 'detectHeight', text: ['Height', '高さ'][this._locale] },
+
+			{blockType: BlockType.COMMAND, opcode: 'startDetectionMulti', text: 'Start detection[ARG1]/[ARG2], [ARG3]/[ARG4], [ARG5]/[ARG6]',
+			arguments: {
+				ARG1: {type:ArgumentType.COLOR, defaultValue:'#ff0000'},
+				ARG2: {type:ArgumentType.NUMBER, defaultValue:50 },
+				ARG3: {type:ArgumentType.COLOR, defaultValue:'#0000ff'},
+				ARG4: {type:ArgumentType.NUMBER, defaultValue:50 },
+				ARG5: {type:ArgumentType.COLOR, defaultValue:'#00ff00'},
+				ARG6: {type:ArgumentType.NUMBER, defaultValue:50 },
+			}},
 		];
 	}
 
@@ -106,8 +118,8 @@ class Scratch3Blocks {
 	}
 
 	startDetection(args, util) {
-		this._targetRGB = Cast.toRgbColorObject(args.ARG1);
-		this._tolerance = args.ARG2*1;
+		this._targetRGB[0] = Cast.toRgbColorObject(args.ARG1);
+		this._tolerance[0] = args.ARG2*1;
 
 		const _this = this;
 
@@ -118,72 +130,108 @@ class Scratch3Blocks {
 		return new Promise(resolve => setTimeout(resolve, 1000))
 		.then(() => {
 
-			window.tracking.ColorTracker.registerColor('color1', function (r, g, b) {
-				const distance = Math.sqrt((_this._targetRGB.r - r) * (_this._targetRGB.r - r)
-										+ (_this._targetRGB.g - g) * (_this._targetRGB.g - g)
-										+ (_this._targetRGB.b - b) * (_this._targetRGB.b - b));
-				return distance < _this._tolerance;
-			});
-
+			window.tracking.ColorTracker.registerColor('color1', function (r, g, b) {return _this._checkDistance(0, r, g, b);});
 			_this.tracker = new window.tracking.ColorTracker(['color1']);
 			_this.tracker.minDimension = 5;
 			window.tracking.track(_this.runtime.ioDevices.video.element, _this.tracker);
 
-			_this.tracker.on('track', function(event) {
-				_this._drawArea();
+			_this.tracker.on('track', _this._detected.bind(_this));
+		})
+	}
 
-				if(event.data.length == 0 || !_this.tracker) {
-					_this._isDetected = false;
-				} else {
-					_this._isDetected = true;
-					let maxIdx = -1;
-					let maxSize = 0;
-					let rect;
-					for(let i = 0; i < event.data.length; i++) {
-						rect = event.data[i];
-						const x = 240 - (rect.x + rect.width/2);
-						const y = 180 - (rect.y + rect.height/2);
-						
-						if(_this._areaEnabled()
-						&& (x < _this._areaX[0] || x > _this._areaX[1] || y < _this._areaY[0] || y > _this._areaY[1])) {
-							;
-						} else {
-console.log(_this._areaX[0], ',', _this._areaX[1], ',', x, ',', _this._areaY[0], ',', _this._areaY[1], ',', y);
-							if(maxSize < rect.width+rect.height) {
-								maxSize = rect.width+rect.height;
-								maxIdx = i;
-							}
-						}
-					}
-					if(maxIdx != -1) {
-					rect = event.data[maxIdx];
-					const xs = [240 - rect.x, 240 - (rect.x + rect.width)];
-					const ys = [180 - rect.y, 180 - (rect.y + rect.height)];
-					_this._drawRect(xs, ys, attrRed);
-					_this._detectX = (xs[0] + xs[1]) / 2;
-					_this._detectY = (ys[0] + ys[1]) / 2;
-					_this._detectWidth = rect.width;
-					_this._detectHeight = rect.height;
-					}
-				}
-			});
+	startDetectionMulti(args, util) {
+		this._targetRGB[0] = Cast.toRgbColorObject(args.ARG1);
+		this._tolerance[0] = args.ARG2*1;
+		this._targetRGB[1] = Cast.toRgbColorObject(args.ARG3);
+		this._tolerance[1] = args.ARG4*1;
+		this._targetRGB[2] = Cast.toRgbColorObject(args.ARG5);
+		this._tolerance[2] = args.ARG6*1;
+
+		const _this = this;
+
+		if(!this.tracker) this.stopDetection(null);
+
+		this.runtime.ioDevices.video.enableVideo();
+		this.runtime.ioDevices.video.mirror = true;
+		return new Promise(resolve => setTimeout(resolve, 1000))
+		.then(() => {
+
+			window.tracking.ColorTracker.registerColor('color1', function (r, g, b) {return _this._checkDistance(0, r, g, b);});
+			window.tracking.ColorTracker.registerColor('color2', function (r, g, b) {return _this._checkDistance(1, r, g, b);});
+			window.tracking.ColorTracker.registerColor('color3', function (r, g, b) {return _this._checkDistance(2, r, g, b);});
+			_this.tracker = new window.tracking.ColorTracker(['color1','color2','color3']);
+			_this.tracker.minDimension = 5;
+			window.tracking.track(_this.runtime.ioDevices.video.element, _this.tracker);
+
+			_this.tracker.on('track', _this._detected.bind(_this));
 		})
 	}
 
 	stopDetection(args) {
 		if(!this.tracker) return;
-		this._drawArea();
+		this._clearArea();
 		this.tracker.removeAllListeners();
 		delete this.tracker;
 	}
 
-	setArea(args) {
-		this._areaX[0] = Math.min(args.ARG1*1, args.ARG2*1);
-		this._areaX[1] = Math.max(args.ARG1*1, args.ARG2*1);
-		this._areaY[0] = Math.min(args.ARG3*1, args.ARG4*1);
-		this._areaY[1] = Math.max(args.ARG3*1, args.ARG4*1);
+	_checkDistance(index, r, g, b) {
+		const distance =  ((this._targetRGB[index].r - r) ** 2)
+						+ ((this._targetRGB[index].g - g) ** 2)
+						+ ((this._targetRGB[index].b - b) ** 2);
+		return distance < (this._tolerance[index] ** 2);
+	}
 
-		this._drawArea();
+	_detected(event) {
+		if(event.data.length == 0 || !this.tracker) {
+			this.isDetected = false;
+			return;
+		}
+		this._clearArea();
+		this.isDetected = true;
+
+		if(this.runtime.tracking.detected) {
+			let ret = this.runtime.tracking.detected(event.data);
+			if(ret == false) return;
+		}
+
+		let maxIdx = -1;
+		let maxSize = 0;
+		let rect;
+		for(let i = 0; i < event.data.length; i++) {
+			rect = event.data[i];
+			const x = 240 - (rect.x + rect.width/2);
+			const y = 180 - (rect.y + rect.height/2);
+			
+			if(this.areaEnabled()
+			&& (x < this.areaX[0] || x > this.areaX[1] || y < this.areaY[0] || y > this.areaY[1])) {
+				;
+			} else {
+			//	console.log(this.areaX[0], ',', this.areaX[1], ',', x, ',', this.areaY[0], ',', this.areaY[1], ',', y);
+				if(maxSize < rect.width+rect.height) {
+					maxSize = rect.width+rect.height;
+					maxIdx = i;
+				}
+			}
+		}
+		if(maxIdx != -1) {
+			rect = event.data[maxIdx];
+			const xs = [240 - rect.x, 240 - (rect.x + rect.width)];
+			const ys = [180 - rect.y, 180 - (rect.y + rect.height)];
+			this.drawRect(xs, ys, attrRed);
+			this._detectX = (xs[0] + xs[1]) / 2;
+			this._detectY = (ys[0] + ys[1]) / 2;
+			this._detectWidth = rect.width;
+			this._detectHeight = rect.height;
+		}
+	}
+
+	setArea(args) {
+		this.areaX[0] = Math.min(args.ARG1*1, args.ARG2*1);
+		this.areaX[1] = Math.max(args.ARG1*1, args.ARG2*1);
+		this.areaY[0] = Math.min(args.ARG3*1, args.ARG4*1);
+		this.areaY[1] = Math.max(args.ARG3*1, args.ARG4*1);
+
+		this._clearArea();
 	}
 
 	setCameraMode(args) {
@@ -192,32 +240,32 @@ console.log(_this._areaX[0], ',', _this._areaX[1], ',', x, ',', _this._areaY[0],
 		return this.runtime.dev.comlib.setCameraMode(mode, gain);
 	}
 
-	isDetected(args)   { return this._isDetected; }
+	isDetected(args)   { return this.isDetected; }
 	detectX(args)      { return this._detectX; }
 	detectY(args)      { return this._detectY; }
 	detectWidth(args)  { return this._detectWidth; }
 	detectHeight(args) { return this._detectHeight; }
 
 
-	_areaEnabled() {
-		if( this._areaX[0] == -240 && this._areaX[1] == 240
-		 && this._areaY[0] == -180 && this._areaY[1] == 180 )
+	areaEnabled() {
+		if( this.areaX[0] == -240 && this.areaX[1] == 240
+		 && this.areaY[0] == -180 && this.areaY[1] == 180 )
 		    return false;
 
-		if( this._areaX[0] == this._areaX[1]
-		 || this._areaY[0] == this._areaY[1] )
+		if( this.areaX[0] == this.areaX[1]
+		 || this.areaY[0] == this.areaY[1] )
 		    return false;
 
 		return true;
 	}
 
-	_drawArea() {
+	_clearArea() {
 		this.runtime.renderer.penClear(this._penSkinId);
-		if(this._areaEnabled())
-			this._drawRect(this._areaX, this._areaY, attrBlue);
+		if(this.areaEnabled())
+			this.drawRect(this.areaX, this.areaY, attrBlue);
 	}
 
-	_drawRect(xs, ys, attr) {
+	drawRect(xs, ys, attr) {
 		const x0 = Math.max(xs[0], -240);
 		const x1 = Math.min(xs[1],  239);
 		const y0 = Math.max(ys[0], -180);
