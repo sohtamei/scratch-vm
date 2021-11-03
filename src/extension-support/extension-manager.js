@@ -17,13 +17,15 @@ const builtinExtensions = {
     // but serves as a reference for loading core blocks as extensions.
     coreExample: () => require('../blocks/scratch3_core_example'),
     // These are the non-core built-in extensions.
-    uno: () => require('../extensions/scratch3_tukurutch/uno.js'),
-    GroveBeginnerKit: () => require('../extensions/scratch3_tukurutch/GroveBeginnerKit.js'),
+    M5Series: () => require('../extensions/scratch3_tukurutch/M5Series.js'),
     M5Camera: () => require('../extensions/scratch3_tukurutch/M5Camera.js'),
     M5CameraCar: () => require('../extensions/scratch3_tukurutch/M5CameraCar.js'),
-    M5Series: () => require('../extensions/scratch3_tukurutch/M5Series.js'),
+    uno: () => require('../extensions/scratch3_tukurutch/uno.js'),
+    GroveBeginnerKit: () => require('../extensions/scratch3_tukurutch/GroveBeginnerKit.js'),
+    cameratch32: () => require('../extensions/scratch3_tukurutch/cameratch32.js'),
     QuadCrawlerAI: () => require('../extensions/scratch3_tukurutch/QuadCrawlerAI.js'),
 
+    uiParts: () => require('../extensions/scratch3_devices/uiParts.js'),
     genericIO: () => require('../extensions/scratch3_devices/genericIO.js'),
     TempHumSht3x: () => require('../extensions/scratch3_devices/TempHumSht3x.js'),
     BMP280: () => require('../extensions/scratch3_devices/BMP280.js'),
@@ -33,7 +35,6 @@ const builtinExtensions = {
     maqueen: () => require('../extensions/scratch3_devices/maqueen.js'),
     folo: () => require('../extensions/scratch3_devices/folo.js'),
     foloCamera: () => require('../extensions/scratch3_devices/foloCamera.js'),
-    uiParts: () => require('../extensions/scratch3_devices/uiParts.js'),
     tracking: () => require('../extensions/scratch3_devices/trackingBlock.js'),
 
     microbit: () => require('../extensions/scratch3_microbit/microbit.js'),

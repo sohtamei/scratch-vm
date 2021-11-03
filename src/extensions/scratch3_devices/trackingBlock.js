@@ -34,7 +34,7 @@ class Scratch3Blocks {
 		this._targetRGB = [{r:0, g:0, b:0},{r:0, g:0, b:0},{r:0, g:0, b:0}];
 		this._tolerance = [100,100,100];
 
-		this.isDetected = false;
+		this._isDetected = false;
 		this._detectX = 0;
 		this._detectY = 0;
 		this._detectWidth = 0;
@@ -183,13 +183,14 @@ class Scratch3Blocks {
 
 	_detected(event) {
 		if(event.data.length == 0 || !this.tracker) {
-			this.isDetected = false;
+			this._isDetected = false;
 			return;
 		}
 		this._clearArea();
-		this.isDetected = true;
+		this._isDetected = true;
 
-		if(this.runtime.tracking.detected) {
+		if(typeof this.runtime.tracking.detected !== "undefined") {
+	//	if(this.runtime.tracking.detected) {
 			let ret = this.runtime.tracking.detected(event.data);
 			if(ret == false) return;
 		}
@@ -240,7 +241,7 @@ class Scratch3Blocks {
 		return this.runtime.dev.comlib.setCameraMode(mode, gain);
 	}
 
-	isDetected(args)   { return this.isDetected; }
+	isDetected(args)   { return this._isDetected; }
 	detectX(args)      { return this._detectX; }
 	detectY(args)      { return this._detectY; }
 	detectWidth(args)  { return this._detectWidth; }
