@@ -14,9 +14,9 @@ require('./tracking.js');
 const WIDTH = 480;
 const HEIGHT = 360;
 
-const attrRed   = { color4f: [1,0,0,1], diameter: 1 };	// R
-const attrBlue  = { color4f: [0,0,1,1], diameter: 1 };	// B
-const attrGreen = { color4f: [0,1,0,1], diameter: 1 };	// G
+const colorRed   = [1,0,0,1];
+const colorBlue  = [0,0,1,1];
+const colorGreen = [0,1,0,1];
 
 class Scratch3Blocks {
 	constructor (runtime) {
@@ -35,6 +35,8 @@ class Scratch3Blocks {
 		this._tolerance = [100,100,100];
 
 		this._isDetected = false;
+		this._whenDetected = false;
+		this._lastDetectedJson = '';
 		this._detectX = 0;
 		this._detectY = 0;
 		this._detectWidth = 0;
@@ -91,6 +93,7 @@ class Scratch3Blocks {
 			}},
 
 			{blockType: BlockType.BOOLEAN, opcode: 'isDetected', text: ['Is detected', '検出'][this._locale] },
+			{blockType: BlockType.HAT, opcode: 'whenDetected', text: ['When detected', '検出したとき'][this._locale] },
 			{blockType: BlockType.REPORTER, opcode: 'detectX', text: ['X axis', 'x座標'][this._locale] },
 			{blockType: BlockType.REPORTER, opcode: 'detectY', text: ['Y axis', 'y座標'][this._locale] },
 			{blockType: BlockType.REPORTER, opcode: 'detectWidth', text: ['Width', '幅'][this._locale] },
@@ -183,13 +186,23 @@ class Scratch3Blocks {
 
 	_detected(event) {
 		if(event.data.length == 0 || !this.tracker) {
+			this._clearArea();
 			this._isDetected = false;
+			this._whenDetected = false;
 			return;
 		}
+
+		const detectedJson = JSON.stringify(event.data);
+		if(this._lastDetectedJson == detectedJson) {
+			return;
+		}
+		this._lastDetectedJson = detectedJson;
+
 		this._clearArea();
 		this._isDetected = true;
+		this._whenDetected = true;
 
-		if(typeof this.runtime.tracking.detected !== "undefined") {
+		if(typeof this.runtime.tracking.detected !== 'undefined') {
 	//	if(this.runtime.tracking.detected) {
 			let ret = this.runtime.tracking.detected(event.data);
 			if(ret == false) return;
@@ -218,7 +231,7 @@ class Scratch3Blocks {
 			rect = event.data[maxIdx];
 			const xs = [240 - rect.x, 240 - (rect.x + rect.width)];
 			const ys = [180 - rect.y, 180 - (rect.y + rect.height)];
-			this.drawRect(xs, ys, attrRed);
+			this.drawRect(xs, ys, colorRed);
 			this._detectX = (xs[0] + xs[1]) / 2;
 			this._detectY = (ys[0] + ys[1]) / 2;
 			this._detectWidth = rect.width;
@@ -242,6 +255,11 @@ class Scratch3Blocks {
 	}
 
 	isDetected(args)   { return this._isDetected; }
+	whenDetected(args) {
+		const whenDetected = this._whenDetected;
+		this._whenDetected = false;
+		return whenDetected;
+	}
 	detectX(args)      { return this._detectX; }
 	detectY(args)      { return this._detectY; }
 	detectWidth(args)  { return this._detectWidth; }
@@ -263,10 +281,11 @@ class Scratch3Blocks {
 	_clearArea() {
 		this.runtime.renderer.penClear(this._penSkinId);
 		if(this.areaEnabled())
-			this.drawRect(this.areaX, this.areaY, attrBlue);
+			this.drawRect(this.areaX, this.areaY, colorBlue);
 	}
 
-	drawRect(xs, ys, attr) {
+	drawRect(xs, ys, color) {
+		const attr = { color4f: color, diameter: 1 };
 		const x0 = Math.max(xs[0], -240);
 		const x1 = Math.min(xs[1],  239);
 		const y0 = Math.max(ys[0], -180);
@@ -276,6 +295,16 @@ class Scratch3Blocks {
 		this.runtime.renderer.penLine(this._penSkinId, attr, x0, y0, x0, y1);
 		this.runtime.renderer.penLine(this._penSkinId, attr, x0, y1, x1, y1);
 		this.runtime.renderer.penLine(this._penSkinId, attr, x1, y0, x1, y1);
+	}
+
+	drawLine(xs, ys, color) {
+		const attr = { color4f: color, diameter: 1 };
+		const x0 = Math.max(xs[0], -240);
+		const x1 = Math.min(xs[1],  239);
+		const y0 = Math.max(ys[0], -180);
+		const y1 = Math.min(ys[1],  179);
+
+		this.runtime.renderer.penLine(this._penSkinId, attr, x0, y0, x1, y1);
 	}
 }
 module.exports = Scratch3Blocks;
