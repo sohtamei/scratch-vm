@@ -19,6 +19,8 @@ const BLEUUID = {
 	rxChar: '6e400003-b5a3-f393-e0a9-e50e24dcca9e',	// BLENotify
 };
 
+const TIMEOUT = 6000;
+
 class comlib {
 	constructor(runtime, extName, SupportCamera) {
 		this._runtime = runtime;
@@ -236,7 +238,7 @@ class comlib {
 				this.ws.send(new Uint8Array([0xff,0x55,0x01,0xff]));	// reset
 				return new Promise(resolve => setTimeout(resolve, 100))
 				.then(() => new Promise((resolve,reject) => {
-					hTimeout = setTimeout(reject, 5000);
+					hTimeout = setTimeout(reject, TIMEOUT);
 					_this.wsResolve = resolve;
 					_this.ws.close();
 				})).then(() => {
@@ -523,7 +525,7 @@ class comlib {
 			loop();
 			function loop(){
 				new Promise(resolve2 => {
-					hTimeout = setTimeout(resolve2, 3000);
+					hTimeout = setTimeout(resolve2, TIMEOUT);
 				}).then(() => {
 					console.log('timeout !');
 					if(_this.uart && _this.uart.readable) {
@@ -605,7 +607,7 @@ class comlib {
 		const _this = this;
 		let hTimeout = null;
 		return new Promise((resolve,reject) => {
-			hTimeout = setTimeout(reject, 3000);
+			hTimeout = setTimeout(reject, TIMEOUT);
 			_this.bleRxChar.addEventListener('characteristicvaluechanged', resolve);
 			return _this.bleTxChar.writeValue(sendBuf);
 	//		return _this.ble.startNotifications(BLEUUID.service, BLEUUID.rxChar, resolve)
