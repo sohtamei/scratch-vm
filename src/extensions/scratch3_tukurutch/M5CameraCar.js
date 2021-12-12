@@ -94,7 +94,12 @@ var ext = class {
     ARG4: { type: ArgumentType.NUMBER, type2:'S', defaultValue:0 },
 }},
 
-'---',
+{blockType: BlockType.COMMAND, opcode: 'setCar2', text: '[ARG1] at speed [ARG2] duration [ARG3] ms', arguments: {
+    ARG1: { type: ArgumentType.STRING, type2:'B', defaultValue:'1', menu: 'direction' },
+    ARG2: { type: ArgumentType.NUMBER, type2:'S', defaultValue:100 },
+    ARG3: { type: ArgumentType.NUMBER, type2:'S', defaultValue:0 },
+}},
+
 '---',
 {blockType: BlockType.COMMAND, opcode: 'stopCar', text: [
     'stop',
@@ -169,6 +174,7 @@ speed: { acceptReporters: true, items: ['4','2','1','0','-1','-2','-4',]},
 
 setCar(args,util) { return this.sendRecv('setCar', args); }
 setMotor(args,util) { return this.sendRecv('setMotor', args); }
+setCar2(args,util) { return this.sendRecv('setCar2', args); }
 stopCar(args,util) { return this.sendRecv('stopCar', args); }
 enumDirection(args) { return args.ARG1; }
 setLED(args,util) { return this.sendRecv('setLED', args); }

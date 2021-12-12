@@ -15,8 +15,8 @@ const WIDTH = 480;
 const HEIGHT = 360;
 
 const colorRed   = [1,0,0,1];
-const colorBlue  = [0,0,1,1];
 const colorGreen = [0,1,0,1];
+const colorBlue  = [0,0,1,1];
 
 class Scratch3Blocks {
 	constructor (runtime) {
@@ -254,7 +254,12 @@ class Scratch3Blocks {
 		return this.runtime.dev.comlib.setCameraMode(mode, gain);
 	}
 
-	isDetected(args)   { return this._isDetected; }
+	isDetected(args)   {
+		const whenDetected = this._whenDetected;
+		this._whenDetected = false;
+		return whenDetected;
+//		return this._isDetected;
+	}
 	whenDetected(args) {
 		const whenDetected = this._whenDetected;
 		this._whenDetected = false;

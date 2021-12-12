@@ -78,9 +78,10 @@ var ext = class {
     ARG1: { type: ArgumentType.STRING, type2:'B', defaultValue:'1', menu: 'onoff' },
 }},
 
-{blockType: BlockType.COMMAND, opcode: 'setCar', text: '[ARG1] at speed [ARG2]', arguments: {
+{blockType: BlockType.COMMAND, opcode: 'setCar', text: '[ARG1] at speed [ARG2] duration [ARG3] ms', arguments: {
     ARG1: { type: ArgumentType.STRING, type2:'B', defaultValue:'1', menu: 'direction' },
     ARG2: { type: ArgumentType.NUMBER, type2:'S', defaultValue:100 },
+    ARG3: { type: ArgumentType.NUMBER, type2:'S', defaultValue:0 },
 }},
 
 {blockType: BlockType.COMMAND, opcode: 'setMotor', text: 'set motor [ARG1] speed [ARG2]', arguments: {
@@ -89,6 +90,10 @@ var ext = class {
 }},
 
 {blockType: BlockType.COMMAND, opcode: 'stopCar', text: 'stop', arguments: {
+}},
+
+{blockType: BlockType.COMMAND, opcode: 'setPwmFreq', text: 'set pwm freq [ARG1]', arguments: {
+    ARG1: { type: ArgumentType.NUMBER, type2:'S', defaultValue:10000 },
 }},
 
 {blockType: BlockType.REPORTER, opcode: 'enumDirection', text: '[ARG1] .', arguments: {
@@ -142,6 +147,7 @@ setLED(args,util) { return this.sendRecv('setLED', args); }
 setCar(args,util) { return this.sendRecv('setCar', args); }
 setMotor(args,util) { return this.sendRecv('setMotor', args); }
 stopCar(args,util) { return this.sendRecv('stopCar', args); }
+setPwmFreq(args,util) { return this.sendRecv('setPwmFreq', args); }
 enumDirection(args) { return args.ARG1; }
 
 	burnFlash(args) {
