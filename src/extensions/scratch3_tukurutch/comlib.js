@@ -271,6 +271,7 @@ class comlib {
   {'b'},			// 0x8a:setPwms        (LIST[port,data])
   {},				// 0x8b:neoPixcel      ()
   {'B','B'},		// 0x8c:setCameraMode  (mode,gain)
+  {'S','B','b'},	// 0x8d:setPwmsDur     (duration,mode,LIST[port,data])
 
   {},				// 0xFB:statusWifi     ()                      ret:wlanStatus SSID ip
   {},				// 0xFC:scanWifi       ()                      ret:SSID1 SSID2 SSID3 ..
@@ -339,7 +340,7 @@ class comlib {
 		return this.sendRecv(0x89,_defs,_args);
 	}
 
-	setPwms(portLevels) {
+	setPwms(portLevels, duration=0, mode=0) {
 		let buf = new Uint8Array(portLevels.length*3);
 		for(let i = 0; i < portLevels.length; i++) {
 			let level = Math.min(portLevels[i].level, 0xFFF);
@@ -348,9 +349,15 @@ class comlib {
 			buf[i*3+2] = level>>8;
 		}
 
-		const _defs = {ARG1:{type2:'b'}};
-		const _args = {ARG1:buf};
-		return this.sendRecv(0x8A,_defs,_args);
+		if(duration) {
+			const _defs = {ARG1:{type2:'S'},ARG2:{type2:'B'},ARG3:{type2:'b'}};
+			const _args = {ARG1:duration, ARG2:mode, ARG3:buf};
+			return this.sendRecv(0x8D,_defs,_args);
+		} else {
+			const _defs = {ARG1:{type2:'b'}};
+			const _args = {ARG1:buf};
+			return this.sendRecv(0x8A,_defs,_args);
+		}
 	}
 
 	setCameraMode(mode,gain) {

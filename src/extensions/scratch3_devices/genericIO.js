@@ -247,25 +247,15 @@ var ext = class {
 
 	tone(args) {
 		let port = args.ARG1*1;
-		let ms = args.ARG3*1;
 		let freq = args.ARG2*1;
-	/*	let code = args.ARG2*1;
-		let freq = [65,69,73,78,82,87,93,98,104,110,117,123,
-					131,139,147,156,165,175,186,196,208,220,234,247,
-					262,278,294,312,330,349,371,392,416,440,467,494,
-					523,555,587,623,659,698,741,784,832,880,934,988,
-					1047,1111,1175,1247,1319,1397,1483,1568,1664,1760,1868,1976,
-					2093,2221,2349,2493,2637,2794,2965,3136,3328,3520,3736,3951,
-					4186,4443,4699][code];
-		if(typeof freq === 'undefined') return 'error';
-	*/
+		let ms = args.ARG3*1;
 		return this.runtime.dev.comlib.tone(port,freq,ms);
 	}
 
 	setPwms(args) {
 		let port = args.ARG1*1;
 		let level = Math.min(args.ARG2*1, 0xFFF);
-		return this.runtime.dev.comlib.setPwms([{port:port,level:level}]);
+		return this.runtime.dev.comlib.setPwms([{port:port,level:level}], 0/*duration*/, 0/*mode*/);
 	}
 
 	setServo180(args) {
@@ -276,7 +266,7 @@ var ext = class {
 		const srvMin = 103;		// 0.5ms/20ms*4096 = 102.4 (-90c)
 		const srvMax = 491;		// 2.4ms/20ms*4096 = 491.5 (+90c)
 		let level = (angle * (srvMax - srvMin)) / 180 + srvMin;
-		return this.runtime.dev.comlib.setPwms([{port:port,level:level}]);
+		return this.runtime.dev.comlib.setPwms([{port:port,level:level}], 0/*duration*/, 0/*mode*/);
 	}
 
 	hex2dec(args) {

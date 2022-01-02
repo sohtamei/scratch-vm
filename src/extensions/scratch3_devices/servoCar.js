@@ -46,9 +46,10 @@ var ext = class {
 					ARG2: digitalPortArg,
 				}},
 
-				{blockType: BlockType.COMMAND, opcode: 'setCar', text: '[ARG1] at speed [ARG2]', arguments: {
+				{blockType: BlockType.COMMAND, opcode: 'setCar', text: '[ARG1] at speed [ARG2] duration [ARG3]', arguments: {
 				    ARG1: { type: ArgumentType.STRING, defaultValue:'1', menu: 'direction' },
 				    ARG2: { type: ArgumentType.NUMBER, defaultValue:100 },
+				    ARG3: { type: ArgumentType.NUMBER, defaultValue:0 },
 				}},
 
 				{blockType: BlockType.COMMAND, opcode: 'stopCar', text: 'stop', arguments: {
@@ -98,16 +99,16 @@ var ext = class {
 		const srvMin = 103;		// 0.5ms/20ms*4096 = 102.4 (-90c)
 		const srvMax = 491;		// 2.4ms/20ms*4096 = 491.5 (+90c)
 		let level = (angle * (srvMax - srvMin)) / 180 + srvMin;
-		return this.runtime.dev.comlib.setPwms([{port:port,level:level}]);
+		return this.runtime.dev.comlib.setPwms([{port:port,level:level}], 0/*duration*/, 0/*mode*/);
 	}
 
 	setServo360(args) {
 		let port = args.ARG1*1;
 		let speed = args.ARG2*1;	// -100~100
-		return this._setServo360([{port:port, level:speed}]);
+		return this._setServo360([{port:port, level:speed}], 0);
 	}
 
-	_setServo360(portLevels) {
+	_setServo360(portLevels, duration) {
 		let i = 0;
 		for(i = 0; i < portLevels.length; i++) {
 			speed = Math.min(100, Math.max(-100, portLevels[i].level));
@@ -119,12 +120,13 @@ var ext = class {
 			}
 			portLevels[i].level = level;
 		}
-		return this.runtime.dev.comlib.setPwms(portLevels);
+		return this.runtime.dev.comlib.setPwms(portLevels, duration, 1/*mode*/);
 	}
 
 	setCar(args) {
 		let dir = args.ARG1*1;
 		let speed = args.ARG2*1;
+		let duration = args.ARG3*1;
 		const dir_table = [
 			{L: 0, R: 0},  // 0:STOP
 			{L: 1, R:-1},  // 1:FORWARD
@@ -140,11 +142,11 @@ var ext = class {
 			{port:this.portL, level:speed*dir_table[dir].L},
 			{port:this.portR, level:speed*dir_table[dir].R},
 		];
-		return this._setServo360(portLevels);
+		return this._setServo360(portLevels, duration);
 	}
 
 	stopCar(args) {
-		return this._setServo360([{port:this.portL, level:0}, {port:this.portR, level:0}]);
+		return this._setServo360([{port:this.portL, level:0}, {port:this.portR, level:0}], 0);
 	}
 
 	enumDirection(args, util, blockInfo) { return args.ARG1; }
