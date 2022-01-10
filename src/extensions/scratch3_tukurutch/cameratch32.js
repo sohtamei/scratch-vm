@@ -96,11 +96,14 @@ var ext = class {
     ARG1: { type: ArgumentType.NUMBER, type2:'S', defaultValue:10000 },
 }},
 
+{blockType: BlockType.COMMAND, opcode: 'setColorWipe', text: 'LED [ARG1]', arguments: {
+    ARG1: { type: ArgumentType.STRING, type2:'B', defaultValue:'1', menu: 'color' },
+}},
+
 {blockType: BlockType.REPORTER, opcode: 'enumDirection', text: '[ARG1] .', arguments: {
     ARG1: { type: ArgumentType.STRING, type2:'B', defaultValue:'1', menu: 'direction' },
 }},
 
-'---',
 		];
 		return this._blocks;
 	}
@@ -119,6 +122,16 @@ ifType: { acceptReporters: true, items: [
 videoState: { acceptReporters: true, items: ['off','on','on_flipped']},
 
 flashList: { acceptReporters: true, items: this.flashItems },
+
+color: { acceptReporters: true, items: [
+{ text: 'off', value: '0' },
+{ text: 'red', value: '1' },
+{ text: 'green', value: '2' },
+{ text: 'blue', value: '3' },
+{ text: 'yellow', value: '4' },
+{ text: 'purple', value: '5' },
+{ text: 'lightblue', value: '6' },
+]},
 
 direction: { acceptReporters: true, items: [
 { text: 'stop', value: '0' },
@@ -148,6 +161,7 @@ setCar(args,util) { return this.sendRecv('setCar', args); }
 setMotor(args,util) { return this.sendRecv('setMotor', args); }
 stopCar(args,util) { return this.sendRecv('stopCar', args); }
 setPwmFreq(args,util) { return this.sendRecv('setPwmFreq', args); }
+setColorWipe(args,util) { return this.sendRecv('setColorWipe', args); }
 enumDirection(args) { return args.ARG1; }
 
 	burnFlash(args) {
