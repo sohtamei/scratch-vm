@@ -33,6 +33,7 @@ class Scratch3Blocks {
 
 		this._targetRGB = [{r:0, g:0, b:0},{r:0, g:0, b:0},{r:0, g:0, b:0}];
 		this._tolerance = [100,100,100];
+		this._targetHsv = {h:0, s:0, v:0};
 
 		this._isDetected = false;
 		this._whenDetected = false;
@@ -70,6 +71,16 @@ class Scratch3Blocks {
 			arguments: {
 				ARG1: {type:ArgumentType.COLOR, defaultValue:'#ff0000'},
 				ARG2: {type:ArgumentType.NUMBER, defaultValue:50 },
+			}},
+
+			{blockType: BlockType.COMMAND, opcode: 'startDetection2', text: [
+					'Start detection color[ARG1] hue-delta[ARG2] saturation-min[ARG3] brightness-min[ARG4]',
+					'検出開始 色[ARG1] 色相誤差[ARG2] 彩度min[ARG3] 明度min[ARG4]'][this._locale],
+			arguments: {
+				ARG1: {type:ArgumentType.COLOR, defaultValue:'#ff0000'},
+				ARG2: {type:ArgumentType.NUMBER, defaultValue:5 },
+				ARG3: {type:ArgumentType.NUMBER, defaultValue:30 },
+				ARG4: {type:ArgumentType.NUMBER, defaultValue:50 },
 			}},
 
 			{blockType: BlockType.COMMAND, opcode: 'stopDetection', text: ['Stop Detection', '検出停止'][this._locale] },
@@ -126,7 +137,7 @@ class Scratch3Blocks {
 
 		const _this = this;
 
-		if(!this.tracker) this.stopDetection(null);
+		if(this.tracker) this.stopDetection(null);
 
 		this.runtime.ioDevices.video.enableVideo();
 		this.runtime.ioDevices.video.mirror = true;
@@ -152,7 +163,7 @@ class Scratch3Blocks {
 
 		const _this = this;
 
-		if(!this.tracker) this.stopDetection(null);
+		if(this.tracker) this.stopDetection(null);
 
 		this.runtime.ioDevices.video.enableVideo();
 		this.runtime.ioDevices.video.mirror = true;
@@ -170,6 +181,50 @@ class Scratch3Blocks {
 		})
 	}
 
+	_checkDistance(index, r, g, b) {
+		const distance =  ((this._targetRGB[index].r - r) ** 2)
+						+ ((this._targetRGB[index].g - g) ** 2)
+						+ ((this._targetRGB[index].b - b) ** 2);
+		return distance < (this._tolerance[index] ** 2);
+	}
+
+	startDetection2(args, util) {
+		const hsv = this.rgb2hsv(Cast.toRgbColorObject(args.ARG1));
+		this._targetHsv = {h:hsv.h, s:args.ARG3*1, v:args.ARG4*1};
+		this._tolerance[0] = args.ARG2*1;
+
+		const _this = this;
+
+		if(this.tracker) this.stopDetection(null);
+
+		this.runtime.ioDevices.video.enableVideo();
+		this.runtime.ioDevices.video.mirror = true;
+		return new Promise(resolve => setTimeout(resolve, 1000))
+		.then(() => {
+
+			window.tracking.ColorTracker.registerColor('color1', function (r, g, b) {return _this._checkDistance2(r, g, b);});
+			_this.tracker = new window.tracking.ColorTracker(['color1']);
+			_this.tracker.minDimension = 5;
+			window.tracking.track(_this.runtime.ioDevices.video.element, _this.tracker);
+
+			_this.tracker.on('track', _this._detected.bind(_this));
+		})
+	}
+
+	_checkDistance2(r, g, b) {
+		let rgb = {r:r, g:g, b:b};
+		const hsv = this.rgb2hsv(rgb);
+		if(hsv.s < this._targetHsv.s) return false;
+		if(hsv.v < this._targetHsv.v) return false;
+
+		let hue = hsv.h - this._targetHsv.h;
+		if(hue < -180) hue += 360;
+		if(hue >  180) hue -= 360;
+		if(Math.abs(hue) > this._tolerance[0]) return false;
+//console.log(rgb.r + " " + rgb.g + " " + rgb.b + " " + Math.round(hsv.h) + " " + Math.round(this._targetHsv.h) + " " + Math.round(hue));
+		return true;
+	}
+
 	stopDetection(args) {
 		if(!this.tracker) return;
 		this._clearArea();
@@ -177,11 +232,35 @@ class Scratch3Blocks {
 		delete this.tracker;
 	}
 
-	_checkDistance(index, r, g, b) {
-		const distance =  ((this._targetRGB[index].r - r) ** 2)
-						+ ((this._targetRGB[index].g - g) ** 2)
-						+ ((this._targetRGB[index].b - b) ** 2);
-		return distance < (this._tolerance[index] ** 2);
+	rgb2hsv(rgb) {
+		let hsv = {h:0.0, s:0.0, v:0.0};
+		let Max = 0;
+		let Min = 0;
+		
+		if(rgb.r >= rgb.g) {
+			Max = (rgb.r >= rgb.b) ? rgb.r: rgb.b;
+			Min = (rgb.g <  rgb.b) ? rgb.g: rgb.b;
+		} else {
+			Max = (rgb.b >= rgb.g) ? rgb.b: rgb.g;
+			Min = (rgb.r <  rgb.b) ? rgb.r: rgb.b;
+		}
+		
+		if(Max != Min) {
+			if(Max == rgb.r) {
+				hsv.h = ((rgb.g - rgb.b) * 60.0 / (Max - Min));
+			} else if (Max == rgb.g) {
+				hsv.h = ((rgb.b - rgb.r) * 60.0 / (Max - Min)) + 120;
+			} else {
+				hsv.h = ((rgb.r - rgb.g) * 60.0 / (Max - Min)) + 240;
+			}
+			hsv.s = (Max - Min) * 100.0 / Max;
+		} else {
+			hsv.h = 0;
+			hsv.s = 0;
+		}
+		hsv.v = Max * 100.0 / 255.0;
+		hsv.h = hsv.h * 100.0 / 360.0;
+		return hsv;
 	}
 
 	_detected(event) {
@@ -221,6 +300,10 @@ class Scratch3Blocks {
 				;
 			} else {
 			//	console.log(this.areaX[0], ',', this.areaX[1], ',', x, ',', this.areaY[0], ',', this.areaY[1], ',', y);
+				const xs = [240 - rect.x, 240 - (rect.x + rect.width)];
+				const ys = [180 - rect.y, 180 - (rect.y + rect.height)];
+				this.drawRect(xs, ys, colorGreen);
+
 				if(maxSize < rect.width+rect.height) {
 					maxSize = rect.width+rect.height;
 					maxIdx = i;

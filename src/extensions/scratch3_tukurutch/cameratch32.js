@@ -100,6 +100,15 @@ var ext = class {
     ARG1: { type: ArgumentType.STRING, type2:'B', defaultValue:'1', menu: 'color' },
 }},
 
+{blockType: BlockType.COMMAND, opcode: 'setServo', text: 'set servo [ARG1] [ARG2]', arguments: {
+    ARG1: { type: ArgumentType.NUMBER, type2:'B', defaultValue:0 },
+    ARG2: { type: ArgumentType.NUMBER, type2:'B', defaultValue:90 },
+}},
+
+{blockType: BlockType.COMMAND, opcode: 'stopServo', text: 'stop servo [ARG1]', arguments: {
+    ARG1: { type: ArgumentType.NUMBER, type2:'B', defaultValue:0 },
+}},
+
 {blockType: BlockType.REPORTER, opcode: 'enumDirection', text: '[ARG1] .', arguments: {
     ARG1: { type: ArgumentType.STRING, type2:'B', defaultValue:'1', menu: 'direction' },
 }},
@@ -162,6 +171,8 @@ setMotor(args,util) { return this.sendRecv('setMotor', args); }
 stopCar(args,util) { return this.sendRecv('stopCar', args); }
 setPwmFreq(args,util) { return this.sendRecv('setPwmFreq', args); }
 setColorWipe(args,util) { return this.sendRecv('setColorWipe', args); }
+setServo(args,util) { return this.sendRecv('setServo', args); }
+stopServo(args,util) { return this.sendRecv('stopServo', args); }
 enumDirection(args) { return args.ARG1; }
 
 	burnFlash(args) {
