@@ -24,6 +24,7 @@ const builtinExtensions = {
     GroveBeginnerKit: () => require('../extensions/scratch3_tukurutch/GroveBeginnerKit.js'),
     cameratch32: () => require('../extensions/scratch3_tukurutch/cameratch32.js'),
     QuadCrawlerAI: () => require('../extensions/scratch3_tukurutch/QuadCrawlerAI.js'),
+    RemoconRobo: () => require('../extensions/scratch3_tukurutch/RemoconRobo_.js'),
 
     uiParts: () => require('../extensions/scratch3_devices/uiParts.js'),
     genericIO: () => require('../extensions/scratch3_devices/genericIO.js'),

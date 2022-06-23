@@ -644,6 +644,7 @@ class comlib {
 			case 5: tmp = tmp2.getFloat64(4, true); break;
 			case 6: tmp = String.fromCharCode.apply(null, buf.slice(4)); break;
 			case 7: tmp = buf.slice(5,5+buf[4]); break;
+			case 0x80: tmp = buf.slice(4); break;	// remote
 			}
 			return tmp;
 		}
