@@ -34,7 +34,7 @@ var ext = class {
 
 		return {
 			id: extName,
-			name: extName,
+			name: ['RemoconRobo','リモコンロボ'][this._locale],
 			//blockIconURI: IconURI,
 			menuIconURI: IconURI,
 			showStatusButton: true,
@@ -70,10 +70,10 @@ var ext = class {
 {blockType: BlockType.COMMAND, opcode: 'connectWifi', text: ['connect','接続'][this._locale]+' ssid[ARG1] pass[ARG2]', arguments: {
 	ARG1: { type: ArgumentType.STRING, defaultValue: ' ' },
 	ARG2: { type: ArgumentType.STRING, defaultValue: ' ' },
-}},
+}, hideFromPalette:true },
 
 {blockType: BlockType.REPORTER, opcode: 'statusWifi', text: ['WiFi status','WiFi接続状態'][this._locale], disableMonitor:true, arguments: {
-}},
+}, hideFromPalette:true },
 
 '---',
 
