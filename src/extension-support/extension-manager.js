@@ -25,6 +25,7 @@ const builtinExtensions = {
     cameratch32: () => require('../extensions/scratch3_tukurutch/cameratch32.js'),
     QuadCrawlerAI: () => require('../extensions/scratch3_tukurutch/QuadCrawlerAI.js'),
     RemoconRobo: () => require('../extensions/scratch3_tukurutch/RemoconRobo_.js'),
+    QuadCrawler: () => require('../extensions/scratch3_tukurutch/QuadCrawler_.js'),
 
     uiParts: () => require('../extensions/scratch3_devices/uiParts.js'),
     genericIO: () => require('../extensions/scratch3_devices/genericIO.js'),
