@@ -95,6 +95,10 @@ class Scratch3Blocks {
 					ARG3: { type: ArgumentType.NUMBER, defaultValue: 3 },
 				}},
 
+				{blockType: BlockType.COMMAND, opcode: 'plot1v', text: ['voltage ch','電圧 チャンネル'][this._locale]+'[ARG1]', arguments: {
+					ARG1: { type: ArgumentType.NUMBER, defaultValue: 1 },
+				}},
+
 				'---',
 
 				{blockType: BlockType.HAT, opcode:'whenKeyPressed', text: formatMessage({id: 'makeymakey.whenKeyPressed', default: 'when [KEY] key pressed'}),  arguments: {
@@ -224,6 +228,10 @@ class Scratch3Blocks {
 	plot1(args, util) { return this.plot(args, util, 1); }
 	plot2(args, util) { return this.plot(args, util, 2); }
 	plot3(args, util) { return this.plot(args, util, 3); }
+	plot1v(args, util) { 
+		args.ARG1 = parseInt(args.ARG1,10) * (360/5000) - 180;
+		return this.plot(args, util, 1);
+	}
 
 	plot(args, util, num) {
 		let y = [0,0,0];

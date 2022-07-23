@@ -86,7 +86,7 @@ var ext = class {
 
 {blockType: BlockType.COMMAND, opcode: 'BuzzerJ2', text: [
     'play tone on note [ARG1] beat [ARG2]',
-    '[ARG1] を [ARG2] 鳴らす',
+    '[ARG1] を [ARG2] ならす',
 ][this._locale], arguments: {
     ARG1: { type: ArgumentType.STRING, type2:'S', defaultValue:'262', menu: 'noteJ2' },
     ARG2: { type: ArgumentType.STRING, type2:'S', defaultValue:'500', menu: 'beats' },
@@ -98,7 +98,7 @@ var ext = class {
 ][this._locale], arguments: {
     ARG1: { type: ArgumentType.NUMBER, type2:'B', defaultValue:0 },
     ARG2: { type: ArgumentType.NUMBER, type2:'S', defaultValue:1 },
-    ARG3: { type: ArgumentType.STRING, type2:'B', defaultValue:'0', menu: 'onoff' },
+    ARG3: { type: ArgumentType.STRING, type2:'B', defaultValue:'1', menu: 'onoff' },
 }},
 
 {blockType: BlockType.COMMAND, opcode: 'setRobot', text: [
