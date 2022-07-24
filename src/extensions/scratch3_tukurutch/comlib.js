@@ -995,14 +995,9 @@ class comlib {
 			let i = 0;
 			loop();
 			function loop(){
-				// DTR=1 -> 0- > 1
-				return      _this.uart.setSignals({ dataTerminalReady: false})
-				.then(() => new Promise(resolve => setTimeout(resolve, 110)))
-				.then(() => _this.uart.setSignals({ dataTerminalReady: true}))
-				.then(() => new Promise(resolve => setTimeout(resolve, 100)))
-				.then(() => _this.uart.setSignals({ dataTerminalReady: false}))
-				.then(() => new Promise(resolve => setTimeout(resolve, 100)))
-
+				// DTR=1
+				return      _this.uart.setSignals({ dataTerminalReady: true})
+				.then(() => new Promise(resolve => setTimeout(resolve, 580)))
 				.then(() => _this._SendRecvAvrBurn([0x30], 0))	// SYNC
 				.then(() => {
 					resolve1();
