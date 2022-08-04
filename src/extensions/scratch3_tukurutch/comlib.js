@@ -680,7 +680,8 @@ class comlib {
 			const _this = this;
 			console.log('disconnected');
 			this.closeReq = true;
-			return this.uart.close()
+			return _this.uart.setSignals({ dataTerminalReady: false })
+			.then(() => _this.uart.close())
 			.then(() => {
 				_this.closeReq = false;
 				_this.uart = null;
