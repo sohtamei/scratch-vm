@@ -5,6 +5,7 @@ const IconURI = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFAAAABQCAYAAACOE
 //*
 const ArgumentType = require('../../extension-support/argument-type');
 const BlockType = require('../../extension-support/block-type');
+const Base64Util = require('../../util/base64-util');
 const formatMessage = require('format-message');
 const comlib = require('./comlib.js');
 class Scratch3Blocks {
@@ -197,6 +198,18 @@ var ext = class {
 }},
 */
 
+{blockType: BlockType.REPORTER, opcode: 'enumNote', text: '[ARG1] .', arguments: {
+    ARG1: { type: ArgumentType.STRING, type2:'B', defaultValue:'262', menu: 'noteJ2' },
+}},
+
+{blockType: BlockType.REPORTER, opcode: 'enumIrcode', text: '[ARG1] .', arguments: {
+    ARG1: { type: ArgumentType.STRING, type2:'B', defaultValue:'69', menu: 'ircode' },
+}},
+
+{blockType: BlockType.REPORTER, opcode: 'enumDirection', text: '[ARG1] .', arguments: {
+    ARG1: { type: ArgumentType.STRING, type2:'B', defaultValue:'0', menu: 'direction' },
+}},
+
 {blockType: BlockType.BOOLEAN, opcode: 'checkRemoteKey', text: [
 	'remote pressed',
 	'リモコンボタンが押された'
@@ -227,18 +240,6 @@ var ext = class {
 	'get remote Y',
 	'アナログYの値'
 ][this._locale], arguments: {
-}},
-
-{blockType: BlockType.REPORTER, opcode: 'enumNote', text: '[ARG1] .', arguments: {
-    ARG1: { type: ArgumentType.STRING, type2:'B', defaultValue:'262', menu: 'noteJ2' },
-}},
-
-{blockType: BlockType.REPORTER, opcode: 'enumIrcode', text: '[ARG1] .', arguments: {
-    ARG1: { type: ArgumentType.STRING, type2:'B', defaultValue:'69', menu: 'ircode' },
-}},
-
-{blockType: BlockType.REPORTER, opcode: 'enumDirection', text: '[ARG1] .', arguments: {
-    ARG1: { type: ArgumentType.STRING, type2:'B', defaultValue:'0', menu: 'direction' },
 }},
 
 		];
@@ -409,6 +410,35 @@ enumNote(args) { return args.ARG1; }
 enumIrcode(args) { return args.ARG1; }
 enumDirection(args) { return args.ARG1; }
 
+	checkRemoteKey(args) {
+		let ret = this.comlib.sendRecv(0x80, {}, {});
+		if(!(ret instanceof Promise)) return ret;
+
+		const _this = this;
+		return ret.then(data => {
+			let tmp2 = new DataView(data.buffer);
+			_this.remoteKey = tmp2.getUint8(0);
+			_this.remoteX = tmp2.getInt16(1, true);
+			_this.remoteY = tmp2.getInt16(3, true);
+		//	console.log(_this.remoteKey, _this.remoteX, _this.remoteY);
+			return _this.remoteKey;
+		});
+	}
+	isRemoteKey(args) {
+		return (this.remoteKey==Number(args.ARG1));
+	}
+	isARemoteKey(args) {
+		return (this.remoteKey==Number(args.ARG1));
+	}
+
+	getRemoteX(args) {
+		return this.remoteX;
+	}
+
+	getRemoteY(args) {
+		return this.remoteY;
+	}
+
 	burnFlash(args) {
 		if(this.comlib.server=='http') return ['please access via https://','https:// でアクセスして下さい'][this._locale];
 
@@ -444,36 +474,6 @@ enumDirection(args) { return args.ARG1; }
 		}
 		return 0;
 	}
-
-	checkRemoteKey(args) {
-		let ret = this.comlib.sendRecv(0x80, {}, {});
-		if(!(ret instanceof Promise)) return ret;
-
-		const _this = this;
-		return ret.then(data => {
-			let tmp2 = new DataView(data.buffer);
-			_this.remoteKey = tmp2.getUint8(0);
-			_this.remoteX = tmp2.getInt16(1, true);
-			_this.remoteY = tmp2.getInt16(3, true);
-		//	console.log(_this.remoteKey, _this.remoteX, _this.remoteY);
-			return _this.remoteKey;
-		});
-	}
-	isRemoteKey(args) {
-		return (this.remoteKey==Number(args.ARG1));
-	}
-	isARemoteKey(args) {
-		return (this.remoteKey==Number(args.ARG1));
-	}
-
-	getRemoteX(args) {
-		return this.remoteX;
-	}
-
-	getRemoteY(args) {
-		return this.remoteY;
-	}
-
 }
 //*
 module.exports = Scratch3Blocks;

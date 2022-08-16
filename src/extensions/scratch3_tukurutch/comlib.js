@@ -432,44 +432,60 @@ class comlib {
 	sendRecv(cmd, argsDef, args) {
 		this.statusMessage.innerText = '';
 
-		let data = new Uint8Array(256);
+		let data = new Uint8Array(65536);
 		let dv = new DataView(data.buffer);
-
-		data.set([0xff,0x55,0x00,cmd],0);
-		let ofs = 4;
-
-		for(let i = 1; ; i++) {
-			eval("var param = args.ARG"+i);
-			eval("var def = argsDef.ARG"+i);
-		//	console.log(i,param, def);
-			if(typeof param === 'undefined') break;
-			switch(def.type2) {
-			case 'B': dv.setUint8(ofs,param);        ofs+=1; break;
-			case 'S': dv.setInt16(ofs,param, true);  ofs+=2; break;
-			case 'L': dv.setInt32(ofs,param, true);  ofs+=4; break;
-			case 'F': dv.setFloat32(ofs,param, true);ofs+=4; break;
-			case 'D': dv.setFloat64(ofs,param,true); ofs+=8; break;
-
-			case 's':
-				let j = 0;
-				if(param !== 'undefined') {
-					let charList = param.split('');
-					for(j = 0; j < charList.length; j++)
-						data[ofs+j] = charList[j].charCodeAt(0);
-				}
-				data[ofs+j] = 0;
-				ofs += j+1;
-				break;
-
-			case 'b':
-				if(typeof param !== 'object') break;
-				data[ofs+0] = param.length;
-				data.set(param, ofs+1);
-				ofs += param.length+1;
-				break;
+		let ofs = 0;
+		if(typeof argsDef.ARG1 !== 'undefined' && argsDef.ARG1.type2 == 'b2') {
+			let param;
+			if(typeof args.ARG1 === 'object') {
+				param = args.ARG1;
+			} else if(typeof args.ARG1 === 'string') {
+				param = new Uint8Array(args.ARG1.length/2);
+				for(let i = 0; i < args.ARG1.length/2; i++)
+					param[i] = parseInt(args.ARG1.slice(i*2,i*2+2),16);
 			}
+			data.set([0xff,0x54], 0);
+			dv.setInt16(2, param.length+1, true);
+			data[4] = cmd;
+			data.set(param, 5);
+			ofs = 5 + param.length;
+		} else {
+			data.set([0xff,0x55,0x00,cmd],0);
+			ofs = 4;
+
+			for(let i = 1; ; i++) {
+				eval("var param = args.ARG"+i);
+				eval("var def = argsDef.ARG"+i);
+			//	console.log(i,param, def);
+				if(typeof param === 'undefined') break;
+				switch(def.type2) {
+				case 'B': dv.setUint8(ofs,param);        ofs+=1; break;
+				case 'S': dv.setInt16(ofs,param, true);  ofs+=2; break;
+				case 'L': dv.setInt32(ofs,param, true);  ofs+=4; break;
+				case 'F': dv.setFloat32(ofs,param, true);ofs+=4; break;
+				case 'D': dv.setFloat64(ofs,param,true); ofs+=8; break;
+
+				case 's':
+					let j = 0;
+					if(param !== 'undefined') {
+						let charList = param.split('');
+						for(j = 0; j < charList.length; j++)
+							data[ofs+j] = charList[j].charCodeAt(0);
+					}
+					data[ofs+j] = 0;
+					ofs += j+1;
+					break;
+
+				case 'b':
+					if(typeof param !== 'object') break;
+					data[ofs+0] = param.length;
+					data.set(param, ofs+1);
+					ofs += param.length+1;
+					break;
+				}
+			}
+			data[2] = ofs-3;
 		}
-		data[2] = ofs-3;
 		data = data.slice(0,ofs);
 		if(this.cueue.length >= 5) return 'error';
 
@@ -491,7 +507,8 @@ class comlib {
 		_this.busy = true;
 
 		const {resolve, data} = _this.cueue.shift();
-		console.log('W:'+_this._dumpBuf(data));	// debug
+		if(data.length < 256)
+			console.log('W:'+_this._dumpBuf(data));	// debug
 		switch(_this.ifType) {
 		case 'UART':
 		case 'BLE':

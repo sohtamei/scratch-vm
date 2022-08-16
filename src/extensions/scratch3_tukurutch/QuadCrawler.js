@@ -5,6 +5,7 @@ const IconURI = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFAAAABQCAYAAACOE
 //*
 const ArgumentType = require('../../extension-support/argument-type');
 const BlockType = require('../../extension-support/block-type');
+const Base64Util = require('../../util/base64-util');
 const formatMessage = require('format-message');
 const comlib = require('./comlib.js');
 class Scratch3Blocks {
@@ -14,6 +15,7 @@ var ext = class {
 */
 	constructor (runtime) {
 		runtime.dev = this;
+
 		this.remoteKey = 0;
 		this.remoteX = 0;
 		this.remoteY = 0;
@@ -48,17 +50,11 @@ var ext = class {
 {name:'QuadCrawler', type:'atmega328', baudrate:115200},
 		];
 
-		this.blockOffset = 6;
-
 		this._blocks = [
 {blockType: BlockType.COMMAND, opcode: 'setConfig', text: ['con/discon','接続/切断'][this._locale] + '[ARG1] IP=[ARG2]', arguments: {
 	ARG1: { type: ArgumentType.STRING, defaultValue: this.comlib.ifType, menu: 'ifType' },
 	ARG2: { type: ArgumentType.STRING, defaultValue: this.comlib.ipadrs},
 }},
-
-{blockType: BlockType.COMMAND, opcode: 'videoToggle', text: 'turn video [ARG1]', arguments: {
-	ARG1: { type: ArgumentType.STRING, defaultValue: 'on', menu: 'videoState' },
-}, hideFromPalette: (SupportCamera==false)},
 
 {blockType: BlockType.COMMAND, opcode: 'burnFlash', text: [
     'burn [ARG1]',
@@ -66,15 +62,19 @@ var ext = class {
 ][this._locale], arguments: {
 	ARG1: { type: ArgumentType.STRING, defaultValue:'0', menu: 'flashList' },
 }},
+/*ESP32*
+{blockType: BlockType.COMMAND, opcode: 'videoToggle', text: 'turn video [ARG1]', arguments: {
+	ARG1: { type: ArgumentType.STRING, defaultValue: 'on', menu: 'videoState' },
+}, hideFromPalette: (SupportCamera==false)},
 
 {blockType: BlockType.COMMAND, opcode: 'connectWifi', text: ['connect','接続'][this._locale]+' ssid[ARG1] pass[ARG2]', arguments: {
 	ARG1: { type: ArgumentType.STRING, defaultValue: ' ' },
 	ARG2: { type: ArgumentType.STRING, defaultValue: ' ' },
-}, hideFromPalette:true },
+}},
 
 {blockType: BlockType.REPORTER, opcode: 'statusWifi', text: ['WiFi status','WiFi接続状態'][this._locale], disableMonitor:true, arguments: {
-}, hideFromPalette:true },
-
+}},
+*ESP32*/
 '---',
 
 {blockType: BlockType.COMMAND, opcode: 'setWalk', text: [
@@ -181,6 +181,23 @@ var ext = class {
     ARG1: { type: ArgumentType.STRING, type2:'B', defaultValue:'1', menu: 'onoff' },
 }},
 
+{blockType: BlockType.REPORTER, opcode: 'enumIrcode', text: '[ARG1] .', arguments: {
+    ARG1: { type: ArgumentType.STRING, type2:'B', defaultValue:'69', menu: 'ircode' },
+}},
+
+{blockType: BlockType.REPORTER, opcode: 'enumIrcodeA', text: '[ARG1] .', arguments: {
+    ARG1: { type: ArgumentType.STRING, type2:'B', defaultValue:'113', menu: 'ircodeA' },
+}},
+
+{blockType: BlockType.REPORTER, opcode: 'enumColor', text: '[ARG1] .', arguments: {
+    ARG1: { type: ArgumentType.STRING, type2:'B', defaultValue:'1', menu: 'color' },
+}},
+
+{blockType: BlockType.REPORTER, opcode: 'enumWalkcmd', text: '[ARG1] .', arguments: {
+    ARG1: { type: ArgumentType.STRING, type2:'B', defaultValue:'1', menu: 'walkcmd' },
+}},
+
+
 {blockType: BlockType.BOOLEAN, opcode: 'checkRemoteKey', text: [
 	'remote pressed',
 	'リモコンボタンが押された'
@@ -212,24 +229,14 @@ var ext = class {
 	'アナログYの値'
 ][this._locale], arguments: {
 }},
-
-{blockType: BlockType.REPORTER, opcode: 'enumIrcode', text: '[ARG1] .', arguments: {
-    ARG1: { type: ArgumentType.STRING, type2:'B', defaultValue:'69', menu: 'ircode' },
-}},
-
-{blockType: BlockType.REPORTER, opcode: 'enumIrcodeA', text: '[ARG1] .', arguments: {
-    ARG1: { type: ArgumentType.STRING, type2:'B', defaultValue:'113', menu: 'ircodeA' },
-}},
-
-{blockType: BlockType.REPORTER, opcode: 'enumColor', text: '[ARG1] .', arguments: {
-    ARG1: { type: ArgumentType.STRING, type2:'B', defaultValue:'1', menu: 'color' },
-}},
-
-{blockType: BlockType.REPORTER, opcode: 'enumWalkcmd', text: '[ARG1] .', arguments: {
-    ARG1: { type: ArgumentType.STRING, type2:'B', defaultValue:'1', menu: 'walkcmd' },
-}},
-
 		];
+		this.blockOffset = 6;
+		for(let i = 0; i < this._blocks.length; i++) {
+			if(this._blocks[i] == '---') {
+				this.blockOffset = i+1;
+				break;
+			}
+		}
 		return this._blocks;
 	}
 
@@ -384,6 +391,35 @@ enumIrcodeA(args) { return args.ARG1; }
 enumColor(args) { return args.ARG1; }
 enumWalkcmd(args) { return args.ARG1; }
 
+	checkRemoteKey(args) {
+		let ret = this.comlib.sendRecv(0x80, {}, {});
+		if(!(ret instanceof Promise)) return ret;
+
+		const _this = this;
+		return ret.then(data => {
+			let tmp2 = new DataView(data.buffer);
+			_this.remoteKey = tmp2.getUint8(0);
+			_this.remoteX = tmp2.getInt16(1, true);
+			_this.remoteY = tmp2.getInt16(3, true);
+		//	console.log(_this.remoteKey, _this.remoteX, _this.remoteY);
+			return _this.remoteKey;
+		});
+	}
+	isRemoteKey(args) {
+		return (this.remoteKey==Number(args.ARG1));
+	}
+	isARemoteKey(args) {
+		return (this.remoteKey==Number(args.ARG1));
+	}
+
+	getRemoteX(args) {
+		return this.remoteX;
+	}
+
+	getRemoteY(args) {
+		return this.remoteY;
+	}
+
 	burnFlash(args) {
 		if(this.comlib.server=='http') return ['please access via https://','https:// でアクセスして下さい'][this._locale];
 
@@ -418,36 +454,6 @@ enumWalkcmd(args) { return args.ARG1; }
 			}
 		}
 		return 0;
-	}
-
-	checkRemoteKey(args) {
-		let ret = this.comlib.sendRecv(0x80, {}, {});
-		if(!(ret instanceof Promise)) return ret;
-
-		const _this = this;
-		return ret.then(data => {
-			let tmp2 = new DataView(data.buffer);
-			_this.remoteKey = tmp2.getUint8(0);
-			_this.remoteX = tmp2.getInt16(1, true);
-			_this.remoteY = tmp2.getInt16(3, true);
-		//	console.log(_this.remoteKey, _this.remoteX, _this.remoteY);
-			return _this.remoteKey;
-		});
-	}
-
-	isRemoteKey(args) {
-		return (this.remoteKey==Number(args.ARG1));
-	}
-	isARemoteKey(args) {
-		return (this.remoteKey==Number(args.ARG1));
-	}
-
-	getRemoteX(args) {
-		return this.remoteX;
-	}
-
-	getRemoteY(args) {
-		return this.remoteY;
 	}
 }
 //*
