@@ -137,6 +137,15 @@ var ext = class {
 
 {blockType: BlockType.COMMAND, opcode: 'drawStage', text: 'draw stage', arguments: {
 }},
+
+{blockType: BlockType.COMMAND, opcode: 'drawStage2', text: 'draw stage x[ARG1] y[ARG2] w[ARG3] h[ARG4] lcd[ARG5],[ARG6]', arguments: {
+    ARG1: { type: ArgumentType.NUMBER, defaultValue:-240 },
+    ARG2: { type: ArgumentType.NUMBER, defaultValue:180 },
+    ARG3: { type: ArgumentType.NUMBER, defaultValue:480 },
+    ARG4: { type: ArgumentType.NUMBER, defaultValue:360 },
+    ARG5: { type: ArgumentType.NUMBER, defaultValue:320 },
+    ARG6: { type: ArgumentType.NUMBER, defaultValue:240 },
+}},
 		];
 		this.blockOffset = 6;
 		for(let i = 0; i < this._blocks.length; i++) {
@@ -290,34 +299,20 @@ fillScreen(args,util) { return this.sendRecv('fillScreen', args); }
 drawJpg(args,util) { return this.sendRecv('drawJpg', args); }
 
 	drawStage(args,util) {
-		// 480x360(scratch) - 510x382(canvas) - M5Stack(320x240)
-		const TARGET_WIDTH = 320;
-		const TARGET_HEIGHT = 240;
-
-		const _renderer = this.comlib._runtime.renderer;
-		const org_width = _renderer.canvas.width;
-		const org_height = _renderer.canvas.height;
-		_renderer.canvas.width = TARGET_WIDTH;
-		_renderer.canvas.height = TARGET_HEIGHT;
-		_renderer.draw();
-	//	console.log(_renderer.canvas);
-		const tmpData = _renderer.canvas.toDataURL('image/jpeg', 0.5 /*quality*/);
-	//	console.log(tmpData);
-		args.ARG1 = Base64Util.base64ToUint8Array(tmpData.replace('data:image/jpeg;base64,', ''));
+		const tmpData = this.comlib._runtime.renderer.drawWithMask(util.sequencer.runtime.ioDevices.video._skinId);
+		args.ARG1 = Base64Util.base64ToUint8Array(tmpData);
 		console.log('size='+args.ARG1.length);
-		_renderer.canvas.width = org_width;
-		_renderer.canvas.height = org_height;
-/*
-		const tmpCanvas = document.createElement('canvas');
-		tmpCanvas.width = colorInfo.width;
-		tmpCanvas.height = colorInfo.height;
-		const tmpCtx = tmpCanvas.getContext('2d');
-		const imageData = tmpCtx.createImageData(colorInfo.width, colorInfo.height);
-		imageData.data.set(colorInfo.data);
-		tmpCtx.putImageData(imageData, 0, 0);
-		console.log(tmp);
-*/
+
 		return this.sendRecv('drawJpg', args);
+	}
+
+	drawStage2(args,util) {
+		const tmpData = this.comlib._runtime.renderer.drawWithMask(util.sequencer.runtime.ioDevices.video._skinId,
+						Number(args.ARG1),Number(args.ARG2),Number(args.ARG3),Number(args.ARG4),Number(args.ARG5),Number(args.ARG6));
+		const args2 = {ARG1:Base64Util.base64ToUint8Array(tmpData)}
+		console.log('size='+args2.ARG1.length);
+
+		return this.sendRecv('drawJpg', args2);
 	}
 
 	burnFlash(args) {
