@@ -242,6 +242,18 @@ class Scratch3Facemesh2ScratchBlocks {
                     text: Message.peopleCount[this._locale]
                 },
                 {
+                    opcode: 'getDirection',
+                    blockType: BlockType.REPORTER,
+                    text: 'direction [ARG1]',
+                    arguments: {
+                        ARG1: {
+                            type: ArgumentType.STRING,
+                            menu: 'directionMenu',
+                            defaultValue: 'LR'
+                        },
+                    }
+                },
+                {
                     opcode: 'videoToggle',
                     blockType: BlockType.COMMAND,
                     text: Message.videoToggle[this._locale],
@@ -298,7 +310,15 @@ class Scratch3Facemesh2ScratchBlocks {
               intervalMenu: {
                 acceptReporters: true,
                 items: this.INTERVAL_MENU
-              }
+              },
+              directionMenu: {
+                acceptReporters: true,
+                items: [
+                    { text:'LR', value:'LR' },
+                    { text:'UpDown', value:'UpDown' },
+                    { text:'Rotate', value:'Rotate' },
+                ]
+              },
             }
         };
     }
@@ -338,6 +358,40 @@ class Scratch3Facemesh2ScratchBlocks {
 
     getPeopleCount () {
       return this.faces.length;
+    }
+
+    getDirection (args) {
+      let kp0 = 10;
+      let kp1 = 199;
+      let kp2 = 1;
+
+      if(args.ARG1 == 'UpDown') {
+        kp0 = 234;
+        kp1 = 454;
+      }
+
+      const xy0 = this.faces[0].keypoints[kp0];
+      const xy1 = this.faces[0].keypoints[kp1];
+      const xy2 = this.faces[0].keypoints[kp2];
+
+      const len01 = Math.sqrt(Math.pow(xy1[1]-xy0[1],2) + Math.pow(xy1[0]-xy0[0],2));
+      let dir;
+      let rotate;
+      if(xy1[0] == xy0[0]) {
+        dir = xy2[0] - xy0[0];
+        rotate = 0;
+      } else {
+        const a = (xy1[1]-xy0[1]) / (xy1[0]-xy0[0]);
+        const b = (xy2[1]-xy0[1]) - a * (xy2[0]-xy0[0]);
+        dir = b/a/Math.sqrt(1+1/(a*a));
+        rotate = Math.atan(1/a)/Math.PI*180;
+      }
+      dir = dir / len01 * 100;
+
+      if(args.ARG1 == 'Rotate')
+        return rotate;
+      else
+        return dir;
     }
 
     videoToggle (args) {
