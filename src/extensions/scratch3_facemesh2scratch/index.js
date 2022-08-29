@@ -29,11 +29,6 @@ const Message = {
     'ja-Hira': 'ビデオを [VIDEO_STATE] にする',
     'en': 'turn video [VIDEO_STATE]'
   },
-  setRatio: {
-    'ja': '倍率を [RATIO] にする',
-    'ja-Hira': 'ばいりつを [RATIO] にする',
-    'en': 'set ratio to [RATIO]'
-  },
   setInterval: {
     'ja': '認識を [INTERVAL] 秒ごとに行う',
     'ja-Hira': 'にんしきを [INTERVAL] びょうごとにおこなう',
@@ -117,31 +112,6 @@ class Scratch3Facemesh2ScratchBlocks {
       ]
     }
 
-    get RATIO_MENU () {
-      return [
-          {
-            text: '0.5',
-            value: '0.5'
-          },
-          {
-            text: '0.75',
-            value: '0.75'
-          },
-          {
-            text: '1',
-            value: '1'
-          },
-          {
-            text: '1.5',
-            value: '1.5'
-          },
-          {
-            text: '2.0',
-            value: '2.0'
-          }
-      ]
-    }
-
     constructor (runtime) {
         this.runtime = runtime;
 
@@ -154,9 +124,18 @@ class Scratch3Facemesh2ScratchBlocks {
         video.style.display = "none";
         this.video = video;
 */
-        this.ratio = 1;
         this.interval = 200;
         this.firstTraining = true;
+
+		this.ipCamera = '';
+		let cookies_get = document.cookie.split(';');
+		for(let i=0;i<cookies_get.length;i++) {
+			let tmp = cookies_get[i].trim().split('=');
+			if(tmp[0]=='Camera_ip') {
+				this.ipCamera=tmp[1];
+				break;
+			}
+		}
 
 //      this.video.addEventListener('loadeddata', (event) => {
 //        alert(Message.please_wait[this._locale]);
@@ -202,6 +181,14 @@ class Scratch3Facemesh2ScratchBlocks {
             id: 'facemesh2scratch',
             name: 'Facemesh2Scratch',
             blocks: [
+				{
+					opcode: 'setConfig',
+					blockType: BlockType.COMMAND,
+					text: 'camera IP=[ARG1]',
+					arguments: {
+						ARG1: { type: ArgumentType.STRING, defaultValue: (this.ipCamera=='')?' ':this.ipCamera},
+					}
+				},
                 {
                     opcode: 'getX',
                     blockType: BlockType.REPORTER,
@@ -266,18 +253,6 @@ class Scratch3Facemesh2ScratchBlocks {
                     }
                 },
                 {
-                    opcode: 'setRatio',
-                    blockType: BlockType.COMMAND,
-                    text: Message.setRatio[this._locale],
-                    arguments: {
-                        RATIO: {
-                            type: ArgumentType.STRING,
-                            menu: 'ratioMenu',
-                            defaultValue: '1'
-                        }
-                    }
-                },
-                {
                     opcode: 'setInterval',
                     blockType: BlockType.COMMAND,
                     text: Message.setInterval[this._locale],
@@ -288,7 +263,7 @@ class Scratch3Facemesh2ScratchBlocks {
                             defaultValue: '0.2'
                         }
                     }
-                }
+                },
             ],
             menus: {
               personNumberMenu: {
@@ -302,10 +277,6 @@ class Scratch3Facemesh2ScratchBlocks {
               videoMenu: {
                 acceptReporters: true,
                 items: this.VIDEO_MENU
-              },
-              ratioMenu: {
-                acceptReporters: true,
-                items: this.RATIO_MENU
               },
               intervalMenu: {
                 acceptReporters: true,
@@ -330,15 +301,24 @@ class Scratch3Facemesh2ScratchBlocks {
       }
     }
 
+	setConfig(args) {
+		const ipCamera = args.ARG1.replace(' ', '');
+		if(this.ipCamera != ipCamera) {
+			this.ipCamera = ipCamera;
+			document.cookie = 'Camera_ip=' + this.ipCamera + '; samesite=lax; expires=Tue, 31-Dec-2037 00:00:00 GMT;';
+			return {'en':'Saved !', 'ja':'保存しました', 'ja-Hira':'ほぞんしました'}[this._locale];
+		}
+	}
+
     getX (args) {
       let personNumber = parseInt(args.PERSON_NUMBER, 10) - 1;
       let keypoint = parseInt(args.KEYPOINT, 10) - 1;
 
       if (this.faces[personNumber].keypoints && this.faces[personNumber].keypoints[keypoint]) {
         if (this.runtime.ioDevices.video.mirror === false) {
-          return -1 * (240 - this.faces[personNumber].keypoints[keypoint][0] * this.ratio);
+          return -1 * (240 - this.faces[personNumber].keypoints[keypoint][0]);
         } else {
-          return 240 - this.faces[personNumber].keypoints[keypoint][0] * this.ratio;
+          return 240 - this.faces[personNumber].keypoints[keypoint][0];
         }
       } else {
         return "";
@@ -350,7 +330,7 @@ class Scratch3Facemesh2ScratchBlocks {
       let keypoint = parseInt(args.KEYPOINT, 10) - 1;
 
       if (this.faces[personNumber].keypoints && this.faces[personNumber].keypoints[keypoint]) {
-        return 180 - this.faces[personNumber].keypoints[keypoint][1] * this.ratio;
+        return 180 - this.faces[personNumber].keypoints[keypoint][1];
       } else {
         return "";
       }
@@ -383,7 +363,11 @@ class Scratch3Facemesh2ScratchBlocks {
       } else {
         const a = (xy1[1]-xy0[1]) / (xy1[0]-xy0[0]);
         const b = (xy2[1]-xy0[1]) - a * (xy2[0]-xy0[0]);
-        dir = b/a/Math.sqrt(1+1/(a*a));
+        if(args.ARG1 == 'UpDown') {
+          dir = b/Math.abs(a)/Math.sqrt(1+1/(a*a));
+        } else {
+          dir = b/a/Math.sqrt(1+1/(a*a));
+        }
         rotate = Math.atan(1/a)/Math.PI*180;
       }
       dir = dir / len01 * 100;
@@ -402,10 +386,6 @@ class Scratch3Facemesh2ScratchBlocks {
         this.runtime.ioDevices.video.enableVideo();
         this.runtime.ioDevices.video.mirror = state === "on";
       }
-    }
-
-    setRatio (args) {
-      this.ratio = parseFloat(args.RATIO);
     }
 
     setInterval (args) {
