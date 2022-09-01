@@ -363,11 +363,9 @@ class Scratch3Facemesh2ScratchBlocks {
       } else {
         const a = (xy1[1]-xy0[1]) / (xy1[0]-xy0[0]);
         const b = (xy2[1]-xy0[1]) - a * (xy2[0]-xy0[0]);
-        if(args.ARG1 == 'UpDown') {
-          dir = b/Math.abs(a)/Math.sqrt(1+1/(a*a));
-        } else {
-          dir = b/a/Math.sqrt(1+1/(a*a));
-        }
+        dir = b/Math.abs(a)/Math.sqrt(1+1/(a*a));
+        if(xy1[0] < xy0[0])
+          dir = -dir;
         rotate = Math.atan(1/a)/Math.PI*180;
       }
       dir = dir / len01 * 100;
