@@ -6,33 +6,33 @@ const BLEUUID = {
 	indicate:    '72c90005-57a9-4d40-b746-534e22ec9f9e',
 };
 
-class Mesh {
-	constructor () {
+class comMesh {
+	constructor(runtime, onNotify) {
+		this.onNotify = onNotify;
 		this.ble = null;
 		this.charWriteWoResp = null
 		this.charNotify= null
 		this.charWrite = null
 		this.charIndicate= null
-		this._notifyCB = null;
 	}
 
-	find(name, notifyCB) {
-		this._notifyCB = notifyCB;
+	connect(prefix) {
 		let options = {
-			filters: [{namePrefix: name}],
+			filters: [{namePrefix: prefix}],
 		//	acceptAllDevices: true,
 			optionalServices: [BLEUUID.service]
 		};
 
 		let _this = this;
-		let _service = null
+		let _service = null;
 		return navigator.bluetooth.requestDevice(options)
 		.catch(err => {
 			console.log('canceled');
 			throw err;
-		}).then(device => device.gatt.connect()
-		).then(gatt => {
+		}).then(device => device.gatt.connect())
+		.then(gatt => {
 			_this.ble = gatt;
+			console.log(gatt);
 			return gatt.getPrimaryService(BLEUUID.service);
 		}).then(service => {
 			_service = service;
@@ -56,25 +56,18 @@ class Mesh {
 			return _this.charIndicate.startNotifications();
 		}).then(() => {
 			const onReceived = function (event) {
-				let buf = event.target.value;
-				console.log("indicate");
-				console.log(buf.buffer);
+				const buf = new Uint8Array(event.target.value.buffer);
+				console.log('indicate:'+this._dumpBuf(buf));
 			}
-			return _this.charIndicate.addEventListener('characteristicvaluechanged', onReceived);
+			return _this.charIndicate.addEventListener('characteristicvaluechanged', onReceived.bind(_this));
 		}).then(() => new Promise(resolve => setTimeout(resolve, 50)))
 		.then(() => _this.charNotify.startNotifications())
 		.then(() => {
-			const onReceived = function (event) {
-				let buf = event.target.value;
-				console.log(event.srcElement.service.device.name);
-				console.log(buf.buffer);
-				if(_this._notifyCB) _this._notifyCB(event.srcElement.service.device.name, buf);
-			}
-			return _this.charNotify.addEventListener('characteristicvaluechanged', onReceived);
+			return _this.charNotify.addEventListener('characteristicvaluechanged', _this.onNotifyReceived.bind(_this));
 		}).then(() => new Promise(resolve => setTimeout(resolve, 50)))
 		.then(() => {
-			const Buf_FeatureDrive = new Uint8Array([0x00, 0x02, 0x01, 0x03]);
-			return _this.charWrite.writeValue(Buf_FeatureDrive);
+			const FeatureDrive = new Uint8Array([0x00, 0x02, 0x01, 0x03]);
+			return _this.charWrite.writeValue(FeatureDrive);
 		}).then(() => {
 			console.log("connected!");
 			return Promise.resolve(_this);	// finish
@@ -84,21 +77,30 @@ class Mesh {
 		});
 	}
 
-	isConnected() {
-		let connected = false;
+	onNotifyReceived(event) {
+		const buf = new Uint8Array(event.target.value.buffer);
+		console.log(event.srcElement.service.device.name+':'+this._dumpBuf(buf));
+		if(this.onNotify) this.onNotify(event.srcElement.service.device.name, buf);
+	}
 
-		if (this.ble) {
-			connected = this.ble.connected;
-		}
-		return connected;
+	isConnected() {
+		if(!this.ble) return false;
+		return this.ble.connected;
+	}
+
+	name() {
+		if(!this.ble) return '';
+		return this.ble.device.name;
 	}
 
 	writeWoResp(data) {
-		let writeData = new Uint8Array(data.length);
-		data.forEach(function (v, i) {
-			writeData[i] = v;
-		});
-		return this.charWriteWoResp.writeValue(writeData);
+		let buf = new Uint8Array(data);
+		let sum = 0;
+		for(let i = 0; i < buf.length-1; i++)
+			sum += buf[i];
+		buf[buf.length-1] = sum & 0xFF;
+		console.log('w:'+this._dumpBuf(buf));
+		return this.charWriteWoResp.writeValue(buf);
 	}
 /*
 	write(data) {
@@ -128,6 +130,13 @@ class Mesh {
 
 	signalStrengthRead() {} // Hardware Control }
 */
+	_dumpBuf(data) {
+		let str = '';
+		for(let i = 0; i < data.length; i++) {
+			str += ('0' + data[i].toString(16)).substr(-2) + ' ';
+		}
+		return str;
+	}
 }
 
-module.exports = Mesh;
+module.exports = comMesh;

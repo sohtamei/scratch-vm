@@ -164,7 +164,7 @@ var ext = class {
 	get_menus() {
 		this.flashItems = [];
 		for(let i = 0; i < this.flashList.length; i++)
-			this.flashItems[i] = { text:this.flashList[i].name, value:i };
+			this.flashItems[i] = { text:this.flashList[i].name, value:i.toString(10) };
 
 	  return {
 ifType: { acceptReporters: true, items: [
