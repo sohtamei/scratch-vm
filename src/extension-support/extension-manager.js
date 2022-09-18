@@ -11,8 +11,8 @@ const comlib = require('../extensions/scratch3_tukurutch/comlib.js');
 // TODO: move these out into a separate repository?
 // TODO: change extension spec so that library info, including extension ID, can be collected through static methods
 
-//const builtinExtensions = Object.assign({
-const builtinExtensions = {
+const builtinExtensions = Object.assign({
+//const builtinExtensions = {
     // This is an example that isn't loaded with the other core blocks,
     // but serves as a reference for loading core blocks as extensions.
     coreExample: () => require('../blocks/scratch3_core_example'),
@@ -42,12 +42,12 @@ const builtinExtensions = {
     microbit: () => require('../extensions/scratch3_microbit/microbit.js'),
     microbitRadio: () => require('../extensions/scratch3_microbit/microbitRadio.js'),
 
-    ml2scratch: () => require('../extensions/scratch3_ml2scratch'),
+//  ml2scratch: () => require('../extensions/scratch3_ml2scratch'),
     facemesh2scratch: () => require('../extensions/scratch3_facemesh2scratch'),
     handpose2scratch: () => require('../extensions/scratch3_handpose2scratch'),
     mesh: () => require('../extensions/scratch3_mesh/meshBlocks.js'),
-    ikimono: () => require('../extensions/ikimono_extension'),
-    konashi: () => require('../extensions/konashi_extension'),
+//  ikimono: () => require('../extensions/ikimono_extension'),
+//  konashi: () => require('../extensions/konashi_extension'),
     pen: () => require('../extensions/scratch3_pen'),
     wedo2: () => require('../extensions/scratch3_wedo2'),
     music: () => require('../extensions/scratch3_music'),
@@ -58,7 +58,7 @@ const builtinExtensions = {
     makeymakey: () => require('../extensions/scratch3_makeymakey'),
     boost: () => require('../extensions/scratch3_boost'),
     gdxfor: () => require('../extensions/scratch3_gdx_for')
-};//, require('../extensions/scratch3_toio').extensions);  // 翻訳が効かなくなる問題暫定対応
+}, require('../extensions/scratch3_toio').extensions);  // 翻訳が効かなくなる問題暫定対応
 
 /**
  * @typedef {object} ArgumentInfo - Information about an extension block argument
@@ -115,8 +115,8 @@ class ExtensionManager {
         this.pendingWorkers = [];
 
         /**
-         * Set of loaded extension URLs/IDs (equivalent for built-in extensions).
-         * @type {Set.<string>}
+         * Map of loaded extension URLs/IDs (equivalent for built-in extensions) to service name.
+         * @type {Map.<string,string>}
          * @private
          */
         this._loadedExtensions = new Map();
