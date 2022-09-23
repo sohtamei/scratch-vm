@@ -42,6 +42,7 @@ class Scratch3Blocks {
         console.log(util.thread.target.comments[comment].text);
         eval(util.thread.target.comments[comment].text);
         if(typeof funcMain !== 'function') return 'no funcMain function';
+        funcMain = funcMain.bind(this);
         return funcMain(args.ARG1,args.ARG2,args.ARG3);
     }
 
