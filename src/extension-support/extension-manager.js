@@ -28,6 +28,7 @@ const builtinExtensions = Object.assign({
     QuadCrawler: () => require('../extensions/scratch3_tukurutch/QuadCrawler.js'),
 
     uiParts: () => require('../extensions/scratch3_devices/uiParts.js'),
+    exeScript: () => require('../extensions/scratch3_devices/exeScript.js'),
     genericIO: () => require('../extensions/scratch3_devices/genericIO.js'),
     TempHumSht3x: () => require('../extensions/scratch3_devices/TempHumSht3x.js'),
     BMP280: () => require('../extensions/scratch3_devices/BMP280.js'),

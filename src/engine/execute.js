@@ -496,6 +496,7 @@ const execute = function (sequencer, thread) {
         const blockFunction = opCached._blockFunction;
 
         // Update values for arguments (inputs).
+        opCached._argValues.blockid = opCached.id;    // sohtamei
         const argValues = opCached._argValues;
 
         // Fields are set during opCached initialization.
