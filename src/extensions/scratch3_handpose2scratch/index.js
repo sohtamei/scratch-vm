@@ -19,6 +19,11 @@ const Message = {
     'ja-Hira': '[LANDMARK] のyざひょう',
     'en': 'y of [LANDMARK]'
   },
+  getZ: {
+    'ja': '[LANDMARK] のz座標',
+    'ja-Hira': '[LANDMARK] のzざひょう',
+    'en': 'z of [LANDMARK]'
+  },
   videoToggle: {
     'ja': 'ビデオを [VIDEO_STATE] にする',
     'ja-Hira': 'ビデオを [VIDEO_STATE] にする',
@@ -240,50 +245,49 @@ class Scratch3Handpose2ScratchBlocks {
         this.runtime = runtime;
 
         this.landmarks = [];
-/*
-        let video = document.createElement("video");
-        video.width = 480;
-        video.height = 360;
-        video.autoplay = true;
-        video.style.display = "none";
-        this.video = video;
-*/
         this.ratio = 1;
+/*
+        this.detectHand = () => {
+          this.video = this.runtime.ioDevices.video.provider.video;
+
+          alert(Message.please_wait[this._locale]);
+
+          const handpose = ml5.handpose(this.video, function() {
+            console.log("Model loaded!")
+          });
+
+          handpose.on('predict', hands => {
+            hands.forEach(hand => {
+              this.landmarks = hand.landmarks;
+            });
+          });
+        }
+        this.runtime.ioDevices.video.enableVideo().then(this.detectHand)
+*/
         this.interval = 200;
         this.firstTraining = true;
 
-//      this.video.addEventListener('loadeddata', (event) => {
-//        alert(Message.please_wait[this._locale]);
-          handpose.load().then(model => {
-            this.model = model;
-            this.timer = setInterval(() => {
-	          const frame = this.runtime.ioDevices.video.getFrame({
-	              format: Video.FORMAT_CANVAS,
-	              mirror: false,
-	              dimensions: Video.DIMENSIONS
-	          });
-	        if (frame) {
-              this.firstTrainingWarning();
-              this.model.estimateHands(frame/*this.video*/).then(hands => {
-                hands.forEach(hand => {
-                  this.landmarks = hand.landmarks;
-                });
-              });
-            }
-            }, this.interval);
-          });
-//      });
-/*
-        let media = navigator.mediaDevices.getUserMedia({
-          video: true,
-          audio: false
+        handpose.load().then(model => {
+          this.model = model;
+          this._intervalId = setInterval(this._detectFace.bind(this), this.interval);
         });
+    }
 
-        media.then((stream) => {
-            this.video.srcObject = stream;
+    _detectFace() {
+        const frame = this.runtime.ioDevices.video.getFrame({
+            format: Video.FORMAT_CANVAS,
+            mirror: false,
+            dimensions: Video.DIMENSIONS
         });
-*/
-//      this.runtime.ioDevices.video.enableVideo();
+        if (!frame) return;
+
+        this.firstTrainingWarning();
+        this.model.estimateHands(frame)
+        .then(hands => {
+          hands.forEach(hand => {
+            this.landmarks = hand.landmarks;
+          });
+        });
     }
 
     getInfo () {
@@ -318,6 +322,18 @@ class Scratch3Handpose2ScratchBlocks {
                     }
                 },
                 {
+                  opcode: 'getZ',
+                  blockType: BlockType.REPORTER,
+                  text: Message.getZ[this._locale],
+                  arguments: {
+                      LANDMARK: {
+                          type: ArgumentType.STRING,
+                          menu: 'landmark',
+                          defaultValue: '1'
+                      }
+                  }
+                },
+                {
                     opcode: 'videoToggle',
                     blockType: BlockType.COMMAND,
                     text: Message.videoToggle[this._locale],
@@ -329,30 +345,6 @@ class Scratch3Handpose2ScratchBlocks {
                         }
                     }
                 },
-                {
-                    opcode: 'setRatio',
-                    blockType: BlockType.COMMAND,
-                    text: Message.setRatio[this._locale],
-                    arguments: {
-                        RATIO: {
-                            type: ArgumentType.STRING,
-                            menu: 'ratioMenu',
-                            defaultValue: '1'
-                        }
-                    }
-                },
-                {
-                    opcode: 'setInterval',
-                    blockType: BlockType.COMMAND,
-                    text: Message.setInterval[this._locale],
-                    arguments: {
-                        INTERVAL: {
-                            type: ArgumentType.STRING,
-                            menu: 'intervalMenu',
-                            defaultValue: '0.2'
-                        }
-                    }
-                }
             ],
             menus: {
               landmark: {
@@ -404,41 +396,24 @@ class Scratch3Handpose2ScratchBlocks {
       }
     }
 
+    getZ (args) {
+      let landmark = parseInt(args.LANDMARK, 10) - 1;
+      if (this.landmarks[landmark]) {
+        return this.landmarks[landmark][2];
+      } else {
+        return "";
+      }
+    }
+
     videoToggle (args) {
       let state = args.VIDEO_STATE;
       if (state === 'off') {
         this.runtime.ioDevices.video.disableVideo();
+        clearInterval(this._intervalId);
       } else {
-        this.runtime.ioDevices.video.enableVideo();
+        this.runtime.ioDevices.video.enableVideo();//.then(this.detectHand);
         this.runtime.ioDevices.video.mirror = state === "on";
       }
-    }
-
-    setRatio (args) {
-      this.ratio = parseFloat(args.RATIO);
-    }
-
-    setInterval (args) {
-      if (this.timer) {
-        clearTimeout(this.timer);
-      }
-
-      this.interval = args.INTERVAL * 1000;
-      this.timer = setInterval(() => {
-        const frame = this.runtime.ioDevices.video.getFrame({
-            format: Video.FORMAT_CANVAS,
-            mirror: false,
-            dimensions: Video.DIMENSIONS
-        });
-      if (frame) {
-        this.firstTrainingWarning();
-        this.model.estimateHands(frame/*this.video*/).then(hands => {
-          hands.forEach(hand => {
-            this.landmarks = hand.landmarks;
-          });
-        });
-      }
-      }, this.interval);
     }
 
     setLocale() {

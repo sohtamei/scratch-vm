@@ -29,6 +29,11 @@ const Message = {
     'ja-Hira': 'ビデオを [VIDEO_STATE] にする',
     'en': 'turn video [VIDEO_STATE]'
   },
+  setRatio: {
+    'ja': '倍率を [RATIO] にする',
+    'ja-Hira': 'ばいりつを [RATIO] にする',
+    'en': 'set ratio to [RATIO]'
+  },
   setInterval: {
     'ja': '認識を [INTERVAL] 秒ごとに行う',
     'ja-Hira': 'にんしきを [INTERVAL] びょうごとにおこなう',
@@ -112,20 +117,36 @@ class Scratch3Facemesh2ScratchBlocks {
       ]
     }
 
+    get RATIO_MENU () {
+      return [
+          {
+            text: '0.5',
+            value: '0.5'
+          },
+          {
+            text: '0.75',
+            value: '0.75'
+          },
+          {
+            text: '1',
+            value: '1'
+          },
+          {
+            text: '1.5',
+            value: '1.5'
+          },
+          {
+            text: '2.0',
+            value: '2.0'
+          }
+      ]
+    }
+
     constructor (runtime) {
         this.runtime = runtime;
 
         this.faces = [];
-/*
-        let video = document.createElement("video");
-        video.width = 480;
-        video.height = 360;
-        video.autoplay = true;
-        video.style.display = "none";
-        this.video = video;
-*/
-        this.interval = 200;
-        this.firstTraining = true;
+        this.ratio = 1;
 
 		this.ipCamera = '';
 		let cookies_get = document.cookie.split(';');
@@ -136,42 +157,58 @@ class Scratch3Facemesh2ScratchBlocks {
 				break;
 			}
 		}
+/*
+        this.detectFace = () => {
+          // We should reuse the video element created by videoProvider instead of creating a new video element
+          // This is because iOS or iPad does not allow camera attached to two video elements
+          this.video = this.runtime.ioDevices.video.provider.video
 
-//      this.video.addEventListener('loadeddata', (event) => {
-//        alert(Message.please_wait[this._locale]);
-          facemesh.load().then(model => {
-            this.model = model;
-            this.timer = setInterval(() => {
-	          const frame = this.runtime.ioDevices.video.getFrame({
-	              format: Video.FORMAT_CANVAS,
-	              mirror: false,
-	              dimensions: Video.DIMENSIONS
-	          });
-	        if (frame) {
-	          this.firstTrainingWarning();
-              this.model.estimateFaces(frame/*this.video*/).then(faces => {
-                if (faces.length < this.faces.length) {
-                  this.faces.splice(faces.length);
-                }
-                faces.forEach((face, index) => {
-                  this.faces[index] = {keypoints: face.scaledMesh};
-                });
-              }, this.interval);
+          alert(Message.please_wait[this._locale]);
+
+
+          this.facemesh = ml5.facemesh(this.video, function() {
+            console.log("Model loaded!")
+          });
+
+          this.facemesh.on('predict', faces => {
+            if (faces.length < this.faces.length) {
+              this.faces.splice(faces.length);
             }
+            faces.forEach((face, index) => {
+              this.faces[index] = {keypoints: face.scaledMesh};
             });
           });
-//      });
-/*
-        let media = navigator.mediaDevices.getUserMedia({
-          video: true,
-          audio: false
-        });
+        }
 
-        media.then((stream) => {
-            this.video.srcObject = stream;
-        });
+        this.runtime.ioDevices.video.enableVideo().then(this.detectFace)
 */
-//      this.runtime.ioDevices.video.enableVideo();
+        this.interval = 200;
+        this.firstTraining = true;
+
+        facemesh.load().then(model => {
+          this.model = model;
+          this._intervalId = setInterval(this._detectFace.bind(this), this.interval);
+        });
+    }
+
+    _detectFace() {
+      const frame = this.runtime.ioDevices.video.getFrame({
+          format: Video.FORMAT_CANVAS,
+          mirror: false,
+          dimensions: Video.DIMENSIONS
+      });
+      if (!frame) return;
+
+      this.firstTrainingWarning();
+      return this.model.estimateFaces(frame)
+      .then(faces => {
+          if (faces.length < this.faces.length) {
+            this.faces.splice(faces.length);
+          }
+          faces.forEach((face, index) => {
+            this.faces[index] = {keypoints: face.scaledMesh};
+          });
+      });
     }
 
     getInfo () {
@@ -252,18 +289,6 @@ class Scratch3Facemesh2ScratchBlocks {
                         }
                     }
                 },
-                {
-                    opcode: 'setInterval',
-                    blockType: BlockType.COMMAND,
-                    text: Message.setInterval[this._locale],
-                    arguments: {
-                        INTERVAL: {
-                            type: ArgumentType.STRING,
-                            menu: 'intervalMenu',
-                            defaultValue: '0.2'
-                        }
-                    }
-                },
             ],
             menus: {
               personNumberMenu: {
@@ -277,6 +302,10 @@ class Scratch3Facemesh2ScratchBlocks {
               videoMenu: {
                 acceptReporters: true,
                 items: this.VIDEO_MENU
+              },
+              ratioMenu: {
+                acceptReporters: true,
+                items: this.RATIO_MENU
               },
               intervalMenu: {
                 acceptReporters: true,
@@ -316,9 +345,9 @@ class Scratch3Facemesh2ScratchBlocks {
 
       if (this.faces[personNumber].keypoints && this.faces[personNumber].keypoints[keypoint]) {
         if (this.runtime.ioDevices.video.mirror === false) {
-          return -1 * (240 - this.faces[personNumber].keypoints[keypoint][0]);
+          return -1 * (240 - this.faces[personNumber].keypoints[keypoint][0] * this.ratio);
         } else {
-          return 240 - this.faces[personNumber].keypoints[keypoint][0];
+          return 240 - this.faces[personNumber].keypoints[keypoint][0] * this.ratio;
         }
       } else {
         return "";
@@ -330,7 +359,7 @@ class Scratch3Facemesh2ScratchBlocks {
       let keypoint = parseInt(args.KEYPOINT, 10) - 1;
 
       if (this.faces[personNumber].keypoints && this.faces[personNumber].keypoints[keypoint]) {
-        return 180 - this.faces[personNumber].keypoints[keypoint][1];
+        return 180 - this.faces[personNumber].keypoints[keypoint][1] * this.ratio;
       } else {
         return "";
       }
@@ -380,53 +409,11 @@ class Scratch3Facemesh2ScratchBlocks {
       let state = args.VIDEO_STATE;
       if (state === 'off') {
         this.runtime.ioDevices.video.disableVideo();
+        //this.facemesh.video = null; // Stop the model prediction if video is off
+        clearInterval(this._intervalId);
       } else {
-        this.runtime.ioDevices.video.enableVideo();
+        this.runtime.ioDevices.video.enableVideo();//.then(this.detectFace);
         this.runtime.ioDevices.video.mirror = state === "on";
-      }
-    }
-
-    setInterval (args) {
-      if (this.timer) {
-        clearTimeout(this.timer);
-      }
-
-      this.interval = args.INTERVAL * 1000;
-      this.timer = setInterval(() => {
-        const frame = this.runtime.ioDevices.video.getFrame({
-            format: Video.FORMAT_CANVAS,
-            mirror: false,
-            dimensions: Video.DIMENSIONS
-        });
-      if (frame) {
-        this.firstTrainingWarning();
-        this.model.estimateFaces(frame/*this.video*/).then(faces => {
-          if (faces.length < this.faces.length) {
-            this.faces.splice(faces.length);
-          }
-          faces.forEach((face, index) => {
-            this.faces[index] = {keypoints: face.scaledMesh};
-          });
-        }, this.interval);
-      }
-      });
-    }
-
-    setKeypoints() {
-
-        this.faces = [];
-        const frame = this.runtime.ioDevices.video.getFrame({
-            format: Video.FORMAT_CANVAS,
-            mirror: false,
-            dimensions: Video.DIMENSIONS
-        });
-      if (frame) {
-        this.firstTrainingWarning();
-        this.model.estimateFaces(frame/*this.video*/).then(faces => {
-          faces.forEach((face, index) => {
-            this.faces[index] = {keypoints: face.scaledMesh};
-          });
-        });
       }
     }
 

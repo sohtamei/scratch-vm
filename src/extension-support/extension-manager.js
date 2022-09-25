@@ -49,6 +49,7 @@ const builtinExtensions = Object.assign({
     mesh: () => require('../extensions/scratch3_mesh/meshBlocks.js'),
 //  ikimono: () => require('../extensions/ikimono_extension'),
 //  konashi: () => require('../extensions/konashi_extension'),
+    qrcode: () => require('../extensions/scratch3_qrcode'),
     pen: () => require('../extensions/scratch3_pen'),
     wedo2: () => require('../extensions/scratch3_wedo2'),
     music: () => require('../extensions/scratch3_music'),
