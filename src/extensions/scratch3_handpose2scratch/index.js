@@ -269,11 +269,11 @@ class Scratch3Handpose2ScratchBlocks {
 
         handpose.load().then(model => {
           this.model = model;
-          this._intervalId = setInterval(this._detectFace.bind(this), this.interval);
+          this._intervalId = setInterval(this._detectHand.bind(this), this.interval);
         });
     }
 
-    _detectFace() {
+    _detectHand() {
         const frame = this.runtime.ioDevices.video.getFrame({
             format: Video.FORMAT_CANVAS,
             mirror: false,
@@ -345,6 +345,18 @@ class Scratch3Handpose2ScratchBlocks {
                         }
                     }
                 },
+                {
+                    opcode: 'setRatio',
+                    blockType: BlockType.COMMAND,
+                    text: Message.setRatio[this._locale],
+                    arguments: {
+                        RATIO: {
+                            type: ArgumentType.STRING,
+                            menu: 'ratioMenu',
+                            defaultValue: '0.75'
+                        }
+                    }
+                }
             ],
             menus: {
               landmark: {
@@ -416,6 +428,9 @@ class Scratch3Handpose2ScratchBlocks {
       }
     }
 
+    setRatio (args) {
+
+    }
     setLocale() {
       let locale = formatMessage.setup().locale;
       if (AvailableLocales.includes(locale)) {

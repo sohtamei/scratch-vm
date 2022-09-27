@@ -289,6 +289,18 @@ class Scratch3Facemesh2ScratchBlocks {
                         }
                     }
                 },
+                {
+                    opcode: 'setRatio',
+                    blockType: BlockType.COMMAND,
+                    text: Message.setRatio[this._locale],
+                    arguments: {
+                        RATIO: {
+                            type: ArgumentType.STRING,
+                            menu: 'ratioMenu',
+                            defaultValue: '0.75'
+                        }
+                    }
+                }
             ],
             menus: {
               personNumberMenu: {
@@ -415,6 +427,10 @@ class Scratch3Facemesh2ScratchBlocks {
         this.runtime.ioDevices.video.enableVideo();//.then(this.detectFace);
         this.runtime.ioDevices.video.mirror = state === "on";
       }
+    }
+
+    setRatio (args) {
+
     }
 
     setLocale() {
