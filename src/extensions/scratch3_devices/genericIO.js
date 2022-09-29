@@ -51,30 +51,6 @@ var ext = class {
 			menuIconURI: IconURI,
 
 			blocks: [
-				{blockType: BlockType.COMMAND, opcode: 'wire_write', text: '［I2C］send adrs[ARG1] data[ARG2] (hex)', arguments: {
-					ARG1: { type: ArgumentType.STRING, defaultValue:'1F' },
-					ARG2: { type: ArgumentType.STRING, defaultValue:'1A2B3C' },
-				}},
-
-				{blockType: BlockType.REPORTER, opcode: 'wire_read', text: '［I2C］receive adrs[ARG1] [ARG2]bytes', arguments: {
-					ARG1: { type: ArgumentType.STRING, defaultValue:'1F' },
-					ARG2: { type: ArgumentType.NUMBER, defaultValue:1 },
-				}},
-
-				{blockType: BlockType.REPORTER, opcode: 'wire_writeRead', text: '［I2C］send&receive adrs[ARG1] data[ARG2] [ARG3]bytes', arguments: {
-					ARG1: { type: ArgumentType.STRING, defaultValue:'1F' },
-					ARG2: { type: ArgumentType.STRING, defaultValue:'1A2B3C' },
-					ARG3: { type: ArgumentType.NUMBER, defaultValue:1 },
-				}},
-
-				{blockType: BlockType.REPORTER, opcode: 'wire_scan', text: '［I2C］scan devices', disableMonitor: true, arguments: {
-				}},
-
-				{blockType: BlockType.COMMAND, opcode: 'wire_port', text: '［I2C］port [ARG1] for ESP32', arguments: {
-					ARG1: { type: ArgumentType.STRING, defaultValue:'21_22', menu: 'i2cPort' },
-				}},
-
-				'---',
 				{blockType: BlockType.COMMAND, opcode: 'digiWrite', text: '［GPIO］output port[ARG1] level[ARG2]', arguments: {
 					ARG1: digitalPortArg,
 					ARG2: { type: ArgumentType.STRING, defaultValue:'1', menu: 'onoff' },
@@ -108,6 +84,30 @@ var ext = class {
 				}},
 
 				'---',
+				{blockType: BlockType.COMMAND, opcode: 'wire_write', text: '［I2C］send adrs[ARG1] data[ARG2] (hex)', arguments: {
+					ARG1: { type: ArgumentType.STRING, defaultValue:'1F' },
+					ARG2: { type: ArgumentType.STRING, defaultValue:'1A2B3C' },
+				}},
+
+				{blockType: BlockType.REPORTER, opcode: 'wire_read', text: '［I2C］receive adrs[ARG1] [ARG2]bytes', arguments: {
+					ARG1: { type: ArgumentType.STRING, defaultValue:'1F' },
+					ARG2: { type: ArgumentType.NUMBER, defaultValue:1 },
+				}},
+
+				{blockType: BlockType.REPORTER, opcode: 'wire_writeRead', text: '［I2C］send&receive adrs[ARG1] data[ARG2] [ARG3]bytes', arguments: {
+					ARG1: { type: ArgumentType.STRING, defaultValue:'1F' },
+					ARG2: { type: ArgumentType.STRING, defaultValue:'1A2B3C' },
+					ARG3: { type: ArgumentType.NUMBER, defaultValue:1 },
+				}},
+
+				{blockType: BlockType.REPORTER, opcode: 'wire_scan', text: '［I2C］scan devices', disableMonitor: true, arguments: {
+				}},
+
+				{blockType: BlockType.COMMAND, opcode: 'wire_port', text: '［I2C］port [ARG1] for ESP32', arguments: {
+					ARG1: { type: ArgumentType.STRING, defaultValue:'21_22', menu: 'i2cPort' },
+				}},
+
+				'---',
 				{blockType: BlockType.REPORTER, opcode: 'hex2dec', text: '［UTIL］hex[ARG1] (up[ARG2] low[ARG3]) to number', arguments: {
 					ARG1: { type: ArgumentType.STRING, defaultValue:'FF0001' },
 					ARG2: { type: ArgumentType.NUMBER, defaultValue:2 },
@@ -119,7 +119,8 @@ var ext = class {
 				onoff: { acceptReporters: true, items: ['1','0'] },
 
 				i2cPort: { acceptReporters: true, items: [
-				{ text: 'd21 c22 default', value: '21_22', },
+				{ text: 'd21 c22 ESP32 default', value: '21_22', },
+				{ text: 'd8  c9 ESP32S3 default', value: '8_9', },
 				{ text: 'd32 c33 M5StickC', value: '32_33', },
 				{ text: 'd26 c32 M5Atom', value: '26_32', },
 				{ text: 'd4  c13 M5Camera', value: '4_13', },

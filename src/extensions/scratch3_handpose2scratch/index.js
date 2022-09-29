@@ -431,6 +431,7 @@ class Scratch3Handpose2ScratchBlocks {
     setRatio (args) {
 
     }
+
     setLocale() {
       let locale = formatMessage.setup().locale;
       if (AvailableLocales.includes(locale)) {

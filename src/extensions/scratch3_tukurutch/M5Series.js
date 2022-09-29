@@ -48,6 +48,7 @@ var ext = class {
 {name:'M5Stack', type:'esp32', baudrate:921600},
 {name:'M5Core2', type:'esp32', baudrate:921600},
 {name:'M5Atom', type:'esp32', baudrate:1500000},
+{name:'M5RoundLCD', type:'esp32c3', baudrate:921600},
 		];
 
 		this._blocks = [

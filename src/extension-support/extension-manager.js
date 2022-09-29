@@ -26,6 +26,7 @@ const builtinExtensions = Object.assign({
     QuadCrawlerAI: () => require('../extensions/scratch3_tukurutch/QuadCrawlerAI.js'),
     RemoconRobo: () => require('../extensions/scratch3_tukurutch/RemoconRobo_.js'),
     QuadCrawler: () => require('../extensions/scratch3_tukurutch/QuadCrawler.js'),
+    esp32S3DevkitC: () => require('../extensions/scratch3_tukurutch/esp32S3DevkitC.js'),
 
     uiParts: () => require('../extensions/scratch3_devices/uiParts.js'),
     exeScript: () => require('../extensions/scratch3_devices/exeScript.js'),

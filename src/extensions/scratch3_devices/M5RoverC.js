@@ -124,7 +124,8 @@ var ext = class {
 
 				i2cPort: { acceptReporters: true, items: [
 					{ text: 'd0  c26 M5StickC Hat', value: '0_26', },
-					{ text: 'd21 c22 default', value: '21_22', },
+					{ text: 'd21 c22 ESP32 default', value: '21_22', },
+					{ text: 'd8  c9 ESP32S3 default', value: '8_9', },
 					{ text: 'd26 c32 M5Atom', value: '26_32', },
 					{ text: 'd4  c13 M5Camera', value: '4_13', },
 					{ text: 'd32 c33 M5StickC Grove', value: '32_33', },

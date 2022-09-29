@@ -90,7 +90,8 @@ var ext = class {
 			menus: {
 				adrs:[ '76','77' ],
 				i2cPort: { acceptReporters: true, items: [
-					{ text: 'd21 c22 default', value: '21_22', },
+					{ text: 'd21 c22 ESP32 default', value: '21_22', },
+					{ text: 'd8  c9 ESP32S3 default', value: '8_9', },
 					{ text: 'd32 c33 M5StickC', value: '32_33', },
 					{ text: 'd26 c32 M5Atom', value: '26_32', },
 					{ text: 'd4  c13 M5Camera', value: '4_13', },
