@@ -43,9 +43,8 @@ var ext = class {
 	
 	get_blocks() {
 		this.flashList = [
-{name:'generic_ESP32_921600', type:'esp32', baudrate:921600},
-{name:'generic_ESP32_115200', type:'esp32', baudrate:115200},
 {name:'uno', type:'atmega328', baudrate:115200},
+{name:'uno32', type:'esp32', baudrate:921600},
 		];
 
 		this._blocks = [

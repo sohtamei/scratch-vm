@@ -30,7 +30,7 @@ class comlib {
 
 		let href = location.href.split(':');
 		console.log(href);
-		if(href[1] == '//localhost' || href[0] == 'file') {
+		if(href[1].slice(0,11) == '//localhost' || href[0] == 'file') {
 			this.server = 'local';
 		//	this.server = 'https';		// for test
 		//	this.server = 'http';		// for test
@@ -468,9 +468,12 @@ class comlib {
 				case 's':
 					let j = 0;
 					if(param !== 'undefined') {
-						let charList = param.split('');
-						for(j = 0; j < charList.length; j++)
-							data[ofs+j] = charList[j].charCodeAt(0);
+						const tmp = new TextEncoder().encode(param);
+						j = tmp.length;
+						data.set(tmp,ofs);
+//						let charList = param.split('');
+//						for(j = 0; j < charList.length; j++)
+//							data[ofs+j] = charList[j].charCodeAt(0);
 					}
 					data[ofs+j] = 0;
 					ofs += j+1;
