@@ -27,7 +27,7 @@ const builtinExtensions = Object.assign({
     RemoconRobo: () => require('../extensions/scratch3_tukurutch/RemoconRobo_.js'),
     QuadCrawler: () => require('../extensions/scratch3_tukurutch/QuadCrawler.js'),
     DevkitC: () => require('../extensions/scratch3_tukurutch/DevkitC.js'),
-    i2cLCD: () => require('../extensions/scratch3_tukurutch/i2cLCD.js'),
+    micomLCD: () => require('../extensions/scratch3_tukurutch/micomLCD.js'),
 
     uiParts: () => require('../extensions/scratch3_devices/uiParts.js'),
     exeScript: () => require('../extensions/scratch3_devices/exeScript.js'),
@@ -41,6 +41,7 @@ const builtinExtensions = Object.assign({
     folo: () => require('../extensions/scratch3_devices/folo.js'),
     foloCamera: () => require('../extensions/scratch3_devices/foloCamera.js'),
     tracking: () => require('../extensions/scratch3_devices/trackingBlock.js'),
+    i2cLCD: () => require('../extensions/scratch3_devices/i2cLCD.js'),
 
     microbit: () => require('../extensions/scratch3_microbit/microbit.js'),
     microbitRadio: () => require('../extensions/scratch3_microbit/microbitRadio.js'),
