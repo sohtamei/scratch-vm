@@ -107,6 +107,11 @@ var ext = class {
 					ARG1: { type: ArgumentType.STRING, defaultValue:'21_22', menu: 'i2cPort' },
 				}},
 
+				{blockType: BlockType.COMMAND, opcode: 'wire_port2', text: '［I2C］port [ARG1] [ARG2]', arguments: {
+				    ARG1: { type: ArgumentType.NUMBER, defaultValue:15 },
+				    ARG2: { type: ArgumentType.NUMBER, defaultValue:12 },
+				}},
+
 				'---',
 				{blockType: BlockType.REPORTER, opcode: 'hex2dec', text: '［UTIL］hex[ARG1] (up[ARG2] low[ARG3]) to number', arguments: {
 					ARG1: { type: ArgumentType.STRING, defaultValue:'FF0001' },
@@ -125,7 +130,7 @@ var ext = class {
 				{ text: 'd26 c32 M5Atom', value: '26_32', },
 				{ text: 'd4  c13 M5Camera', value: '4_13', },
 				{ text: 'd0  c26 M5StickC Hat', value: '0_26', },
-				{ text: 'd26 c27 QuadCrawler', value: '26_27', },
+				{ text: 'd26 c27 QuadCrawlerAI', value: '26_27', },
 				]},
 				digitalPorts: { acceptReporters: true, items: digitalPorts },
 				analogPorts: { acceptReporters: true, items: analogPorts },
@@ -161,6 +166,10 @@ var ext = class {
 
 	wire_port(args) {
 		this.port = args.ARG1.split('_');
+	}
+
+	wire_port2(args) {
+		this.port = [args.ARG1*1,args.ARG2*1];
 	}
 
 	wire_write(args) {
