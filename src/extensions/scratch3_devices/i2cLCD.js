@@ -1,7 +1,10 @@
+/* copyright (C) 2021 SohtaMei. */
+//	SSD1306 parameters from lovyanGFX (based on Panel_SSD1306.hpp/cpp)
+//	errorDiffusion from ltzz氏 https://qiita.com/ltzz/items/2160b5a73c206e14bde3
+
 var extName = 'i2cLCD';			// _ などの記号厳禁
 
 const ADRS_SSD1306			= 0x3C;
-const I2C_PACKET			= 120;	// 127+1max
 
 // fundamental command
 
@@ -91,7 +94,7 @@ var ext = class {
 	constructor(runtime) {
 		this.runtime = runtime;
 		this.initialized = false;
-		this.port = [21,22];
+		this.port = [21,22,128];
 		this.size = [128,64];
 		this.rowNum = 8;
 	}
@@ -113,7 +116,7 @@ var ext = class {
 			blocks: [
 			{blockType: BlockType.COMMAND, opcode: 'initLCD', text: 'init [ARG1] I2C=[ARG2] brightness[ARG3]', arguments: {
 					ARG1: { type: ArgumentType.STRING, defaultValue:'SSD1306', menu: 'lcdType' },
-					ARG2: { type: ArgumentType.STRING, defaultValue:'21_22', menu: 'i2cPort' },
+					ARG2: { type: ArgumentType.STRING, defaultValue:'21_22_128', menu: 'i2cPort' },
 					ARG3: { type: ArgumentType.NUMBER, defaultValue:127 },
 				}},
 
@@ -141,17 +144,23 @@ var ext = class {
 
 			menus: {
 				i2cPort: { acceptReporters: true, items: [
-					{ text: 'd21 c22 ESP32 default', value: '21_22', },
-					{ text: 'd8  c9 ESP32S3 default', value: '8_9', },
-					{ text: 'd32 c33 M5StickC', value: '32_33', },
-					{ text: 'd26 c32 M5Atom', value: '26_32', },
-					{ text: 'd4  c13 M5Camera', value: '4_13', },
-					{ text: 'd0  c26 M5StickC Hat', value: '0_26', },
-					{ text: 'd26 c27 QuadCrawler', value: '26_27', },
+					{ text: 'dA4 cA5 uno', value: '18_19_32', },
+					{ text: 'd20 c19 microbit', value: '20_19_63', },
+					{ text: 'd21 c22 ESP32 default', value: '21_22_128', },
+					{ text: 'd8 c9 ESP32S3 default', value: '8_9_128', },
+					{ text: 'd32 c33 M5StickC', value: '32_33_128', },
+					{ text: 'd26 c32 M5Atom', value: '26_32_128', },
+					{ text: 'd4 c13 M5Camera', value: '4_13_128', },
+					{ text: 'd0 c26 M5StickC Hat', value: '0_26_128', },
+					{ text: 'd26 c27 QuadCrawler', value: '26_27_128', },
+					{ text: 'd15 c12 QuadCrawler', value: '15_12_128', },
+					{ text: 'd12 c15 QuadCrawler', value: '12_15_128', },
+					{ text: 'd4 c5 RPi pico', value: '4_5_128', },
 				]},
 				lcdType: { acceptReporters: true, items: [
 					{ text: 'SSD1306', value: 'SSD1306', },
 					{ text: 'SSD1306_32', value: 'SSD1306_32', },
+					{ text: 'SSD1315', value: 'SSD1315', },
 				]},
 
 				color: { acceptReporters: true, items: [
@@ -196,6 +205,7 @@ var ext = class {
 		switch(args.ARG1) {
 		case 'SSD1306':
 		case 'SSD1306_32':
+		case 'SSD1315':
 			return this.initLCD_SSD1306(args.ARG1, args.ARG3*1);
 		}
 	}
@@ -257,7 +267,7 @@ var ext = class {
 		const byteData = (args.ARG1*1==TFT_WHITE) ? 0xFF: 0x00;
 		this.lastBuf.fill(byteData);
 
-		const data = new Uint8Array(1+I2C_PACKET);
+		const data = new Uint8Array(this.port[2]);
 		data.fill(byteData);
 		data[0] = PREFIX_DATA;
 
@@ -266,10 +276,10 @@ var ext = class {
 		let i = 0;
 		return this.runtime.dev.comlib.wire_write(ADRS_SSD1306, cmd)
 		.then(() => new Promise(resolve => {
-		//	for(i=0; i<size; i+=I2C_PACKET)
+		//	for(i=0; i<size; i+=this.port[2]-1)
 			loop();
 			function loop(){
-				let num = Math.min(I2C_PACKET, size - i);
+				let num = Math.min(_this.port[2]-1, size - i);
 				return _this.runtime.dev.comlib.wire_write(ADRS_SSD1306, data.slice(0,num+1))
 				.then(() => {
 					i += num;
@@ -359,17 +369,17 @@ var ext = class {
 			CMD_PAGEADDR, r1, r2,
 		]);
 
-		const data = new Uint8Array(1+I2C_PACKET);
+		const data = new Uint8Array(this.port[2]);
 		data[0] = PREFIX_DATA;
 
 		const _this = this;
 		let i = 0;
 		return this.runtime.dev.comlib.wire_write(ADRS_SSD1306, cmd)
 		.then(() => new Promise(resolve => {
-		//	for(i=0; i<size; i+=I2C_PACKET)
+		//	for(i=0; i<size; i+=this.port[2]-1)
 			loop();
 			function loop(){
-				let num = Math.min(I2C_PACKET, outBuf.length - i);
+				let num = Math.min(_this.port[2]-1, outBuf.length - i);
 				data.set(outBuf.slice(i,i+num), 1);
 				return _this.runtime.dev.comlib.wire_write(ADRS_SSD1306, data.slice(0,num+1))
 				.then(() => {
