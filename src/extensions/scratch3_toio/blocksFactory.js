@@ -47,11 +47,12 @@ var util_1 = __importDefault(require("./util"));
 var about_1 = require("./about");
 
 var translations_1 = __importDefault(require("./translations"));
-
+/*
 formatMessage.setup({
-  translations: translations_1.default,
+  translations: translations_1.default,                  // sohtamei:他の翻訳が死ぬ
   locale: util_1.default.getBrowserLanguage() || 'ja'
 });
+*/
 /**
  * Factory class to build a toio extension.
  *

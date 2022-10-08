@@ -11,8 +11,7 @@ const comlib = require('../extensions/scratch3_tukurutch/comlib.js');
 // TODO: move these out into a separate repository?
 // TODO: change extension spec so that library info, including extension ID, can be collected through static methods
 
-const builtinExtensions = Object.assign({
-//const builtinExtensions = {
+const builtinExtensions = {
     // This is an example that isn't loaded with the other core blocks,
     // but serves as a reference for loading core blocks as extensions.
     coreExample: () => require('../blocks/scratch3_core_example'),
@@ -50,8 +49,10 @@ const builtinExtensions = Object.assign({
     facemesh2scratch: () => require('../extensions/scratch3_facemesh2scratch'),
     handpose2scratch: () => require('../extensions/scratch3_handpose2scratch'),
     mesh: () => require('../extensions/scratch3_mesh/meshBlocks.js'),
+    toio: () => require('../extensions/scratch3_toio/'),
 //  ikimono: () => require('../extensions/ikimono_extension'),
 //  konashi: () => require('../extensions/konashi_extension'),
+
     qrcode: () => require('../extensions/scratch3_qrcode'),
     pen: () => require('../extensions/scratch3_pen'),
     wedo2: () => require('../extensions/scratch3_wedo2'),
@@ -62,8 +63,8 @@ const builtinExtensions = Object.assign({
     ev3: () => require('../extensions/scratch3_ev3'),
     makeymakey: () => require('../extensions/scratch3_makeymakey'),
     boost: () => require('../extensions/scratch3_boost'),
-    gdxfor: () => require('../extensions/scratch3_gdx_for')
-}, require('../extensions/scratch3_toio').extensions);  // 翻訳が効かなくなる問題暫定対応
+    gdxfor: () => require('../extensions/scratch3_gdx_for'),
+};
 
 /**
  * @typedef {object} ArgumentInfo - Information about an extension block argument
