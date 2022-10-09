@@ -118,16 +118,11 @@ class comlib {
 				updated = true;
 			}
 
-			if(_this.ifType == 'WLAN' && _this.ipadrs != ipadrs) {
-				_this.ipadrs = ipadrs;
-				document.cookie = _this.extName+'_ip=' + _this.ipadrs + '; samesite=lax; expires=Tue, 31-Dec-2037 00:00:00 GMT;';
-				updated = true;
-			}
-
-			if(_this.ifType == 'WLAN' && _this.SupportCamera && _this.ipCamera != ipadrs) {
-				_this.ipCamera = ipadrs;
-				document.cookie = 'Camera_ip=' + _this.ipadrs + '; samesite=lax; expires=Tue, 31-Dec-2037 00:00:00 GMT;';
-				updated = true;
+			if(_this.ifType == 'WLAN') {
+				if (_this.ipadrs != ipadrs || (_this.SupportCamera && _this.ipCamera != ipadrs)) {
+					_this._updateIp(ipadrs);
+					updated = true;
+				}
 			}
 
 			if(updated) return ['Saved !', '保存しました'][_this._locale];
@@ -403,6 +398,7 @@ class comlib {
 		}).then(status => {
 			if(status[0] != 3) return ['Failed', '失敗しました'][_this._locale];
 
+			_this._updateIp(status[2], true);
 			return ['connected','接続しました'][_this._locale] + ' ('+status[2]+')';
 		})
 	}
@@ -417,14 +413,26 @@ class comlib {
 
 			status[0] = parseInt(status[0], 10);
 			if(status[0] == 3) {
-				_this.ipadrs = status[2];
-				document.cookie = _this.extName+'_ip=' + _this.ipadrs + '; samesite=lax; expires=Tue, 31-Dec-2037 00:00:00 GMT;';
-				if(_this.SupportCamera)
-				  document.cookie = 'Camera_ip=' + _this.ipadrs + '; samesite=lax; expires=Tue, 31-Dec-2037 00:00:00 GMT;';
+				_this._updateIp(status[2], true);
 			}
 			console.log(status);
 			return status;
 		})
+	}
+
+	_updateIp(ipadrs, updateToolbox=false) {
+		this.ipadrs = ipadrs;
+		document.cookie = this.extName+'_ip=' + this.ipadrs + '; samesite=lax; expires=Tue, 31-Dec-2037 00:00:00 GMT;';
+		if(this.SupportCamera) {
+			this.ipCamera = ipadrs;
+			document.cookie = 'Camera_ip=' + this.ipadrs + '; samesite=lax; expires=Tue, 31-Dec-2037 00:00:00 GMT;';
+		}
+		if(updateToolbox) {
+			const targetBlock = Blockly.getMainWorkspace().getBlockById(this.extName+'_setConfig');
+		//	console.log(targetBlock);
+			if(targetBlock)
+				targetBlock.childBlocks_[1].inputList[0].fieldRow[0].setValue(ipadrs);	// block text記述の仕方によって変わる。翻訳注意
+		}
 	}
 
 	// sendRecv --------------------------------------------
