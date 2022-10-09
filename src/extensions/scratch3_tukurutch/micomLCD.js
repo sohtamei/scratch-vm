@@ -64,7 +64,7 @@ var ext = class {
 }, hideFromPalette: (SupportCamera==false)},
 
 {blockType: BlockType.COMMAND, opcode: 'connectWifi', text: ['connect','接続'][this._locale]+' ssid[ARG1] pass[ARG2]', arguments: {
-	ARG1: { type: ArgumentType.STRING, defaultValue: ' ' },
+	ARG1: { type: ArgumentType.STRING, defaultValue: this.comlib.ssid },
 	ARG2: { type: ArgumentType.STRING, defaultValue: ' ' },
 }},
 

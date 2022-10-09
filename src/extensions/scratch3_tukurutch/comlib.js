@@ -43,6 +43,7 @@ class comlib {
 		this.ipadrs = '192.168.1.xx';
 		this.ipCamera = '';
 		this.ifType = (extName=='microbit') ? 'BLE':'UART';
+		this.ssid = ' ';
 		let cookies_get = document.cookie.split(';');
 		for(let i = 0; i < cookies_get.length; i++) {
 			let tmp = cookies_get[i].trim().split('=');
@@ -58,6 +59,9 @@ class comlib {
 			case 'Camera_ip':
 				this.ipCamera = tmp[1];
 				console.log(tmp[0]+'='+tmp[1]);
+				break;
+			case 'ssid':
+				this.ssid = tmp[1];
 				break;
 			}
 		}
@@ -384,6 +388,9 @@ class comlib {
 		ssid = ssid.trim();
 		pass = pass.trim();
 		if(ssid=='') return ['enter ssid and password','SSIDとパスワードを入力して下さい'][this._locale];
+
+		this.ssid = ssid;
+		document.cookie = 'ssid=' + this.ssid + '; samesite=lax; expires=Tue, 31-Dec-2037 00:00:00 GMT;';
 
 		const _this = this;
 		const _defs = {ARG1:{type2:'s'},ARG2:{type2:'s'}};
