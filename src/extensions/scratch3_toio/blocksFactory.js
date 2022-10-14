@@ -70,7 +70,7 @@ var ToioBlocksFactory = function ToioBlocksFactory(id, name, colors, options) {
       function ToioBlocks(runtime) {
         this.runtime = runtime;
         util_1.default.injectToioArea();
-        about_1.injectLink();
+        //about_1.injectLink();
         this.coreCube = new coreCube_1.default(this.runtime, id);
         this.blocks = new blocks_1.default(this.coreCube);
 
@@ -125,7 +125,7 @@ var ToioBlocksFactory = function ToioBlocksFactory(id, name, colors, options) {
             locale: locale || util_1.default.getBrowserLanguage()
           });
           this.locale = locale;
-          about_1.injectLink();
+          //about_1.injectLink();
           this.coreCube.updateTexts();
           this.blocks.updateTexts();
           this.info.blocks = this.blocks.info;

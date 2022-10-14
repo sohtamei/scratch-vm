@@ -52,8 +52,9 @@ const builtinExtensions = {
     toio: () => require('../extensions/scratch3_toio/'),
 //  ikimono: () => require('../extensions/ikimono_extension'),
 //  konashi: () => require('../extensions/konashi_extension'),
-
     qrcode: () => require('../extensions/scratch3_qrcode'),
+    WebMidi: () => require('../extensions/scratch3_webmidi/'),
+
     pen: () => require('../extensions/scratch3_pen'),
     wedo2: () => require('../extensions/scratch3_wedo2'),
     music: () => require('../extensions/scratch3_music'),
