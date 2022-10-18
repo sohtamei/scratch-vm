@@ -495,10 +495,19 @@ class comlib {
 					break;
 
 				case 'b':
-					if(typeof param !== 'object') break;
-					data[ofs+0] = param.length;
-					data.set(param, ofs+1);
-					ofs += param.length+1;
+					let param2;
+					if(typeof param === 'object') {
+						param2 = param;
+					} else if(typeof param === 'string') {
+						param2 = new Uint8Array(param.length/2);
+						for(let i = 0; i < param.length/2; i++)
+							param2[i] = parseInt(param.slice(i*2,i*2+2),16);
+					} else {
+						break;
+					}
+					data[ofs+0] = param2.length;
+					data.set(param2, ofs+1);
+					ofs += param2.length+1;
 					break;
 				}
 			}
@@ -566,32 +575,31 @@ class comlib {
 			let hTimeout = null;
 			loop();
 			function loop(){
+				// timeout thread
 				new Promise(resolve2 => {
 					hTimeout = setTimeout(resolve2, TIMEOUT);
 				}).then(() => {
 					console.log('timeout !');
-					if(_this.uart && _this.uart.readable) {
-						// for no resp
-						reader.cancel();
-					} else {
-						// for disconnect
-						reject('error');
-					}
+					return reader.cancel()	// result.doneへ
+					.catch(err => {
+						console.log(err);
+						reject('timeout');
+						throw err;
+					})
 				})
 
 				return reader.read()
-				.then(result => {
+				.catch(err => {			// buffer overrun
+					clearTimeout(hTimeout);
+					console.log(err);
+					reject('buffer overrun');
+					throw err;
+				}).then(result => {
 					clearTimeout(hTimeout);
 					if(result.done) {
-						writer.releaseLock();
-						reader.releaseLock();
-						if(_this.closeReq) {
-							_this.closeReq = false;
-							_this.uart.close();
-							_this.uart = null
-						}
+						console.log('');
 						reject('timeout');
-						return;
+						throw 'timeout';
 					}
 				//	console.log(_this._dumpBuf(result.value));	// debug
 					for(let i = 0; i < result.value.length; i++) {
@@ -629,20 +637,20 @@ class comlib {
 						}
 					}
 					loop();
-				}).catch(() => {
-					// for disconnect. releaseLock -> port.close -> reject
-					writer.releaseLock();
-					reader.releaseLock();
-					if(_this.closeReq) {
-						_this.closeReq = false;
-						_this.uart.close();
-						_this.uart = null
-					}
-					console.log('error');
-				//	reject('error');
 				})
 			} // loop
-		})) // promise
+		})).catch(err => {
+			// for disconnect. releaseLock -> port.close -> reject
+			writer.releaseLock();
+			reader.releaseLock();
+			if(_this.closeReq) {
+				_this.closeReq = false;
+				_this.uart.close();
+				_this.uart = null
+			}
+			console.log(err);
+			throw err;
+		})
 	}
 
 	_sendRecvBle(sendBuf) {
@@ -716,12 +724,21 @@ class comlib {
 			console.log('disconnected');
 			this.closeReq = true;
 			return _this.uart.setSignals({ dataTerminalReady: false })
+			.then(() => new Promise(resolve => setTimeout(resolve, 100)))
 			.then(() => _this.uart.close())
 			.then(() => {
 				_this.closeReq = false;
 				_this.uart = null;
+				navigator.serial.ondisconnect = null;
 			})
 		}
+	}
+
+	_disconnectedUart() {
+		this._closeUart();
+		this._runtime.emit(this._runtime.constructor.PERIPHERAL_DISCONNECTED);
+		alert(['USB disconnected, please reload screen.','USBが切断されました, プログラムを保存して画面を再読み込みして下さい.\n(USBを抜く前に接続/切断ボタンで切断してください)'][this._locale]);
+		//	this.statusMessage.innerText = ['Disconnected, please reload screen.','USB切断, 画面を再読み込みして下さい'][this._locale];
 	}
 
 	_openUart() {
@@ -733,11 +750,7 @@ class comlib {
 		this._runtime.emit(this._runtime.constructor.PERIPHERAL_DISCONNECTED);
 
 		let uart = null;
-		navigator.serial.ondisconnect = function() {
-			_this._closeUart();
-			_this.statusMessage.innerText = ['Disconnected','切断されました'][_this._locale];
-			_this._runtime.emit(_this._runtime.constructor.PERIPHERAL_DISCONNECTED);
-		}
+		navigator.serial.ondisconnect = this._disconnectedUart.bind(this);
 
 		return navigator.serial.requestPort({})
 		.catch(err => {
@@ -759,22 +772,31 @@ class comlib {
 				let hTimeout = null;
 				loop();
 				function loop(){
+					// timeout thread
 					new Promise(resolve2 => {
 						hTimeout = setTimeout(resolve2, 3000);
 					}).then(() => {
 						console.log('timeout !');
-						reader.cancel();
+						return reader.cancel()	// result.doneへ
+						.catch(err => {
+							console.log(err);
+							reject('timeout');
+							throw err;
+						})
 					})
 
 					return reader.read()
-					.then(result => {
+					.catch(err => {			// UART認識中のbuffer overrun
+						clearTimeout(hTimeout);
+						console.log(err);
+						reject('buffer overrun');
+						throw err;
+					}).then(result => {
 						clearTimeout(hTimeout);
 						if(result.done) {
-							writer.releaseLock();
-							reader.releaseLock();
-							_this._runtime.emit(_this._runtime.constructor.PERIPHERAL_SCAN_TIMEOUT);
+							console.log('');
 							reject('timeout');
-							return;
+							throw 'timeout';
 						}
 					//	console.log(_this._dumpBuf(result.value));	// debug
 						for(let i = 0; i < result.value.length; i++) {
@@ -797,6 +819,9 @@ class comlib {
 				_this._runtime.emit(_this._runtime.constructor.PERIPHERAL_CONNECTED);
 				return;
 			}).catch(err => {
+				writer.releaseLock();
+				reader.releaseLock();
+				_this._runtime.emit(_this._runtime.constructor.PERIPHERAL_SCAN_TIMEOUT);
 				if(uart) uart.close();
 				_this.uart = null;
 				throw err;
@@ -919,9 +944,9 @@ class comlib {
 		})
 	}
 
-	burnWlan(flashBin) {
+	burnWlan(flashBin, clearNVS=false) {
 		switch(flashBin.type) {
-		case 'esp32':		return this.burnESP32(flashBin);
+		case 'esp32':		return this.burnESP32(flashBin, clearNVS);
 		case 'atmega328':	return this.burnAvr(flashBin);
 		default: return null;
 		}
@@ -1126,7 +1151,7 @@ class comlib {
 
 	// flashBin={name:'TukuBoard1.0', type:'esp32', baudrate:230400, part:_part0, image:_image0},
 	// esptool.exe --chip esp32 --port COM6 --baud 921600 --before default_reset --after hard_reset write_flash -z --flash_mode dio --flash_freq 80m --flash_size detect 0xe000 Arduino/portable/packages/esp32/hardware/esp32/1.0.4/tools/partitions/boot_app0.bin 0x1000 Arduino/portable/packages/esp32/hardware/esp32/1.0.4/tools/sdk/bin/bootloader_qio_80m.bin 0x10000 C:\Users\n-tom\fd_work\TuKuRutch\ext\libraries\TukuBoard1.0\robot_pcmode\robot_pcmode.ino.esp32.bin 0x8000 C:\Users\n-tom\fd_work\TuKuRutch\ext\libraries\TukuBoard1.0\robot_pcmode\robot_pcmode.ino.partitions.bin
-	burnESP32(flashBin) {
+	burnESP32(flashBin, clearNVS) {
 		if(this.espBurnBusy) return;
 		this.espBurnBusy = true;
 
@@ -1252,8 +1277,15 @@ class comlib {
 		// 0x8000  partitions.bin
 		.then(rcvParam => _this._espFlash(flashBinPart, 0x8000, 13, 13))
 
+		// 0x9000 NVS
+		.then(rcvParam => {
+			if(clearNVS) {
+				let tmp = new Uint8Array(0x6000);
+				tmp.fill(0xFF);
+				return _this._espFlash(tmp, 0x9000, 13, 13);
+			}
 		// 0x10000  esp32.bin
-		.then(rcvParam => _this._espFlash(flashBinImage, 0x10000, 15, 100))
+		}).then(rcvParam => _this._espFlash(flashBinImage, 0x10000, 15, 100))
 
 		// DTR=1 RTS=0 IO0=1 EN=0
 		// DTR=1 RTS=1 IO0=1 EN=1

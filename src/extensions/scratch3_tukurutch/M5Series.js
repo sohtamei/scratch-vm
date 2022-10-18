@@ -58,10 +58,11 @@ var ext = class {
 }},
 
 {blockType: BlockType.COMMAND, opcode: 'burnFlash', text: [
-    'burn [ARG1]',
-    '[ARG1]書き込み',
+    'burn [ARG1] [ARG2]',
+    '書き込み [ARG1] [ARG2]',
 ][this._locale], arguments: {
 	ARG1: { type: ArgumentType.STRING, defaultValue:'0', menu: 'flashList' },
+	ARG2: { type: ArgumentType.STRING, defaultValue:'0', menu: 'clearNVS' },
 }},
 
 {blockType: BlockType.COMMAND, opcode: 'videoToggle', text: 'turn video [ARG1]', arguments: {
@@ -171,6 +172,11 @@ var ext = class {
 ifType: { acceptReporters: true, items: [
 	{ text: 'USB', value: 'UART' },
 	{ text: 'WiFi', value: 'WLAN' },
+]},
+
+clearNVS: { items: [
+{ text: '--', value: '0' },
+{ text: ['init NVS','NVS初期化'][this._locale], value: '1' },
 ]},
 
 videoState: { acceptReporters: true, items: ['off','on','on_flipped']},
@@ -330,7 +336,7 @@ drawJpg(args,util) { return this.sendRecv('drawJpg', args); }
 		let ret = window.confirm(['Burn TuKuRutch firmware to device, sure ?', 'つくるっち用ファームをデバイスに書き込みますか？'][this._locale]);
 		console.log(ret);
 		if(!ret) return;
-		return this.comlib.burnWlan(this.flashList[Number(args.ARG1)]);
+		return this.comlib.burnWlan(this.flashList[Number(args.ARG1)], Number(args.ARG2));
 	}
 
 	connectWifi(args) {

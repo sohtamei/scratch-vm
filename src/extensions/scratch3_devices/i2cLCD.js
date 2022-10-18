@@ -202,7 +202,7 @@ var ext = class {
 		case 'SSD1306':
 		case 'SSD1306_32':
 		case 'SSD1315':
-			return this.initLCD_SSD1306(args.ARG1, args.ARG3*1);
+			return this.initLCD_SSD1306(args.ARG1, Number(args.ARG3));
 		}
 	}
 
@@ -260,7 +260,7 @@ var ext = class {
 			CMD_PAGEADDR, 0x00, this.rowNum-1,
 		]);
 
-		const byteData = (args.ARG1*1==TFT_WHITE) ? 0xFF: 0x00;
+		const byteData = (Number(args.ARG1)==TFT_WHITE) ? 0xFF: 0x00;
 		this.lastBuf.fill(byteData);
 
 		const data = new Uint8Array(this.port[2]);

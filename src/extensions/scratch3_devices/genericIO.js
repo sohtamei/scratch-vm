@@ -169,7 +169,7 @@ var ext = class {
 	}
 
 	wire_port2(args) {
-		this.port = [args.ARG1*1,args.ARG2*1];
+		this.port = [Number(args.ARG1),Number(args.ARG2)];
 	}
 
 	wire_write(args) {
@@ -192,7 +192,7 @@ var ext = class {
 
 	wire_read(args) {
 		let adrs = parseInt(args.ARG1, 16);
-		let size = args.ARG2*1;
+		let size = Number(args.ARG2);
 
 		const _this = this;
 		return this.runtime.dev.comlib.wire_begin(this.port[0], this.port[1])
@@ -207,7 +207,7 @@ var ext = class {
 
 	wire_writeRead(args) {
 		let adrs = parseInt(args.ARG1, 16);
-		let sizeR = args.ARG3*1;
+		let sizeR = Number(args.ARG3);
 
 		if(args.ARG2.length & 1) args.ARG2 = '0'+args.ARG2;
 		let size = args.ARG2.length/2;
@@ -239,38 +239,38 @@ var ext = class {
 	}
 
 	digiWrite(args) {
-		let port = args.ARG1*1;
-		let level = args.ARG2*1;
+		let port = Number(args.ARG1);
+		let level = Number(args.ARG2);
 		return this.runtime.dev.comlib.digiWrite([{port:port, level:level}]);
 	}
 
 	digiRead(args) {
-		let port = args.ARG1*1;
+		let port = Number(args.ARG1);
 		return this.runtime.dev.comlib.digiRead(port);
 	}
 
 	anaRead(args) {
-		let port = args.ARG1*1;
-		let count = args.ARG2*1;
+		let port = Number(args.ARG1);
+		let count = Number(args.ARG2);
 		return this.runtime.dev.comlib.anaRead(port,count);
 	}
 
 	tone(args) {
-		let port = args.ARG1*1;
-		let freq = args.ARG2*1;
-		let ms = args.ARG3*1;
+		let port = Number(args.ARG1);
+		let freq = Number(args.ARG2);
+		let ms = Number(args.ARG3);
 		return this.runtime.dev.comlib.tone(port,freq,ms);
 	}
 
 	setPwms(args) {
-		let port = args.ARG1*1;
-		let level = Math.min(args.ARG2*1, 0xFFF);
+		let port = Number(args.ARG1);
+		let level = Math.min(Number(args.ARG2), 0xFFF);
 		return this.runtime.dev.comlib.setPwms([{port:port,level:level}], 0/*duration*/, 0/*mode*/);
 	}
 
 	setServo180(args) {
-		let port = args.ARG1*1;
-		let angle = args.ARG2*1;	// 0~180
+		let port = Number(args.ARG1);
+		let angle = Number(args.ARG2);	// 0~180
 		angle = Math.min(180, Math.max(0, angle));
 
 		const srvMin = 103;		// 0.5ms/20ms*4096 = 102.4 (-90c)
@@ -280,8 +280,8 @@ var ext = class {
 	}
 
 	hex2dec(args) {
-		let upper = args.ARG2*1;
-		let lower = args.ARG3*1;
+		let upper = Number(args.ARG2);
+		let lower = Number(args.ARG3);
 		console.log(args.ARG1);
 		if(args.ARG1.length & 1) args.ARG1 = '0'+args.ARG1;
 		if(args.ARG1.length < upper || args.ARG1.length < lower) return 'error';

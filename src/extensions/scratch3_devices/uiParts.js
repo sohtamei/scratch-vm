@@ -222,7 +222,7 @@ class Scratch3Blocks {
 	}
 
 	setVideoTransparency(args) {
-		this.runtime.ioDevices.video.setPreviewGhost(args.ARG1*1);
+		this.runtime.ioDevices.video.setPreviewGhost(Number(args.ARG1));
 	}
 
 	plot1(args, util) { return this.plot(args, util, 1); }
@@ -412,7 +412,7 @@ class Scratch3Blocks {
 */
 
 	getGamepadAxes(args) {
-		return this.gamepadAxes[args.ARG1*1-1];
+		return this.gamepadAxes[Number(args.ARG1)-1];
 	}
 
 	gamepadTimerCallback(){
