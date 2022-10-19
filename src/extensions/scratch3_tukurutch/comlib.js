@@ -499,9 +499,16 @@ class comlib {
 					if(typeof param === 'object') {
 						param2 = param;
 					} else if(typeof param === 'string') {
-						param2 = new Uint8Array(param.length/2);
-						for(let i = 0; i < param.length/2; i++)
-							param2[i] = parseInt(param.slice(i*2,i*2+2),16);
+						if(param.indexOf(',') !== -1) {
+							tmp = param.split(',');
+							param2 = new Uint8Array(tmp.length);
+							for(let i = 0; i < param2.length; i++)
+								param2[i] = parseInt(tmp[i],10);
+						} else {
+							param2 = new Uint8Array(param.length/2);
+							for(let i = 0; i < param.length/2; i++)
+								param2[i] = parseInt(param.slice(i*2,i*2+2),16);
+						}
 					} else {
 						break;
 					}
@@ -945,11 +952,19 @@ class comlib {
 	}
 
 	burnWlan(flashBin, clearNVS=false) {
-		switch(flashBin.type) {
-		case 'esp32':		return this.burnESP32(flashBin, clearNVS);
-		case 'atmega328':	return this.burnAvr(flashBin);
-		default: return null;
-		}
+		const _this = this;
+		return Promise.resolve().then(() => {
+			if(_this.isConnected()) {
+				if(_this.SupportCamera) _this.videoToggle('off');
+				return _this.disconnect();
+			}
+		}).then(() => {
+			switch(flashBin.type) {
+			case 'esp32':		return _this.burnESP32(flashBin, clearNVS);
+			case 'atmega328':	return _this.burnAvr(flashBin);
+			default: return null;
+			}
+		})
 	}
 
 	// atmega328pアップデート -----------------------------------------------------

@@ -26,7 +26,7 @@ const builtinExtensions = {
     RemoconRobo: () => require('../extensions/scratch3_tukurutch/RemoconRobo_.js'),
     QuadCrawler: () => require('../extensions/scratch3_tukurutch/QuadCrawler.js'),
     DevkitC: () => require('../extensions/scratch3_tukurutch/DevkitC.js'),
-    micomLCD: () => require('../extensions/scratch3_tukurutch/micomLCD.js'),
+    lovyanGFX: () => require('../extensions/scratch3_tukurutch/lovyanGFX.js'),
 
     uiParts: () => require('../extensions/scratch3_devices/uiParts.js'),
     exeScript: () => require('../extensions/scratch3_devices/exeScript.js'),
