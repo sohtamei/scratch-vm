@@ -5,6 +5,7 @@ const IconURI = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFAAAABQCAYAAACOE
 //*
 const ArgumentType = require('../../extension-support/argument-type');
 const BlockType = require('../../extension-support/block-type');
+const Base64Util = require('../../util/base64-util');
 const formatMessage = require('format-message');
 const comlib = require('./comlib.js');
 class Scratch3Blocks {
@@ -45,24 +46,23 @@ var ext = class {
 {name:'QuadCrawlerAI', type:'esp32', baudrate:921600},
 		];
 
-		this.blockOffset = 6;
-
 		this._blocks = [
 {blockType: BlockType.COMMAND, opcode: 'setConfig', text: ['con/discon','接続/切断'][this._locale] + '[ARG1] IP=[ARG2]', arguments: {
 	ARG1: { type: ArgumentType.STRING, defaultValue: this.comlib.ifType, menu: 'ifType' },
 	ARG2: { type: ArgumentType.STRING, defaultValue: this.comlib.ipadrs},
 }},
 
+{blockType: BlockType.COMMAND, opcode: 'burnFlash', text: [
+    'burn [ARG1] [ARG2]',
+    '書き込み [ARG1] [ARG2]',
+][this._locale], arguments: {
+	ARG1: { type: ArgumentType.STRING, defaultValue:'0', menu: 'flashList' },
+	ARG2: { type: ArgumentType.STRING, defaultValue:'0', menu: 'clearNVS' },
+}},
+
 {blockType: BlockType.COMMAND, opcode: 'videoToggle', text: 'turn video [ARG1]', arguments: {
 	ARG1: { type: ArgumentType.STRING, defaultValue: 'on', menu: 'videoState' },
 }, hideFromPalette: (SupportCamera==false)},
-
-{blockType: BlockType.COMMAND, opcode: 'burnFlash', text: [
-    'burn [ARG1]',
-    '[ARG1]書き込み',
-][this._locale], arguments: {
-	ARG1: { type: ArgumentType.STRING, defaultValue:'0', menu: 'flashList' },
-}},
 
 {blockType: BlockType.COMMAND, opcode: 'connectWifi', text: ['connect','接続'][this._locale]+' ssid[ARG1] pass[ARG2]', arguments: {
 	ARG1: { type: ArgumentType.STRING, defaultValue: this.comlib.ssid },
@@ -201,18 +201,30 @@ var ext = class {
 }},
 
 		];
+		this.blockOffset = 6;
+		for(let i = 0; i < this._blocks.length; i++) {
+			if(this._blocks[i] == '---') {
+				this.blockOffset = i+1;
+				break;
+			}
+		}
 		return this._blocks;
 	}
 
 	get_menus() {
 		this.flashItems = [];
 		for(let i = 0; i < this.flashList.length; i++)
-			this.flashItems[i] = { text:this.flashList[i].name, value:i };
+			this.flashItems[i] = { text:this.flashList[i].name, value:i.toString(10) };
 
 	  return {
 ifType: { acceptReporters: true, items: [
 	{ text: 'USB', value: 'UART' },
 	{ text: 'WiFi', value: 'WLAN' },
+]},
+
+clearNVS: { items: [
+{ text: '--', value: '0' },
+{ text: ['init NVS','NVS初期化'][this._locale], value: '1' },
 ]},
 
 videoState: { acceptReporters: true, items: ['off','on','on_flipped']},
@@ -387,7 +399,7 @@ setSpeedXY(args,util) { return this.sendRecv('setSpeedXY', args); }
 		let ret = window.confirm(['Burn TuKuRutch firmware to device, sure ?', 'つくるっち用ファームをデバイスに書き込みますか？'][this._locale]);
 		console.log(ret);
 		if(!ret) return;
-		return this.comlib.burnWlan(this.flashList[Number(args.ARG1)]);
+		return this.comlib.burnWlan(this.flashList[Number(args.ARG1)], Number(args.ARG2));
 	}
 
 	connectWifi(args) {
