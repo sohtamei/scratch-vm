@@ -558,8 +558,37 @@ class comlib {
 			})
 			break;
 		case 'WLAN':
-			_this.wsResolve = resolve;
-			return _this.ws.send(data);
+//			return _this.ws.send(data);
+			let count = 0;
+			return new Promise((resolve2,reject2) => {
+				loop();
+				function loop() {
+					let size = Math.min(data.length - count, 16384);
+					let hTimeout = null;
+					_this.ws.send(data.slice(count, count+size));
+					count += size;
+					if(count >= data.length) {
+						_this.wsResolve = resolve;
+						resolve2();
+						return;
+					}
+
+					return new Promise((resolve3, reject3) => {
+						hTimeout = setTimeout(reject3, TIMEOUT);
+						_this.wsResolve = resolve3;
+					}).then(result => {
+						console.log(result);
+						clearTimeout(hTimeout);
+						loop();
+					}).catch(() => {
+						console.log('timeout !');
+						reject2();
+					})
+				} // loop
+			}).catch(() => {
+				console.log('');
+				resolve();
+			})
 		}
 	}
 

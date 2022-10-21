@@ -217,6 +217,8 @@ var ext = class {
 		}
 		this.lastBuf = new Uint8Array(this.size[0]*this.rowNum);
 
+		this.runtime.renderer.setDevSize(this.size[0],this.size[1]);
+
 		const list0 = [
 			PREFIX_CMD,
 
@@ -295,21 +297,21 @@ var ext = class {
 		const tmpData = this.runtime.renderer.drawWithMask(util.sequencer.runtime.ioDevices.video._skinId,
 								[Number(args.ARG1),Number(args.ARG3)], 
 								[Number(args.ARG2),Number(args.ARG4)], 
-								{width:this.size[0],height:this.size[1]},
 								Number(args.ARG5),
 								'ImageData');
+		if(typeof tmpData === 'undefined') return;
 
-		const size = (this.size[0] * this.size[1])>>3;	// 1024byte @ 128x64
+		const size = (tmpData.width * tmpData.height)>>3;	// 1024byte @ 128x64
 		let curBuf = new Uint8Array(size);
 
 		switch(args.ARG6) {
 		case 'errorDiffusion':
-			const grayArray = this.toGrayscale(tmpData, this.size[0], this.size[1]);
-			const funcOutput = this.errorDiffusion1CH(grayArray, this.size[0], this.size[1]);
-			for(let x=0; x<this.size[0]; x++) {
-				for(let y=0; y<this.size[1]; y++) {
-					if(funcOutput[x + y*this.size[0]]) {
-						const ofs2 = (x*this.size[1] + y);
+			const grayArray = this.toGrayscale(tmpData.data, tmpData.width, tmpData.height);
+			const funcOutput = this.errorDiffusion1CH(grayArray, tmpData.width, tmpData.height);
+			for(let x=0; x<tmpData.width; x++) {
+				for(let y=0; y<tmpData.height; y++) {
+					if(funcOutput[x + y*tmpData.width]) {
+						const ofs2 = (x*tmpData.height + y);
 						curBuf[ofs2>>3] = curBuf[ofs2>>3] | (1<<(ofs2&7));
 					}
 				}
@@ -318,13 +320,13 @@ var ext = class {
 
 		case 'imageThresholding':
 		case 'imageThresholdingInv':
-			for(let x=0; x<this.size[0]; x++) {
-				for(let y=0; y<this.size[1]; y++) {
-					const ofs1 = (x+y*this.size[0])*4;
-					const pixel = (tmpData[ofs1+0]+tmpData[ofs1+1]+tmpData[ofs1+2])/3;
+			for(let x=0; x<tmpData.width; x++) {
+				for(let y=0; y<tmpData.height; y++) {
+					const ofs1 = (x+y*tmpData.width)*4;
+					const pixel = (tmpData.data[ofs1+0]+tmpData.data[ofs1+1]+tmpData.data[ofs1+2])/3;
 					if((args.ARG6=='imageThresholding'    && pixel >= 0x80)
 					|| (args.ARG6=='imageThresholdingInv' && pixel <= 0x80)) {
-						const ofs2 = (x*this.size[1]+y);
+						const ofs2 = (x*tmpData.height+y);
 						curBuf[ofs2>>3] = curBuf[ofs2>>3] | (1<<(ofs2&7));
 					}
 				}
@@ -334,35 +336,12 @@ var ext = class {
 			return;
 		}
 
-		let x1 = this.size[0]-1;
-		let x2 = 0;
-		let r1 = this.rowNum-1;
-		let r2 = 0;
-
-		for(let x=0; x<this.size[0]; x++) {
-			for(let r=0; r<this.rowNum; r++) {
-				if(this.lastBuf[x*this.rowNum + r] != curBuf[x*this.rowNum + r]) {
-					x1 = Math.min(x1, x);
-					x2 = Math.max(x2, x);
-					r1 = Math.min(r1, r);
-					r2 = Math.max(r2, r);
-				}
-			}
-		}
-
-		if(x1 > x2 || r1 > r2) return;
-
-		this.lastBuf.set(curBuf, 0);
-		let outBuf = new Uint8Array((x2+1 - x1) * (r2+1 - r1));
-		for(let x=x1; x<=x2; x++) {
-			outBuf.set(curBuf.slice(x*this.rowNum + r1, x*this.rowNum + r2+1), (x-x1)*(r2+1 - r1));
-		}
-		console.log("size="+outBuf.length);
+		console.log("size="+curBuf.length);
 
 		const cmd = new Uint8Array([
 			PREFIX_CMD,
-			CMD_COLUMNADDR, x1, x2,
-			CMD_PAGEADDR, r1, r2,
+			CMD_COLUMNADDR, tmpData.x1, tmpData.x2,
+			CMD_PAGEADDR, tmpData.y1>>3, tmpData.y2>>3,
 		]);
 
 		const data = new Uint8Array(this.port[2]);
@@ -375,12 +354,12 @@ var ext = class {
 		//	for(i=0; i<size; i+=this.port[2]-1)
 			loop();
 			function loop(){
-				let num = Math.min(_this.port[2]-1, outBuf.length - i);
-				data.set(outBuf.slice(i,i+num), 1);
+				let num = Math.min(_this.port[2]-1, curBuf.length - i);
+				data.set(curBuf.slice(i,i+num), 1);
 				return _this.runtime.dev.comlib.wire_write(ADRS_SSD1306, data.slice(0,num+1))
 				.then(() => {
 					i += num;
-					if(i >= outBuf.length) {
+					if(i >= curBuf.length) {
 						resolve();
 						return;
 					}
