@@ -2,9 +2,11 @@ const dispatch = require('../dispatch/central-dispatch');
 const log = require('../util/log');
 const maybeFormatMessage = require('../util/maybe-format-message');
 
-const BlockType = require('./block-type');
 const ArgumentType = require('./argument-type');
+const BlockType = require('./block-type');
+const Base64Util = require('../util/base64-util');
 const formatMessage = require('format-message');
+const Zlib = require('zlib');
 const comlib = require('../extensions/scratch3_tukurutch/comlib.js');
 
 // These extensions are currently built into the VM repository but should not be loaded at startup.
@@ -163,6 +165,23 @@ class ExtensionManager {
         }
 
         /** @TODO dupe handling for non-builtin extensions. See commit 670e51d33580e8a2e852b3b038bb3afc282f81b9 */
+        if (this.isExtensionLoaded(extensionId)) {
+            const message = `Rejecting attempt to load a second extension with ID ${extensionId}`;
+            log.warn(message);
+            return;
+        }
+
+        const extension = builtinExtensions[extensionId]();
+        const extensionInstance = new extension(this.runtime);
+        const serviceName = this._registerInternalExtension(extensionInstance);
+        this._loadedExtensions.set(extensionId, serviceName);
+    }
+
+    loadExtensionData(text) {
+		eval(text);   // var ext = class { ..
+		const extensionId = extName;
+		builtinExtensions[extensionId] = function() { return ext };
+
         if (this.isExtensionLoaded(extensionId)) {
             const message = `Rejecting attempt to load a second extension with ID ${extensionId}`;
             log.warn(message);

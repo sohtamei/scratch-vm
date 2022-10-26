@@ -603,8 +603,8 @@ class comlib {
 		const writer = _this.uart.writable.getWriter();
 		const reader = _this.uart.readable.getReader();
 		let count = 0;
-		let size = 3;
-		let buf = new Uint8Array(256);
+		let size = 4;
+		let buf = new Uint8Array(65536);
 		
 		return writer.write(sendBuf)
 		.then(() => new Promise((resolve,reject) => {
@@ -644,13 +644,18 @@ class comlib {
 							if(result.value[i] != 0xFF) continue
 							break;
 						case 1:
-							if(result.value[i] != 0x55) {
+							if(result.value[i] != 0x55 && result.value[i] != 0x54) {
 								count = 0;
 								continue;
 							}
 							break;
 						case 2:
-							size = 3 + result.value[i];
+							if(buf[1] == 0x55)
+								size = 3 + result.value[i];
+							break;
+						case 3:
+							if(buf[1] == 0x54)
+								size = 4 + buf[2] + (result.value[i]<<8);
 							break;
 						default:
 							break;
@@ -712,9 +717,16 @@ class comlib {
 	}
 
 	_parseRecv(buf) {
-		if(buf[0] == 0xFF && buf[1] == 0x55 && buf[2]+3 == buf.length && buf.length >= 5) {
-			let tmp = null;
-			let tmp2 = new DataView(buf.buffer);
+		if(buf[0] != 0xFF || buf.length < 5)
+			return;
+
+		let tmp = null;
+		let tmp2 = new DataView(buf.buffer);
+
+		switch(buf[1]) {
+		case 0x55:
+			if(buf[2]+3 != buf.length) return;
+
 			switch(buf[3]) {
 			case 1: tmp = tmp2.getUint8(4); break;
 			case 2: tmp = tmp2.getInt16(4, true); break;
@@ -726,6 +738,11 @@ class comlib {
 			case 0x80: tmp = buf.slice(4); break;	// remote
 			}
 			return tmp;
+
+		case 0x54:
+			if(buf[2]+(buf[3]<<8)+4 != buf.length) return;
+
+			return buf.slice(4); break;
 		}
 		return;
 	}
@@ -801,7 +818,7 @@ class comlib {
 			const writer = uart.writable.getWriter();
 			const reader = uart.readable.getReader();
 			let count = 0;
-			let buf = new Uint8Array(256);
+			let buf = new Uint8Array(65536);
 			
 			return writer.write(new Uint8Array([0x00,0xff,0x55,0x01,0xfe]))
 			.then(() => new Promise((resolve,reject) => {
