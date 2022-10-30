@@ -42,6 +42,7 @@ var ext = class {
 			//blockIconURI: IconURI,
 			menuIconURI: IconURI,
 			showStatusButton: true,
+			color1:'#0FBD8C',color2:'#0DA57A',color3:'#0B8E69',
 			blocks: this.get_blocks(),
 			menus: this.get_menus(),
 		};
@@ -100,7 +101,7 @@ var ext = class {
 }},
 '---',
 {blockType: BlockType.REPORTER, opcode: '_getLcdConfig', text: 'get config', arguments: {
-}},
+}, hideFromPalette:true},
 
 {blockType: BlockType.COMMAND, opcode: 'setLcdConfig', text: 'set config [ARG1] port=[ARG2]', arguments: {
     ARG1: { type: ArgumentType.STRING, type2:'S', defaultValue:'0', menu: 'lcdType' },
@@ -156,7 +157,7 @@ var ext = class {
 }},
 
 {blockType: BlockType.REPORTER, opcode: '_getExtJs', text: '_update extension', arguments: {
-}},
+}, hideFromPalette:true},
 
 		];
 		this.blockOffset = 6;
@@ -231,7 +232,22 @@ lcdType: { acceptReporters: true, items: [
 { text: 'AUTO-ROT1', value: '2' },
 { text: 'SSD1306', value: '3' },
 { text: 'SSD1306_32', value: '4' },
-{ text: 'SSD1331', value: '5' },
+{ text: 'QT095B', value: '5' },
+{ text: 'MSP0961', value: '10' },
+{ text: 'MSP1141', value: '11' },
+{ text: 'MSP1308', value: '12' },
+{ text: 'MSP1541', value: '13' },
+{ text: 'GMT177', value: '14' },
+{ text: 'MSP2008', value: '15' },
+{ text: 'MSP1443', value: '16' },
+{ text: 'MSP1803', value: '17' },
+{ text: 'MSP2202', value: '18' },
+{ text: 'MSP2401_2402', value: '19' },
+{ text: 'MSP2806_2807', value: '8' },
+{ text: 'MSP3217_3218', value: '20' },
+{ text: 'MSP3520_3521', value: '21' },
+{ text: 'MSP4020_4021', value: '22' },
+{ text: 'MSP4022_4023', value: '23' },
 { text: '3248S035', value: '6' },
 { text: 'ROUNDLCD', value: '7' },
 { text: 'MSP2807', value: '8' },
