@@ -29,6 +29,7 @@ const builtinExtensions = {
     QuadCrawler: () => require('../extensions/scratch3_tukurutch/QuadCrawler.js'),
     DevkitC: () => require('../extensions/scratch3_tukurutch/DevkitC.js'),
     lovyanGFX: () => require('../extensions/scratch3_tukurutch/lovyanGFX.js'),
+    usb2bt: () => require('../extensions/scratch3_tukurutch/usb2bt.js'),
 
     uiParts: () => require('../extensions/scratch3_devices/uiParts.js'),
     exeScript: () => require('../extensions/scratch3_devices/exeScript.js'),

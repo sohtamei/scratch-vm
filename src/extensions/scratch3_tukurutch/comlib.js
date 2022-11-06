@@ -246,7 +246,7 @@ class comlib {
 				})).then(() => {
 					clearTimeout(hTimeout);
 				}).catch(() => {
-					console.log('timeout !');
+					console.log('timeout');
 					_this.ws = null;
 					_this.busy = false;
 					_this._runtime.emit(_this._runtime.constructor.PERIPHERAL_DISCONNECTED);
@@ -372,7 +372,9 @@ class comlib {
 		const _this = this;
 		return this._statusWifi()
 		.then(status => {
-			if(status[0] == 3)
+			if(status.length < 2)
+				return 'Error';
+			else if(status[0] == 3)
 				return ['connected','接続中'][_this._locale] + ' ('+status[1]+', '+status[2]+')';
 			else if(status[1] == '')
 				return ['Not set up','未設定'][_this._locale];
@@ -549,7 +551,7 @@ class comlib {
 			return ((_this.ifType=='UART')? _this._sendRecvUart(data): _this._sendRecvBle(data))
 			.catch(err => {
 				console.log(err);
-				return err;
+				return err;		// throwだとblockが完了しない
 			}).then(tmp => {
 				_this.busy = false;
 				resolve(tmp);
@@ -581,7 +583,7 @@ class comlib {
 						clearTimeout(hTimeout);
 						loop();
 					}).catch(() => {
-						console.log('timeout !');
+						console.log('timeout');
 						reject2();
 					})
 				} // loop
@@ -645,7 +647,7 @@ class comlib {
 			console.log('R:'+_this._dumpBuf(buf));	// debug
 			return _this._parseRecv(buf);
 		}).catch(() => {
-			console.log('timeout !');
+			console.log('timeout');
 			throw new Error('timeout');
 		})
 	}
@@ -806,12 +808,13 @@ class comlib {
 				new Promise(resolve2 => {
 					hTimeout = setTimeout(resolve2, timeout);
 				}).then(() => {
-					console.log('timeout !');
+					console.log('timeout');
 					return reader.cancel()	// result.doneへ
 					.catch(err => {
 						console.log(err);
 						reject('timeout');
-						throw err;
+					//	throw err;
+						return;
 					})
 				})
 
@@ -820,13 +823,15 @@ class comlib {
 					clearTimeout(hTimeout);
 					console.log(err);
 					reject('buffer overrun');
-					throw err;
+				//	throw err;
+					return;
 				}).then(result => {
 					clearTimeout(hTimeout);
 					if(result.done) {
-						console.log('');
+					//	console.log('');
 						reject('timeout');
-						throw new Error('timeout');
+					//	throw new Error('timeout');
+						return;
 					}
 				//	console.log(_this._dumpBuf(result.value));	// debug
 					for(let i = 0; i < result.value.length; i++) {
@@ -1042,7 +1047,10 @@ class comlib {
 					if(mode == 0x00) {
 						adrsMin = Math.min(adrsMin, adrs);
 						adrsMax = Math.max(adrsMax, adrs+len);
-						if(adrsMax > flashBinImage.length) reject('over size');
+						if(adrsMax > flashBinImage.length) {
+							reject('overrun');
+							return;
+						}
 						for(let j = 0; j < len; j++)
 							flashBinImage[adrs+j] = parseInt(lines[i].slice(9+j*2, 11+j*2),16);
 					}
