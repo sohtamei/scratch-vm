@@ -189,7 +189,7 @@ class comlib {
 		switch(this.ifType) {
 		case 'UART':
 			this._closeUart();
-			return this._openUart();
+			return this._openUart(true);
 		case 'BLE':
 			if(this.ble) {
 				this.ble.disconnect();
@@ -487,11 +487,8 @@ class comlib {
 					let j = 0;
 					if(param !== 'undefined') {
 						const tmp = new TextEncoder().encode(param);
+						data.set(tmp, ofs);
 						j = tmp.length;
-						data.set(tmp,ofs);
-//						let charList = param.split('');
-//						for(j = 0; j < charList.length; j++)
-//							data[ofs+j] = charList[j].charCodeAt(0);
 					}
 					data[ofs+j] = 0;
 					ofs += j+1;
@@ -595,94 +592,6 @@ class comlib {
 		}
 	}
 
-	_sendRecvUart2(sendBuf, timeout, checkResp) {
-		const _this = this;
-
-		if(typeof _this.uart === 'undefined' || _this.uart == null) {
-			throw 'error';
-			return;
-		}
-		if(typeof _this.uart.writable === 'undefined' || typeof _this.uart.readable === 'undefined') {
-			throw 'error';
-			return;
-		}
-
-		const writer = _this.uart.writable.getWriter();
-		const reader = _this.uart.readable.getReader();
-		let count = 0;
-		let buf = new Uint8Array(65536);
-
-		return writer.write(sendBuf)
-		.then(() => new Promise((resolve,reject) => {
-			let hTimeout = null;
-			loop();
-			function loop(){
-				// timeout thread
-				new Promise(resolve2 => {
-					hTimeout = setTimeout(resolve2, timeout);
-				}).then(() => {
-					console.log('timeout !');
-					return reader.cancel()	// result.doneへ
-					.catch(err => {
-						console.log(err);
-						reject('timeout');
-						throw err;
-					})
-				})
-
-				return reader.read()
-				.catch(err => {			// UART認識中のbuffer overrun
-					clearTimeout(hTimeout);
-					console.log(err);
-					reject('buffer overrun');
-					throw err;
-				}).then(result => {
-					clearTimeout(hTimeout);
-					if(result.done) {
-						console.log('');
-						reject('timeout');
-						throw 'timeout';
-					}
-				//	console.log(_this._dumpBuf(result.value));	// debug
-					for(let i = 0; i < result.value.length; i++) {
-						buf[count++] = result.value[i];
-						const {status, result2} = checkResp(buf, count);
-						switch(status) {
-						case 'finish':
-							writer.releaseLock();
-							reader.releaseLock();
-							if(_this.closeReq) {
-								_this.closeReq = false;
-								_this.uart.close();
-								_this.uart = null
-							}
-							resolve(result2);
-							return;
-						case 'reset':
-							count = 0;
-							break;
-						case 'retry':
-							count = 0;
-							return writer.write(sendBuf)
-							.then(() => loop())
-							break;
-						}
-					}
-					loop();
-				})
-			} // loop
-		})).catch(err => {
-			writer.releaseLock();
-			reader.releaseLock();
-			if(_this.closeReq) {
-				_this.closeReq = false;
-				_this.uart.close();
-				_this.uart = null
-			}
-			throw err;
-		})
-	}
-
 	_sendRecvUart(sendBuf) {
 		const _this = this;
 		let size = 4;
@@ -737,7 +646,7 @@ class comlib {
 			return _this._parseRecv(buf);
 		}).catch(() => {
 			console.log('timeout !');
-			throw 'timeout';
+			throw new Error('timeout');
 		})
 	}
 
@@ -780,7 +689,7 @@ class comlib {
 			switch(_this.ifType) {
 			case 'UART':
 				if(_this.uart == null)
-					return _this._openUart();
+					return _this._openUart(true);
 				break;
 			case 'BLE':
 				if(_this.ble == null)
@@ -793,6 +702,54 @@ class comlib {
 				break;
 			}
 			return;
+		})
+	}
+
+	// UART --------------------------------------------
+
+	_openUart(getDevName) {
+		if(this.uart) return Promise.resolve();
+
+		const _this = this;
+		this.busy = false;
+		this.cueue = [];
+		this._runtime.emit(this._runtime.constructor.PERIPHERAL_DISCONNECTED);
+
+		navigator.serial.ondisconnect = this._disconnectedUart.bind(this);
+
+		return navigator.serial.requestPort({})
+		.catch(err => {
+			console.log('canceled');
+			_this._runtime.emit(_this._runtime.constructor.PERIPHERAL_SCAN_TIMEOUT);
+			throw err;
+		}).then(result => {
+			_this.uart = result;
+			return _this.uart.open({ baudRate:(_this.extName=='microbit'?19200:115200) });
+		}).then(() => {
+			if(!getDevName) {
+				_this._runtime.emit(_this._runtime.constructor.PERIPHERAL_CONNECTED);
+				return;
+			}
+
+			return _this._sendRecvUart2(new Uint8Array([0x00,0xff,0x55,0x01,0xfe]), 3000, (buf, count) => {
+				if(buf[count-1] == 0x0a) {
+					return {status:'finish', result2:buf.slice(0,count)};
+				}
+				return {status:''};
+			}).then(recv => {
+				let tmp = String.fromCharCode.apply(null, recv);
+				_this.statusMessage.innerText = tmp;
+				console.log(tmp);
+				_this._runtime.emit(_this._runtime.constructor.PERIPHERAL_CONNECTED);
+				return;
+			})
+		}).catch(err => {
+			_this._runtime.emit(_this._runtime.constructor.PERIPHERAL_SCAN_TIMEOUT);
+			if(_this.uart) {
+				_this.uart.close();
+				_this.uart = null;
+			}
+			throw err;
 		})
 	}
 
@@ -823,46 +780,95 @@ class comlib {
 		//	this.statusMessage.innerText = ['Disconnected, please reload screen.','USB切断, 画面を再読み込みして下さい'][this._locale];
 	}
 
-	_openUart() {
-		if(this.uart) return;
-
+	_sendRecvUart2(sendBuf, timeout, checkResp) {
 		const _this = this;
-		this.busy = false;
-		this.cueue = [];
-		this._runtime.emit(this._runtime.constructor.PERIPHERAL_DISCONNECTED);
 
-		navigator.serial.ondisconnect = this._disconnectedUart.bind(this);
+		if(typeof _this.uart === 'undefined' || _this.uart == null) {
+			throw new Error('error');
+			return;
+		}
+		if(typeof _this.uart.writable === 'undefined' || typeof _this.uart.readable === 'undefined') {
+			throw new Error('error');
+			return;
+		}
 
-		return navigator.serial.requestPort({})
-		.catch(err => {
-			console.log('canceled');
-			_this._runtime.emit(_this._runtime.constructor.PERIPHERAL_SCAN_TIMEOUT);
+		const writer = _this.uart.writable.getWriter();
+		const reader = _this.uart.readable.getReader();
+		let count = 0;
+		let buf = new Uint8Array(65536);
+
+		return writer.write(sendBuf)
+		.then(() => new Promise((resolve,reject) => {
+			let hTimeout = null;
+			loop();
+			function loop(){
+				// timeout thread
+				new Promise(resolve2 => {
+					hTimeout = setTimeout(resolve2, timeout);
+				}).then(() => {
+					console.log('timeout !');
+					return reader.cancel()	// result.doneへ
+					.catch(err => {
+						console.log(err);
+						reject('timeout');
+						throw err;
+					})
+				})
+
+				return reader.read()
+				.catch(err => {			// UART認識中のbuffer overrun
+					clearTimeout(hTimeout);
+					console.log(err);
+					reject('buffer overrun');
+					throw err;
+				}).then(result => {
+					clearTimeout(hTimeout);
+					if(result.done) {
+						console.log('');
+						reject('timeout');
+						throw new Error('timeout');
+					}
+				//	console.log(_this._dumpBuf(result.value));	// debug
+					for(let i = 0; i < result.value.length; i++) {
+						buf[count++] = result.value[i];
+						const {status, result2} = checkResp(buf, count);
+						switch(status) {
+						case 'finish':
+							writer.releaseLock();
+							reader.releaseLock();
+							if(_this.closeReq) {
+								_this.closeReq = false;
+								_this.uart.close();
+								_this.uart = null
+							}
+							resolve(result2);
+							return;
+						case 'reset':
+							count = 0;
+							break;
+						case 'retry':
+							count = 0;
+							return writer.write(sendBuf)
+							.then(() => loop())
+							break;
+						}
+					}
+					loop();
+				})
+			} // loop
+		})).catch(err => {
+			writer.releaseLock();
+			reader.releaseLock();
+			if(_this.closeReq) {
+				_this.closeReq = false;
+				_this.uart.close();
+				_this.uart = null
+			}
 			throw err;
-		}).then(result => {
-			_this.uart = result;
-			return _this.uart.open({ baudRate:(_this.extName=='microbit'?19200:115200) });
-		}).then(() => {
-			return _this._sendRecvUart2(new Uint8Array([0x00,0xff,0x55,0x01,0xfe]), 3000, (buf, count) => {
-				if(buf[count-1] == 0x0a) {
-					return {status:'finish', result2:buf.slice(0,count)};
-				}
-				return {status:''};
-			}).then(recv => {
-				let tmp = String.fromCharCode.apply(null, recv);
-				_this.statusMessage.innerText = tmp;
-				console.log(tmp);
-				_this._runtime.emit(_this._runtime.constructor.PERIPHERAL_CONNECTED);
-				return;
-			}).catch(err => {
-				_this._runtime.emit(_this._runtime.constructor.PERIPHERAL_SCAN_TIMEOUT);
-				if(_this.uart) {
-					_this.uart.close();
-					_this.uart = null;
-				}
-				throw err;
-			})
 		})
 	}
+
+	// BLE --------------------------------------------
 
 	_openBle() {
 		this.busy = false;
@@ -916,6 +922,8 @@ class comlib {
 */
 		return;
 	}
+
+	// websocket --------------------------------------------
 
 	_openWs() {
 		if(this.ws) return;
@@ -979,6 +987,8 @@ class comlib {
 		})
 	}
 
+	// アップデート -----------------------------------------------------
+
 	burnWlan(flashBin, clearNVS=false) {
 		const _this = this;
 		return Promise.resolve().then(() => {
@@ -996,7 +1006,7 @@ class comlib {
 	}
 
 	// atmega328pアップデート -----------------------------------------------------
-	
+
 	// flashBin={name:'TukuBoard1.0', type:'esp32', baudrate:230400, part:_part0, image:_image0},
 	burnAvr(flashBin) {
 		if(this.espBurnBusy) return;
@@ -1082,7 +1092,7 @@ class comlib {
 		.then(() => 'OK !')
 		.catch(err => {
 			console.log(err);
-			throw 'error';
+			throw new Error('error');
 		}).finally(result => {
 			if(_this.uart) {
 				_this.uart.close();
@@ -1268,7 +1278,7 @@ class comlib {
 		.then(() => _this.uart.open({ baudRate:flashBin.baudrate }))
 		.then(() => {
 			reader = _this.uart.readable.getReader();
-			_this._RecvEspBurn(reader);
+			_this._RecvEspBurn(reader);			// この後recvスレッド走りっぱなし
 
 			// write_reg省略
 
@@ -1310,7 +1320,7 @@ class comlib {
 		}).catch(() => {
 			_this.statusMessage.innerText = ['Failed', '書き込み失敗'][_this._locale];
 			console.log('NG');
-			throw 'Error';
+			throw new Error('Error');
 		}).finally(result => {
 			if(reader) {
 				reader.cancel();
@@ -1349,7 +1359,7 @@ class comlib {
 				reject1();
 			}, 5000);
 
-			_this.recvResolve = rcvParam => {
+			_this.recvResolve = (rcvParam) => {
 			//	console.log(rcvParam);	// debug
 				clearTimeout(_this.recvTimeout);
 				_this.recvTimeout = null;
@@ -1489,12 +1499,10 @@ class comlib {
 			function loop(){
 				return reader.read()
 				.catch(err => {			// UART認識中のbuffer overrun
-
 					console.log(err);
 					reject('buffer overrun');
 					throw err;
 				}).then(result => {
-
 					if(result.done) {
 						reader.releaseLock();
 						resolve();
@@ -1518,7 +1526,7 @@ class comlib {
 										rcvBuf[i] = 0xDB;
 										break;
 									default:
-										throw 'Invalid SLIP escape';
+										throw new Error('Invalid SLIP escape');
 									}
 									for(let j = i+i; j < count-1; j++)
 										rcvBuf[j] = rcvBuf[j+1];
@@ -1540,7 +1548,7 @@ class comlib {
 						} else {
 							rcvBuf[count] = result.value[i];
 							count++;
-							if(count >= rcvBuf.length) throw 'overflow';
+							if(count >= rcvBuf.length) throw new Error('overflow');
 						}
 					}
 					loop();
