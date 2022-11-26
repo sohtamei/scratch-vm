@@ -30,7 +30,9 @@ const builtinExtensions = {
     DevkitC: () => require('../extensions/scratch3_tukurutch/DevkitC.js'),
     lovyanGFX: () => require('../extensions/scratch3_tukurutch/lovyanGFX.js'),
     usb2bt: () => require('../extensions/scratch3_tukurutch/usb2bt.js'),
+    AtomMateForToio: () => require('../extensions/scratch3_tukurutch/AtomMateForToio.js'),
 
+    loadVMD: () => require('../extensions/scratch3_devices/loadVMD.js'),
     uiParts: () => require('../extensions/scratch3_devices/uiParts.js'),
     exeScript: () => require('../extensions/scratch3_devices/exeScript.js'),
     genericIO: () => require('../extensions/scratch3_devices/genericIO.js'),
