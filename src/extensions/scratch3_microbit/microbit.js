@@ -49,12 +49,12 @@ class Scratch3Blocks {
 			break;
 		}
 		this.comlib.setLocale(this._locale);
-
+/*
 		if(this.comlib.server=='http') {
 			alert(['please access via https://','https:// でアクセスして下さい'][this._locale]);
 			return null;
 		}
-
+*/
 		this._intervalId = setInterval(this.intervalFunc.bind(this), 200);	// debug
 
 		return {

@@ -66,7 +66,7 @@ class comlib {
 			}
 		}
 
-		if(this.server=='http' && this.ifType=='UART') this.ifType = 'WLAN';
+	//	if(this.server=='http' && this.ifType=='UART') this.ifType = 'WLAN';
 		if(this.server=='https' && this.ifType=='WLAN') this.ifType = 'UART';
 
 		this._locale = 0;
@@ -112,7 +112,7 @@ class comlib {
 				return _this.disconnect();
 			}
 		}).then(() => {
-			if(_this.server=='http' && (ifType=='UART'||ifType=='BLE')) return ['please access via https://','https:// でアクセスして下さい'][_this._locale];
+		//	if(_this.server=='http' && (ifType=='UART'||ifType=='BLE')) return ['please access via https://','https:// でアクセスして下さい'][_this._locale];
 			if(_this.server=='https' && ifType=='WLAN') return ['please access via http://','http:// でアクセスして下さい'][_this._locale];
 
 			let updated = false;
@@ -764,7 +764,7 @@ class comlib {
 		const _this = this;
 		console.log('disconnected');
 		this.closeReq = true;
-		return _this.uart.setSignals({ dataTerminalReady: false })
+		return _this.uart.setSignals({ dataTerminalReady: false, requestToSend: true })
 		.then(() => new Promise(resolve => setTimeout(resolve, 100)))
 		.then(() => _this.uart.close())
 		.then(() => {

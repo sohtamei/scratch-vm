@@ -182,7 +182,7 @@ stopServo(args,util) { return this.sendRecv('stopServo', args); }
 enumDirection(args) { return args.ARG1; }
 
 	burnFlash(args) {
-		if(this.comlib.server=='http') return ['please access via https://','https:// でアクセスして下さい'][this._locale];
+	//	if(this.comlib.server=='http') return ['please access via https://','https:// でアクセスして下さい'][this._locale];
 
 		let ret = window.confirm(['Burn TuKuRutch firmware to device, sure ?', 'つくるっち用ファームをデバイスに書き込みますか？'][this._locale]);
 		console.log(ret);
@@ -191,7 +191,7 @@ enumDirection(args) { return args.ARG1; }
 	}
 
 	connectWifi(args) {
-		if(this.comlib.server=='http') return ['please access via https://','https:// でアクセスして下さい'][this._locale];
+	//	if(this.comlib.server=='http') return ['please access via https://','https:// でアクセスして下さい'][this._locale];
 
 		return this.comlib.connectWifi(args.ARG1, args.ARG2);
 	}

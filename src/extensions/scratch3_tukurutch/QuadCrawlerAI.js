@@ -402,7 +402,7 @@ enumWalkcmd(args) { return args.ARG1; }
 setSpeedXY(args,util) { return this.sendRecv('setSpeedXY', args); }
 
 	burnFlash(args) {
-		if(this.comlib.server=='http') return ['please access via https://','https:// でアクセスして下さい'][this._locale];
+	//	if(this.comlib.server=='http') return ['please access via https://','https:// でアクセスして下さい'][this._locale];
 
 		let ret = window.confirm(['Burn TuKuRutch firmware to device, sure ?', 'つくるっち用ファームをデバイスに書き込みますか？'][this._locale]);
 		console.log(ret);
@@ -411,7 +411,7 @@ setSpeedXY(args,util) { return this.sendRecv('setSpeedXY', args); }
 	}
 
 	connectWifi(args) {
-		if(this.comlib.server=='http') return ['please access via https://','https:// でアクセスして下さい'][this._locale];
+	//	if(this.comlib.server=='http') return ['please access via https://','https:// でアクセスして下さい'][this._locale];
 
 		return this.comlib.connectWifi(args.ARG1, args.ARG2);
 	}
