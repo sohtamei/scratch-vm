@@ -40,6 +40,11 @@ var ext = class {
 				{blockType: BlockType.COMMAND, opcode: 'setPort', text: 'I2C port [ARG1] for ESP32', arguments: {
 					ARG1: { type: ArgumentType.STRING, defaultValue:'21_22', menu: 'i2cPort' },
 				}},
+
+				{blockType: BlockType.COMMAND, opcode: 'setPort2', text: 'I2C port [ARG1] [ARG2]', arguments: {
+				    ARG1: { type: ArgumentType.NUMBER, defaultValue:15 },
+				    ARG2: { type: ArgumentType.NUMBER, defaultValue:12 },
+				}},
 			],
 
 			menus: {
@@ -58,6 +63,10 @@ var ext = class {
 
 	setPort(args, util, blockInfo) {
 		this.port = args.ARG1.split('_');
+	}
+
+	setPort2(args) {
+		this.port = [Number(args.ARG1),Number(args.ARG2)];
 	}
 
 	getTemp(args, util, blockInfo) {

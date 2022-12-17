@@ -82,6 +82,7 @@ class comlib {
 		this.ble = null;
 		this.bleTxChar = null;
 		this.bleRxChar = null;
+		this.bleRxResolve = null;
 		this.closeReq = false;
 
 		// flash burn
@@ -545,10 +546,10 @@ class comlib {
 		const {resolve, data} = _this.cueue.shift();
 		if(data.length < 256)
 			console.log('W:'+_this._dumpBuf(data));	// debug
+		let count = 0;
 		switch(_this.ifType) {
 		case 'UART':
-		case 'BLE':
-			return ((_this.ifType=='UART')? _this._sendRecvUart(data): _this._sendRecvBle(data))
+			return _this._sendRecvUart(data)
 			.catch(err => {
 				console.log(err);
 				return err;		// throwだとblockが完了しない
@@ -559,9 +560,36 @@ class comlib {
 				_this.checkCueue();
 			})
 			break;
+		case 'BLE':
+			return new Promise(resolve2 => {
+				loop();
+				function loop() {
+					let size = Math.min(data.length - count, 20);
+					return _this._sendRecvBle(data.slice(count, count+size))
+					.catch(err => {
+						throw err;
+					}).then(tmp => {
+						count += size;
+						if(count >= data.length) {
+							resolve2(tmp);
+							return;
+						}
+						loop();
+					})
+				} // loop
+			}).catch(err => {
+				console.log(err);
+				return err;		// throwだとblockが完了しない
+			//	resolve();
+			}).then(tmp => {
+				_this.busy = false;
+				resolve(tmp);
+				if(_this.cueue.length != 0) console.log('-Cueue=' + _this.cueue.length + '->' + (_this.cueue.length-1));
+				_this.checkCueue();
+			})
+			break;
 		case 'WLAN':
 //			return _this.ws.send(data);
-			let count = 0;
 			return new Promise((resolve2,reject2) => {
 				loop();
 				function loop() {
@@ -591,6 +619,7 @@ class comlib {
 				console.log('');
 				resolve();
 			})
+			break;
 		}
 	}
 
@@ -635,18 +664,25 @@ class comlib {
 		let hTimeout = null;
 		return new Promise((resolve,reject) => {
 			hTimeout = setTimeout(reject, TIMEOUT);
-			_this.bleRxChar.addEventListener('characteristicvaluechanged', resolve);
-			return _this.bleTxChar.writeValue(sendBuf);
-	//		return _this.ble.startNotifications(BLEUUID.service, BLEUUID.rxChar, resolve)
-	//		.then(() => _this.ble.write(BLEUUID.service, BLEUUID.txChar, Base64Util.uint8ArrayToBase64(sendBuf), 'base64', false/*wResp*/))
-	//	}).then(base64 => {
+			_this.bleRxResolve = resolve;
+			return _this.bleTxChar.writeValue(sendBuf)
+			.catch(err => {
+				console.log(err);
+				return new Promise(resolve2 => setTimeout(resolve2, 50))
+				.then(() => _this.bleTxChar.writeValue(sendBuf))
+				.catch(err => {
+					console.log(err);
+					throw err;
+				})
+			})
 		}).then(event => {
+			_this.bleRxResolve = null;
 			clearTimeout(hTimeout);
 			const buf = new Uint8Array(event.target.value.buffer);
-	//		const buf = Base64Util.base64ToUint8Array(base64);
 			console.log('R:'+_this._dumpBuf(buf));	// debug
 			return _this._parseRecv(buf);
 		}).catch(() => {
+			_this.bleRxResolve = null;
 			console.log('timeout');
 			throw new Error('timeout');
 		})
@@ -902,7 +938,13 @@ class comlib {
 			_this.bleTxChar = char;
 			return _service.getCharacteristic(BLEUUID.rxChar);
 		}).then(char => {
+			function _bleRxValueChanged(event) {
+				if(this.bleRxResolve) this.bleRxResolve(event);
+			}
+
 			_this.bleRxChar = char;
+			_this.bleRxResolve = null;
+			_this.bleRxChar.addEventListener('characteristicvaluechanged', _bleRxValueChanged.bind(_this));
 			return _this.bleRxChar.startNotifications();
 		}).then(() => {
 			console.log('connected!');

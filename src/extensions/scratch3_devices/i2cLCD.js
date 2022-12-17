@@ -114,7 +114,7 @@ var ext = class {
 			menuIconURI: IconURI,
 
 			blocks: [
-			{blockType: BlockType.COMMAND, opcode: 'initLCD', text: 'init [ARG1] I2C=[ARG2] brightness[ARG3]', arguments: {
+				{blockType: BlockType.COMMAND, opcode: 'initLCD', text: 'init [ARG1] I2C=[ARG2] brightness[ARG3]', arguments: {
 					ARG1: { type: ArgumentType.STRING, defaultValue:'SSD1306', menu: 'lcdType' },
 					ARG2: { type: ArgumentType.STRING, defaultValue:'21_22_128', menu: 'i2cPort' },
 					ARG3: { type: ArgumentType.NUMBER, defaultValue:127 },
@@ -146,6 +146,7 @@ var ext = class {
 				i2cPort: { acceptReporters: true, items: [
 					{ text: 'dA4 cA5 uno', value: '18_19_32', },
 					{ text: 'd20 c19 microbit', value: '20_19_63', },
+					{ text: 'd0 c1 microbit', value: '0_1_63', },
 					{ text: 'd21 c22 ESP32 default', value: '21_22_128', },
 					{ text: 'd8 c9 ESP32S3 default', value: '8_9_128', },
 					{ text: 'd32 c33 M5StickC', value: '32_33_128', },
@@ -215,12 +216,11 @@ var ext = class {
 			this.size = [128, 64];
 			this.rowNum = 8;
 		}
-		this.lastBuf = new Uint8Array(this.size[0]*this.rowNum);
 
 		this.runtime.renderer.setDevSize(this.size[0],this.size[1]);
 
 		const list0 = [
-			PREFIX_CMD,
+		//	PREFIX_CMD,
 
 			CMD_DISP_OFF,
 			CMD_SETCLKDIV,			0x80,
@@ -247,7 +247,8 @@ var ext = class {
 
 		const _this = this;
 		return this.runtime.dev.comlib.wire_begin(this.port[0], this.port[1])
-		.then(() => _this.runtime.dev.comlib.wire_write(ADRS_SSD1306, new Uint8Array(list0)))
+//		.then(() => _this.runtime.dev.comlib.wire_write(ADRS_SSD1306, new Uint8Array(list0)))
+		.then(() => _this.writeWireData(PREFIX_CMD, new Uint8Array(list0)))
 		.then(() => {
 			_this.initialized = true;
 		});
@@ -256,39 +257,21 @@ var ext = class {
 	fillScreen(args) {
 		if(!this.initialized) return;
 
+		this.runtime.renderer.setDevSize(this.size[0],this.size[1]);
+
+		const byteData = (Number(args.ARG1)==TFT_WHITE) ? 0xFF: 0x00;
+		const buf = new Uint8Array(this.size[0] * this.rowNum);	// 1024byte @ 128x64
+		buf.fill(byteData);
+
 		const cmd = new Uint8Array([
 			PREFIX_CMD,
 			CMD_COLUMNADDR, 0x00, this.size[0]-1,
 			CMD_PAGEADDR, 0x00, this.rowNum-1,
 		]);
 
-		const byteData = (Number(args.ARG1)==TFT_WHITE) ? 0xFF: 0x00;
-		this.lastBuf.fill(byteData);
-
-		const data = new Uint8Array(this.port[2]);
-		data.fill(byteData);
-		data[0] = PREFIX_DATA;
-
 		const _this = this;
-		const size = this.size[0] * this.rowNum;	// 1024byte @ 128x64
-		let i = 0;
 		return this.runtime.dev.comlib.wire_write(ADRS_SSD1306, cmd)
-		.then(() => new Promise(resolve => {
-		//	for(i=0; i<size; i+=this.port[2]-1)
-			loop();
-			function loop(){
-				let num = Math.min(_this.port[2]-1, size - i);
-				return _this.runtime.dev.comlib.wire_write(ADRS_SSD1306, data.slice(0,num+1))
-				.then(() => {
-					i += num;
-					if(i >= size) {
-						resolve();
-						return;
-					}
-					loop();
-				})
-			}
-		}))
+		.then(() => _this.writeWireData(PREFIX_DATA, buf));
 	}
 
 	drawStage(args,util) {
@@ -344,29 +327,34 @@ var ext = class {
 			CMD_PAGEADDR, tmpData.y1>>3, tmpData.y2>>3,
 		]);
 
+		const _this = this;
+		return this.runtime.dev.comlib.wire_write(ADRS_SSD1306, cmd)
+		.then(() => _this.writeWireData(PREFIX_DATA, curBuf));
+	}
+
+	writeWireData(cd, buf) {
 		const data = new Uint8Array(this.port[2]);
-		data[0] = PREFIX_DATA;
+		data[0] = cd;
 
 		const _this = this;
 		let i = 0;
-		return this.runtime.dev.comlib.wire_write(ADRS_SSD1306, cmd)
-		.then(() => new Promise(resolve => {
+		return new Promise(resolve => {
 		//	for(i=0; i<size; i+=this.port[2]-1)
 			loop();
 			function loop(){
-				let num = Math.min(_this.port[2]-1, curBuf.length - i);
-				data.set(curBuf.slice(i,i+num), 1);
+				let num = Math.min(_this.port[2]-1, buf.length - i);
+				data.set(buf.slice(i,i+num), 1);
 				return _this.runtime.dev.comlib.wire_write(ADRS_SSD1306, data.slice(0,num+1))
 				.then(() => {
 					i += num;
-					if(i >= curBuf.length) {
+					if(i >= buf.length) {
 						resolve();
 						return;
 					}
 					loop();
 				})
 			}
-		}))
+		});
 	}
 
 	sendCmd(args) {
