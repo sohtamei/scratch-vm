@@ -43,8 +43,8 @@ var ext = class {
 			menuIconURI: IconURI,   // Icon png to be displayed in the blocks category menu, encoded as a data URI.
 
 			blocks: [
-				{blockType: BlockType.COMMAND, opcode: 'setPort', text: 'I2C port [ARG1] for ESP32', arguments: {
-					ARG1: { type: ArgumentType.STRING, defaultValue:'14_2', menu: 'i2cPort' },
+				{blockType: BlockType.COMMAND, opcode: 'setPort', text: 'I2C port [ARG1]', arguments: {
+					ARG1: { type: ArgumentType.STRING, defaultValue:'20_19', menu: 'i2cPort' },
 				}},
 
 				{blockType: BlockType.COMMAND, opcode: 'setCar', text: '[ARG1] at speed [ARG2]', arguments: {
@@ -67,6 +67,7 @@ var ext = class {
 
 			menus: {
 				i2cPort: { acceptReporters: true, items: [
+					{ text: 'd20 c19 microbit', value: '20_19', },
 					{ text: 'd14 c2 ESP32-CAM', value: '14_2', },
 					{ text: 'd25 c21 M5Atom plen', value: '25_21', },
 					{ text: 'd4  c13 M5Camera', value: '4_13', },

@@ -72,7 +72,7 @@ var ext = class {
 			menuIconURI: IconURI,
 
 			blocks: [
-				{blockType: BlockType.COMMAND, opcode: 'setPort', text: '1. I2C port [ARG1] for ESP32', arguments: {
+				{blockType: BlockType.COMMAND, opcode: 'setPort', text: '1. I2C port [ARG1]', arguments: {
 					ARG1: { type: ArgumentType.STRING, defaultValue:'21_22', menu: 'i2cPort' },
 				}},
 
@@ -90,13 +90,17 @@ var ext = class {
 			menus: {
 				adrs:[ '76','77' ],
 				i2cPort: { acceptReporters: true, items: [
+					{ text: 'dA4 cA5 uno', value: '18_19', },
+					{ text: 'd20 c19 microbit', value: '20_19', },
+					{ text: 'd0 c1 microbit', value: '0_1', },
 					{ text: 'd21 c22 ESP32 default', value: '21_22', },
-					{ text: 'd8  c9 ESP32S3 default', value: '8_9', },
+					{ text: 'd8 c9 ESP32S3 default', value: '8_9', },
 					{ text: 'd32 c33 M5StickC', value: '32_33', },
 					{ text: 'd26 c32 M5Atom', value: '26_32', },
-					{ text: 'd4  c13 M5Camera', value: '4_13', },
-					{ text: 'd0  c26 M5StickC Hat', value: '0_26', },
+					{ text: 'd4 c13 M5Camera', value: '4_13', },
+					{ text: 'd0 c26 M5StickC Hat', value: '0_26', },
 					{ text: 'd26 c27 QuadCrawlerAI', value: '26_27', },
+					{ text: 'd4 c5 RPi pico', value: '4_5', },
 				]},
 			},
 		};

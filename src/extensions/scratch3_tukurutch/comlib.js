@@ -666,7 +666,7 @@ class comlib {
 			hTimeout = setTimeout(reject, TIMEOUT);
 			_this.bleRxResolve = resolve;
 			return _this.bleTxChar.writeValue(sendBuf)
-			.catch(err => {
+			.catch(err => {				// DOMException: GATT operation already in progress.
 				console.log(err);
 				return new Promise(resolve2 => setTimeout(resolve2, 50))
 				.then(() => _this.bleTxChar.writeValue(sendBuf))
