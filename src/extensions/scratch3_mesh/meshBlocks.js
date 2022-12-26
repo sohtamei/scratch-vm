@@ -30,7 +30,7 @@ const TAG_INTERVAL = 500;
 class MeshBlocks {
 
 	constructor (runtime) {
-		runtime.dev = this;
+	//	runtime.dev = this;
 		this._runtime = runtime;
 
 	//	this._intervalId = setInterval(this._updateConState.bind(this), 200);
@@ -96,14 +96,14 @@ class MeshBlocks {
 		let localeStr = formatMessage.setup().locale;
 		let locale = (localeStr == 'ja' || localeStr == 'ja-Hira') ? 1: 0;
 		this._locale = locale;
-
+	/*
 		this._icons = [];
 		for(let i = 0; i < 7; i++) {
 			this._icons.push({icon:document.body.querySelector('#tagIcon'+i),
 							label:document.body.querySelector('#tagName'+i),
 							bat:document.body.querySelector('#tagBat'+i)});
 		}
-
+	*/
 		this._tags.button.name	= ['Button ',	'ボタン　'][locale];
 		this._tags.led.name		= ['LED　',		'LED 　　'][locale];
 		this._tags.move.name	= ['Move ',		'動き　　'][locale];
