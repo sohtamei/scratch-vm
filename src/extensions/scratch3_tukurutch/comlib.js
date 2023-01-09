@@ -7,9 +7,11 @@ const Zlib = require('zlib');
 const BLE = require('../../io/ble');
 const Base64Util = require('../../util/base64-util');
 
-const StubCodeBin = require('!arraybuffer-loader!./STUB_CODE.bin');
+const StubCodeBin   = require('!arraybuffer-loader!./STUB_CODE.bin');
+const StubCodeC3Bin = require('!arraybuffer-loader!./STUB_CODE_C3.bin');
+const StubCodeS3Bin = require('!arraybuffer-loader!./STUB_CODE_S3.bin');
 const BootloaderBin = require('!arraybuffer-loader!./bootloader_qio_80m.bin');
-const BootApp0Bin = require('!arraybuffer-loader!./boot_app0.bin');
+const BootApp0Bin   = require('!arraybuffer-loader!./boot_app0.bin');
 
 //const WlanStatus = ['IDLE_STATUS','NO_SSID_AVAIL','SCAN_COMPLETED','CONNECTED','CONNECT_FAILED','CONNECTION_LOST','DISCONNECTED',],
 
@@ -1046,6 +1048,10 @@ class comlib {
 		}).then(() => {
 			switch(flashBin.type) {
 			case 'esp32':		return _this.burnESP32(flashBin, clearNVS);
+			case 'esp32c3':
+			case 'esp32c3u':	return _this.burnESP32C3(flashBin, clearNVS);
+			case 'esp32s3':
+			case 'esp32s3u':	return _this.burnESP32S3(flashBin, clearNVS);
 			case 'atmega328':	return _this.burnAvr(flashBin);
 			default: return null;
 			}
@@ -1316,7 +1322,7 @@ class comlib {
 		//R:C0 4F 48 41 49 C0 - 'OHAI'
 		.then(rcvParam => new Promise(resolve => setTimeout(resolve, 1000)))
 
-		//  baudrate             921600   115200
+		//  change_baudrate      921600   115200
 		//W:c0000f 0800 00000000 000e1000 0001c200 c0
 		//R:c0010f 0200 00000000 0000 c0
 		.then(() => _this._SendRecvEspBurn(0xf, [flashBin.baudrate,115200], null))
@@ -1324,7 +1330,7 @@ class comlib {
 		// close/open
 		.then(rcvParam => reader.cancel())
 		.then(() => _this.uart.close())
-	//	.then(() => new Promise(resolve => setTimeout(resolve, 100)))
+		.then(() => new Promise(resolve => setTimeout(resolve, 1000)))
 		.then(() => _this.uart.open({ baudRate:flashBin.baudrate }))
 		.then(() => {
 			reader = _this.uart.readable.getReader();
@@ -1337,16 +1343,16 @@ class comlib {
 			//R:c0010b 0200 00000000 0000 c0
 			return _this._SendRecvEspBurn(0xB, [0,0x400000,0x10000,0x1000,0x100,0xFFFF], null);
 
-		// 0xe000  boot_app0.bin
-		}).then(rcvParam => _this._espFlash(BootApp0, 0xe000, 11, 11))
-
 		// 0x1000 bootloader_qio_80m.bin
-		//	data[2] = 0x2;
-		//	data[3] = 0x20;
-		.then(rcvParam => _this._espFlash(Bootloader, 0x1000, 12, 12))
+		//	data[2] = 0x02;
+		//	data[3] = 0x2f;
+		}).then(rcvParam => {
+			Bootloader[2] = 0x02;
+			Bootloader[3] = 0x2f;
+			return _this._espFlash(Bootloader, 0x1000, 12, 12);
 
 		// 0x8000  partitions.bin
-		.then(rcvParam => _this._espFlash(flashBinPart, 0x8000, 13, 13))
+		}).then(rcvParam => _this._espFlash(flashBinPart, 0x8000, 13, 13))
 
 		// 0x9000 NVS
 		.then(rcvParam => {
@@ -1355,8 +1361,11 @@ class comlib {
 				tmp.fill(0xFF);
 				return _this._espFlash(tmp, 0x9000, 13, 13);
 			}
+		// 0xe000  boot_app0.bin
+		}).then(rcvParam => _this._espFlash(BootApp0, 0xe000, 14, 14))
+
 		// 0x10000  esp32.bin
-		}).then(rcvParam => _this._espFlash(flashBinImage, 0x10000, 15, 100))
+		.then(rcvParam => _this._espFlash(flashBinImage, 0x10000, 15, 100))
 
 		// DTR=1 RTS=0 IO0=1 EN=0
 		// DTR=1 RTS=1 IO0=1 EN=1
@@ -1384,14 +1393,374 @@ class comlib {
 			return result;
 		})
 	}
-/*
-		If checkInit.Checked = True Then
-			For i = 0 To PARAM_SIZE - 1
-				binBuf(i) = 0xFF
-			Next
-			_espFlash(binBuf, PARAM1_START, PARAM_SIZE, 100, 100)
-		End If
-*/
+
+	burnESP32C3(flashBin, clearNVS) {
+		if(this.espBurnBusy) return;
+		this.espBurnBusy = true;
+
+		const PARAM1_START = 0x9000;
+		const PARAM_SIZE = 0x6000;
+		const StubCode = new Uint8Array(StubCodeC3Bin);
+		const BootApp0 = new Uint8Array(BootApp0Bin);
+	//	const Bootloader = new Uint8Array(BootloaderBin);
+		const UpdateMsg = ['burning ', '書き込み中 '][this._locale];
+		this.statusMessage.innerText = '';
+
+		const _this = this;
+		let reader = null;
+		if(this.uart) {
+			this.uart.close();
+			this.uart = null;
+		}
+		let Bootloader = null;
+		let flashBinPart = null;
+		let flashBinImage = null;
+
+		return navigator.serial.requestPort({})
+		.then(result => {
+			_this.uart = result;
+
+			return _this.uart.open({ baudRate:115200 });
+		}).then(() => {
+			_this.statusMessage.innerText = UpdateMsg+'0%';
+
+			return fetch('static/extensions/'+flashBin.name+'.part.bin')
+			.then(response => response.blob())
+			.then(blob => new Promise(resolve => {
+				let _reader = new FileReader();
+				_reader.onload = function(e){
+					flashBinPart = new Uint8Array(_reader.result);
+					resolve();
+				};
+				return _reader.readAsArrayBuffer(blob);
+			}))
+		}).then(() => {
+			return fetch('static/extensions/'+flashBin.name+'.boot.bin')
+			.then(response => response.blob())
+			.then(blob => new Promise(resolve => {
+				let _reader = new FileReader();
+				_reader.onload = function(e){
+					Bootloader = new Uint8Array(_reader.result);
+					resolve();
+				};
+				return _reader.readAsArrayBuffer(blob);
+			}))
+		}).then(() => {
+			return fetch('static/extensions/'+flashBin.name+'.image.bin')
+			.then(response => response.blob())
+			.then(blob => new Promise(resolve => {
+				let _reader = new FileReader();
+				_reader.onload = function(e){
+					flashBinImage = new Uint8Array(_reader.result);
+					resolve();
+				};
+				return _reader.readAsArrayBuffer(blob);
+			}))
+		}).then(() => {
+			reader = _this.uart.readable.getReader();
+			_this._RecvEspBurn(reader);
+
+			return _this._syncEspBurn();
+		}).then(() => {
+			_this.statusMessage.innerText = UpdateMsg+'5%';
+			return new Promise(resolve => setTimeout(resolve, 500));
+
+		//  mem_begin            size     blocks   blocksize offset
+		//W:c00005 0010 00000000 00000e28 00000001 00001800 40380000 c0
+		//R:c00105 0004 000084f7 00000000 c0
+		}).then(rcvParam => _this._SendRecvEspBurn(0x5, [StubCode.length,1,0x1800,0x40380000], null))
+
+		//  mem_data             data     seq
+		//W:c00007 0e38 00000093 00000e28 00000000 00000000 00000000 411122..
+		//R:c00107 0004 000084f7 00000000 c0
+		.then(rcvParam => _this._SendRecvEspBurn(0x7, [StubCode.length,0,0,0], StubCode))
+
+		//  mem_begin            size     blocks   blocksize offset
+		//W:c00005 0010 00000000 00000004 00000001 00001800 3fc96ba8 c0
+		//R:c00105 0004 000084f7 00000000 c0
+		.then(rcvParam => _this._SendRecvEspBurn(0x5, [4,1,0x1800,0x3fc96ba8], null))
+
+		//  mem_data             data     seq
+		//W:c00007 0014 00000054 00000004 00000000 00000000 00000000 0c40c83f c0
+		//R:c00107 0004 000084f7 00000000 c0
+		.then(rcvParam => _this._SendRecvEspBurn(0x7, [4,0,0,0], new Uint8Array([0x0c,0x40,0xc8,0x3f])))
+
+		//  mem_end                       entrypoint
+		//W:c00006 0008 00000000 00000000 40380670 c0
+		//R:c00106 0004 000084f7 00000000 c0
+		.then(rcvParam => _this._SendRecvEspBurn(0x6, [0,0x40380670], null))
+
+		//R:C0 4F 48 41 49 C0 - 'OHAI'
+		.then(rcvParam => new Promise(resolve => setTimeout(resolve, 1000)))
+
+		//  change_baudrate      921600   115200
+		//W:c0000f 0008 00000000 000e1000 0001c200 c0
+		//R:c0010f 0002 00000000 0000c0
+		.then(() => _this._SendRecvEspBurn(0xf, [flashBin.baudrate,115200], null))
+
+		// close/open
+		.then(rcvParam => reader.cancel())
+		.then(() => _this.uart.close())
+		.then(() => new Promise(resolve => setTimeout(resolve, 1000)))
+		.then(() => _this.uart.open({ baudRate:flashBin.baudrate }))
+		.then(() => {
+			reader = _this.uart.readable.getReader();
+			_this._RecvEspBurn(reader);			// この後recvスレッド走りっぱなし
+
+			// write_reg省略
+
+			//  set_params           fl_id    total_size block_size sector_size page_size status_mask
+			//W:c0000b 0018 00000000 00000000 00400000 00010000 00001000 00000100 0000ffff c0
+			//R:c0010b 0002 00000000 0000c0
+			return _this._SendRecvEspBurn(0xB, [0,0x400000,0x10000,0x1000,0x100,0xFFFF], null);
+
+		// 0x0000 bootloader_qio_80m.bin
+		//	data[2] = 0x02;
+		//	data[3] = 0x2f;
+		}).then(rcvParam => {
+			Bootloader[2] = 0x02;
+			Bootloader[3] = 0x2f;
+			return _this._espFlash(Bootloader, 0x0000, 12, 12);
+
+		// 0x8000  partitions.bin
+		}).then(rcvParam => _this._espFlash(flashBinPart, 0x8000, 13, 13))
+
+		// 0x9000 NVS
+		.then(rcvParam => {
+			if(clearNVS) {
+				let tmp = new Uint8Array(0x6000);
+				tmp.fill(0xFF);
+				return _this._espFlash(tmp, 0x9000, 13, 13);
+			}
+		// 0xe000  boot_app0.bin
+		}).then(rcvParam => _this._espFlash(BootApp0, 0xe000, 14, 14))
+
+		// 0x10000  esp32.bin
+		.then(rcvParam => _this._espFlash(flashBinImage, 0x10000, 15, 100))
+
+		//  flash_begin
+		//W:c00002 0010 00000000 00000000 00000000 00004000 00000000 c0
+		//R:c00102 0002 00000000 0000c0
+		.then(rcvParam => _this._SendRecvEspBurn(0x2, [0,0,0x4000,0], null))
+
+		//  flash_defl_end       reboot
+		//W:c00012 0004 00000000 00000001 c0
+		//R:c00112 0002 00000000 0000c0
+		.then(rcvParam => _this._SendRecvEspBurn(0x12, [1], null))
+
+		// DTR=1 RTS=0 IO0=1 EN=0
+		// DTR=1 RTS=1 IO0=1 EN=1
+		.then(rcvParam => _this.uart.setSignals({ dataTerminalReady: false, requestToSend: true }))
+		.then(() => new Promise(resolve => setTimeout(resolve, 100)))
+		.then(() => _this.uart.setSignals({ dataTerminalReady: false, requestToSend: false }))
+		.then(() => {
+			_this.statusMessage.innerText = ['Finished', '書き込み完了'][_this._locale];
+			console.log('OK');
+			return 'OK !';
+		}).catch(() => {
+			_this.statusMessage.innerText = ['Failed', '書き込み失敗'][_this._locale];
+			console.log('NG');
+			throw new Error('Error');
+		}).finally(result => {
+			if(reader) {
+				reader.cancel();
+				reader.releaseLock();
+			}
+			if(_this.uart) {
+				_this.uart.close();
+				_this.uart = null;
+			}
+			_this.espBurnBusy = false;
+			return result;
+		})
+	}
+
+	burnESP32S3(flashBin, clearNVS) {
+		if(this.espBurnBusy) return;
+		this.espBurnBusy = true;
+
+		const PARAM1_START = 0x9000;
+		const PARAM_SIZE = 0x6000;
+		const StubCode = new Uint8Array(StubCodeS3Bin);
+		const BootApp0 = new Uint8Array(BootApp0Bin);
+	//	const Bootloader = new Uint8Array(BootloaderBin);
+		const UpdateMsg = ['burning ', '書き込み中 '][this._locale];
+		this.statusMessage.innerText = '';
+
+		const _this = this;
+		let reader = null;
+		if(this.uart) {
+			this.uart.close();
+			this.uart = null;
+		}
+		let Bootloader = null;
+		let flashBinPart = null;
+		let flashBinImage = null;
+
+		return navigator.serial.requestPort({})
+		.then(result => {
+			_this.uart = result;
+
+			if(flashBin.type == 'esp32s3u') {
+				return _this.uart.open({ baudRate:1200 })
+				.then(() => new Promise(resolve => setTimeout(resolve, 100)))
+				.then(() => _this.uart.close())
+				.then(() => new Promise(resolve => setTimeout(resolve, 500)));
+			}
+		}).then(() => _this.uart.open({ baudRate:115200 }))
+		.then(() => {
+			_this.statusMessage.innerText = UpdateMsg+'0%';
+
+			return fetch('static/extensions/'+flashBin.name+'.part.bin')
+			.then(response => response.blob())
+			.then(blob => new Promise(resolve => {
+				let _reader = new FileReader();
+				_reader.onload = function(e){
+					flashBinPart = new Uint8Array(_reader.result);
+					resolve();
+				};
+				return _reader.readAsArrayBuffer(blob);
+			}))
+		}).then(() => {
+			return fetch('static/extensions/'+flashBin.name+'.boot.bin')
+			.then(response => response.blob())
+			.then(blob => new Promise(resolve => {
+				let _reader = new FileReader();
+				_reader.onload = function(e){
+					Bootloader = new Uint8Array(_reader.result);
+					resolve();
+				};
+				return _reader.readAsArrayBuffer(blob);
+			}))
+		}).then(() => {
+			return fetch('static/extensions/'+flashBin.name+'.image.bin')
+			.then(response => response.blob())
+			.then(blob => new Promise(resolve => {
+				let _reader = new FileReader();
+				_reader.onload = function(e){
+					flashBinImage = new Uint8Array(_reader.result);
+					resolve();
+				};
+				return _reader.readAsArrayBuffer(blob);
+			}))
+		}).then(() => {
+			reader = _this.uart.readable.getReader();
+			_this._RecvEspBurn(reader);
+
+			return _this._syncEspBurn();
+		}).then(() => {
+			_this.statusMessage.innerText = UpdateMsg+'5%';
+			return new Promise(resolve => setTimeout(resolve, 500));
+
+		//  mem_begin            size     blocks   blocksize offset
+		//W:c00005 0010 00000000 000012d4 00000001 00001800 40378000 c0
+		//R:c00105 0004 000084f7 00000000 c0
+		}).then(rcvParam => _this._SendRecvEspBurn(0x5, [StubCode.length,1,0x1800,0x40378000], null))
+
+		//  mem_data             data     seq=0
+		//W:c00007 12e4 00000071 000012d4 00000000 00000000 00000000 148003..
+		//R:c00107 0004 000084f7 00000000 c0
+		.then(rcvParam => _this._SendRecvEspBurn(0x7, [StubCode.length,0,0,0], StubCode))
+
+		//  mem_begin            size     blocks   blocksize offset
+		//W:c00005 0010 00000000 00000004 00000001 00001800 3fcb2bf4 c0
+		//R:c00105 0004 000084f7 00000000 c0
+		.then(rcvParam => _this._SendRecvEspBurn(0x5, [4,1,0x1800,0x3fcb2bf4], null))
+
+		//  mem_data             data     seq=0
+		//W:c00007 0014 00000012 00000004 00000000 00000000 00000000 0800ca3fc0
+		//R:c00107 0004 000084f7 00000000 c0
+		.then(rcvParam => _this._SendRecvEspBurn(0x7, [4,0,0,0], new Uint8Array([0x08,0x00,0xca,0x3f])))
+
+		//  mem_end                       entrypoint
+		//W:c00006 0008 00000000 00000000 40378988 c0
+		//R:c00106 0004 000084f7 00000000 c0
+		.then(rcvParam => _this._SendRecvEspBurn(0x6, [0,0x40378988], null))
+
+		//R:C0 4F 48 41 49 C0 - 'OHAI'
+		.then(rcvParam => new Promise(resolve => setTimeout(resolve, 1000)))
+
+		//  change_baudrate      921600   115200
+		//W:c0000f 0008 00000000 000e1000 0001c200 c0
+		//R:c0010f 0002 00000000 0000c0
+		.then(() => _this._SendRecvEspBurn(0xf, [flashBin.baudrate,115200], null))
+
+		// close/open
+		.then(rcvParam => reader.cancel())
+		.then(() => _this.uart.close())
+		.then(() => new Promise(resolve => setTimeout(resolve, 1000)))
+		.then(() => _this.uart.open({ baudRate:flashBin.baudrate }))
+		.then(() => {
+			reader = _this.uart.readable.getReader();
+			_this._RecvEspBurn(reader);			// この後recvスレッド走りっぱなし
+
+			// write_reg省略
+
+			//  set_params           fl_id    total_size block_size sector_size page_size status_mask
+			//W:c0000b 0018 00000000 00000000 00800000 00010000 00001000 00000100 0000ffff c0
+			//R:c0010b 0002 00000000 0000c0
+			return _this._SendRecvEspBurn(0xB, [0,0x800000,0x10000,0x1000,0x100,0xFFFF], null);
+
+		// 0x0000 bootloader_qio_80m.bin
+		//	data[2] = 0x02;
+		//	data[3] = 0x3f;
+		}).then(rcvParam => {
+			Bootloader[2] = 0x02;
+			Bootloader[3] = 0x3f;
+			return _this._espFlash(Bootloader, 0x0000, 12, 12);
+
+		// 0x8000  partitions.bin
+		}).then(rcvParam => _this._espFlash(flashBinPart, 0x8000, 13, 13))
+
+		// 0x9000 NVS
+		.then(rcvParam => {
+			if(clearNVS) {
+				let tmp = new Uint8Array(0x6000);
+				tmp.fill(0xFF);
+				return _this._espFlash(tmp, 0x9000, 13, 13);
+			}
+		// 0xe000  boot_app0.bin
+		}).then(rcvParam => _this._espFlash(BootApp0, 0xe000, 14, 14))
+
+		// 0x10000  esp32.bin
+		.then(rcvParam => _this._espFlash(flashBinImage, 0x10000, 15, 100))
+
+		//  flash_begin
+		//W:c00002 0010 00000000 00000000 00000000 00004000 00000000 c0
+		//R:c00102 0002 00000000 0000c0
+		.then(rcvParam => _this._SendRecvEspBurn(0x2, [0,0,0x4000,0], null))
+
+		//  flash_defl_end       reboot
+		//W:c00012 0004 00000000 00000001 c0
+		//R:c00112 0002 00000000 0000c0
+		.then(rcvParam => _this._SendRecvEspBurn(0x12, [1], null))
+
+		// DTR=1 RTS=0 IO0=1 EN=0
+		// DTR=1 RTS=1 IO0=1 EN=1
+		.then(rcvParam => _this.uart.setSignals({ dataTerminalReady: false, requestToSend: true }))
+		.then(() => new Promise(resolve => setTimeout(resolve, 100)))
+		.then(() => _this.uart.setSignals({ dataTerminalReady: false, requestToSend: false }))
+		.then(() => {
+			_this.statusMessage.innerText = ['Finished', '書き込み完了'][_this._locale];
+			console.log('OK');
+			return 'OK !';
+		}).catch(() => {
+			_this.statusMessage.innerText = ['Failed', '書き込み失敗'][_this._locale];
+			console.log('NG');
+			throw new Error('Error');
+		}).finally(result => {
+			if(reader) {
+				reader.cancel();
+				reader.releaseLock();
+			}
+			if(_this.uart) {
+				_this.uart.close();
+				_this.uart = null;
+			}
+			_this.espBurnBusy = false;
+			return result;
+		})
+	}
 
 	_SendRecvEspBurn(cmd, header, data) {	// ret:[result, rcvParam]
 
@@ -1407,7 +1776,7 @@ class comlib {
 				_this.recvTimeout = null;
 				_this.recvResolve = null;
 				reject1();
-			}, 5000);
+			}, 8000);
 
 			_this.recvResolve = (rcvParam) => {
 			//	console.log(rcvParam);	// debug
