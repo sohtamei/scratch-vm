@@ -254,6 +254,7 @@ lcdType: { acceptReporters: true, items: [
 { text: 'MSP4020_4021', value: '22' },
 { text: 'MSP4022_4023', value: '23' },
 { text: '3248S035', value: '6' },
+{ text: '1732S019', value: '29' },
 { text: 'ROUNDLCD', value: '7' },
 { text: 'ROUNDXIAO', value: '24' },
 { text: 'SQUARE', value: '25' },
