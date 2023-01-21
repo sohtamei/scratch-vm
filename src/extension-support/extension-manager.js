@@ -32,6 +32,7 @@ const builtinExtensions = {
     usb2bt: () => require('../extensions/scratch3_tukurutch/usb2bt.js'),
     AtomMateForToio: () => require('../extensions/scratch3_tukurutch/AtomMateForToio.js'),
     M5Unified: () => require('../extensions/scratch3_tukurutch/M5Unified.js'),
+    esp32camlcd: () => require('../extensions/scratch3_tukurutch/esp32camlcd.js'),
 
     loadVMD: () => require('../extensions/scratch3_devices/loadVMD.js'),
     uiParts: () => require('../extensions/scratch3_devices/uiParts.js'),
@@ -47,6 +48,7 @@ const builtinExtensions = {
     foloCamera: () => require('../extensions/scratch3_devices/foloCamera.js'),
     tracking: () => require('../extensions/scratch3_devices/trackingBlock.js'),
     i2cLCD: () => require('../extensions/scratch3_devices/i2cLCD.js'),
+    envX: () => require('../extensions/scratch3_devices/envX.js'),
 
     microbit: () => require('../extensions/scratch3_microbit/microbit.js'),
     microbitRadio: () => require('../extensions/scratch3_microbit/microbitRadio.js'),
