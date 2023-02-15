@@ -22,6 +22,7 @@ const BLEUUID = {
 };
 
 const TIMEOUT = 6000;
+const MidiDevName = 'Pico';
 
 class comlib {
 	constructor(runtime, extName, SupportCamera) {
@@ -87,6 +88,24 @@ class comlib {
 		this.bleRxResolve = null;
 		this.closeReq = false;
 
+		// MIDI
+		this.midi = null;
+		this.midiInput = null;
+		this.midiOutput = null;
+		this.midiResolve = null;
+
+		if(extName == 'uno') {	// tentative!
+			const _this = this;
+			navigator.requestMIDIAccess({sysex: true })
+			.then(midi => {
+				_this.midi = midi;
+				_this.midi.onstatechange = _this._onStateChange.bind(_this);
+				_this._onStateChange({port:{name:MidiDevName, manufacturer:'', state:'connected', type:''}});
+			}).catch(error => {
+				alert(error);
+			});
+		}
+
 		// flash burn
 		this.espBurnBusy = false;
 		this.recvResolve = null;
@@ -110,7 +129,7 @@ class comlib {
 
 		const _this = this;
 		return Promise.resolve().then(() => {
-			if(connected) {
+			if(connected && _this.ifType != 'MIDI') {
 				if(_this.SupportCamera) _this.videoToggle('off');
 				return _this.disconnect();
 			}
@@ -181,6 +200,9 @@ class comlib {
 		case 'WLAN':
 			if(this.ws) connected = true;
 			break;
+		case 'MIDI':
+			if(this.midiInput && this.midiOutput) connected = true;
+			break;
 		}
 	//	if(!connected) console.log('disconnected!');
 	//	console.log('isconnected='+connected);
@@ -205,6 +227,8 @@ class comlib {
 				this.ws = null;
 			}
 			return this._openWs();
+		case 'MIDI':
+			break;
 		}
 	}
 
@@ -622,6 +646,45 @@ class comlib {
 				resolve();
 			})
 			break;
+		case 'MIDI':
+			_this.midiOutput.send(_this.midiEncdata(data));
+			return new Promise((resolve2,reject2) => {
+				let enc = new Uint8Array(293);
+				loop();
+				function loop() {
+					let hTimeout = null;
+					return new Promise((resolve3, reject3) => {
+						hTimeout = setTimeout(reject3, TIMEOUT);
+						_this.midiResolve = resolve3;
+					}).then(result => {
+						clearTimeout(hTimeout);
+						enc.set(result, count);
+						count += result.length;
+						if(enc[count-1] == 0xf7) {
+							const plain = _this.midiDecdata(enc.slice(0, count));
+							console.log('R:'+_this._dumpBuf(plain));	// debug
+							let tmp = _this._parseRecv(plain);
+							_this.busy = false;
+						//	resolve(_this._dumpBuf(enc.slice(0, count)) + "," + _this._dumpBuf(plain) + "," + tmp);
+							resolve(tmp);
+							if(_this.cueue.length != 0) console.log('-Cueue=' + _this.cueue.length + '->' + (_this.cueue.length-1));
+							_this.checkCueue();
+						} else {
+							loop();
+						}
+					}).catch(() => {
+						console.log('timeout');
+						_this.busy = false;
+						resolve();
+						if(_this.cueue.length != 0) console.log('-Cueue=' + _this.cueue.length + '->' + (_this.cueue.length-1));
+						_this.checkCueue();
+					})
+				} // loop
+			}).catch(() => {
+				console.log('');
+				resolve();
+			})
+			break;
 		}
 	}
 
@@ -739,6 +802,8 @@ class comlib {
 			case 'WLAN':
 				if(_this.ws == null)
 					return _this._openWs();
+				break;
+			case 'MIDI':
 				break;
 			}
 			return;
@@ -1034,6 +1099,98 @@ class comlib {
 				}
 			};
 		})
+	}
+
+	// MIDI ------------------------------------
+
+	_onStateChange(event) {
+	//	console.log(event.port);
+		console.log(event.port.name +','+ event.port.manufacturer +','+ event.port.state +','+ event.port.type);
+		if(event.port.name != MidiDevName) return;
+
+		switch(event.port.state) {
+		case 'disconnected':
+			if(this.midiInput && this.midiOutput) {
+				this.midiInput.onmidimessage = null;
+				this.midiInput = null;
+				this.midiOutput = null;
+				console.log('Midi Disconnected');
+			}
+			break;
+
+		case 'connected':
+			if(this.midiInput && this.midiOutput) break;
+		
+			let midiInput = null;
+			this.midi.inputs.forEach(input => {
+			//	console.log(input);
+			//	console.log('in:' + input.name);
+				if(input.name == MidiDevName) {
+					midiInput = input;
+				}
+			});
+
+			let midiOutput = null;
+			this.midi.outputs.forEach(output => {
+			//	console.log('out:' + output.name);
+				if(output.name == MidiDevName) {
+					midiOutput = output;
+				}
+			});
+
+			if(midiInput && midiOutput) {
+				this.midiInput = midiInput;
+				this.midiOutput = midiOutput;
+				this.midiInput.onmidimessage = this._onMidiMessage.bind(this);
+				console.log('Midi Connected');
+			}
+			break;
+		}
+	}
+
+	_onMidiMessage(event){
+	//	console.log(event);
+	//	console.log(this._dumpBuf(event.data));
+		if(this.midiResolve) {
+			this.midiResolve(event.data);
+			this.midiResolve = null;
+		}
+	}
+
+	midiEncdata(data) {
+		const plain = data.slice(2);
+		const enc = new Uint8Array(2 + (plain.length*8+6)/7);
+		for(let i = 0; i < (enc.length-2)*7; i+=7) {
+			const shift = i % 8;
+			const offset = (i-shift)/8;
+			let tmp2 = plain[offset];
+			if(offset+1 < plain.length) {
+				tmp2 += plain[offset+1] << 8;
+			}
+			enc[1+i/7] = (tmp2 >> shift) & 0x7f;
+		}
+		enc[0] = 0xf0;
+		enc[enc.length-1] = 0xf7;
+	//	console.log(this._dumpBuf(enc));	// debug
+		return enc;
+	}
+
+	midiDecdata(data) {
+		const enc = data.slice(1, data.length-1);
+		const plain = new Uint8Array(2 + (enc.length*7)/8);
+		for(let i = 0; i < (plain.length-2)*8; i+=8) {
+			const shift = i % 7;
+			const offset = (i-shift)/7;
+			let tmp2 = enc[offset];
+			if(offset+1 < enc.length) {
+				tmp2 += enc[offset+1] << 7;
+			}
+			plain[2+i/8] = (tmp2 >> shift) & 0xff;
+		}
+		plain[0] = 0xff;
+		plain[1] = 0x55;
+	//	console.log(this._dumpBuf(plain));	// debug
+		return plain;
 	}
 
 	// アップデート -----------------------------------------------------
