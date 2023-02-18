@@ -102,7 +102,11 @@ var ext = class {
 {blockType: BlockType.REPORTER, opcode: '_getLcdConfig', text: 'get config', arguments: {
 }, hideFromPalette:true},
 
-'---',
+{blockType: BlockType.COMMAND, opcode: 'setLcdConfig', text: 'set config [ARG1] port=[ARG2]', arguments: {
+    ARG1: { type: ArgumentType.STRING, type2:'S', defaultValue:'25', menu: 'lcdType' },
+    ARG2: { type: ArgumentType.STRING, type2:'b', defaultValue:' ' },
+}},
+
 {blockType: BlockType.COMMAND, opcode: 'setFont', text: 'set font=[ARG1]', arguments: {
     ARG1: { type: ArgumentType.STRING, type2:'B', defaultValue:'10', menu: 'font' },
 }},
@@ -190,6 +194,7 @@ var ext = class {
 ifType: { acceptReporters: true, items: [
 	{ text: 'USB', value: 'UART' },
 	{ text: 'WiFi', value: 'WLAN' },
+	{ text: 'MIDI', value: 'MIDI' },
 ]},
 
 clearNVS: { items: [
@@ -247,6 +252,11 @@ font: { acceptReporters: true, items: [
 { text: 'proportional16', value: '13' },
 ]},
 
+lcdType: { acceptReporters: true, items: [
+{ text: 'SQUARE', value: '25' },
+{ text: 'ROUNDLCD', value: '7' },
+]},
+
 motorch: { acceptReporters: true, items: [
 { text: 'ch-L', value: '0' },
 { text: 'ch-R', value: '1' },
@@ -261,6 +271,7 @@ onoff: { acceptReporters: true, items: [
 	}
 
 _getLcdConfig(args,util) { return this.sendRecv('_getLcdConfig', args); }
+setLcdConfig(args,util) { return this.sendRecv('setLcdConfig', args); }
 setFont(args,util) { return this.sendRecv('setFont', args); }
 setRotation(args,util) { return this.sendRecv('setRotation', args); }
 setText(args,util) { return this.sendRecv('setText', args); }
@@ -286,7 +297,22 @@ setPwmFreq(args,util) { return this.sendRecv('setPwmFreq', args); }
 			_this.comlib._runtime.renderer.setDevSize(_this.width, _this.height);
 
 			const id = result[4] + (result[5]<<8);
-			let str = 'width=' + _this.width + ' height=' + _this.height + ' type=' + id;
+
+			const items = _this.get_menus().lcdType.items;
+			let lcdType = id;
+			for(let i = 0; i < items.length; i++) {
+				if(Number(items[i].value) == id) {
+					lcdType = items[i].text;
+					break;
+				}
+			}
+
+			let targetBlock;
+			targetBlock = Blockly.getMainWorkspace().getBlockById(extName+'_setLcdConfig');
+			if(targetBlock)
+				targetBlock.childBlocks_[0].inputList[0].fieldRow[0].setValue(id);
+
+			let str = 'width=' + _this.width + ' height=' + _this.height + ' type=' + lcdType;
 			return str;
 		})
 	}
