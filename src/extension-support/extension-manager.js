@@ -33,6 +33,7 @@ const builtinExtensions = {
     AtomMateForToio: () => require('../extensions/scratch3_tukurutch/AtomMateForToio.js'),
     M5Unified: () => require('../extensions/scratch3_tukurutch/M5Unified.js'),
     esp32camlcd: () => require('../extensions/scratch3_tukurutch/esp32camlcd.js'),
+    bCore: () => require('../extensions/scratch3_tukurutch/bCore.js'),
 
     loadVMD: () => require('../extensions/scratch3_devices/loadVMD.js'),
     uiParts: () => require('../extensions/scratch3_devices/uiParts.js'),

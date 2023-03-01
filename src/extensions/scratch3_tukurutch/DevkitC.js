@@ -109,6 +109,7 @@ var ext = class {
 ifType: { acceptReporters: true, items: [
 	{ text: 'USB', value: 'UART' },
 	{ text: 'WiFi', value: 'WLAN' },
+	{ text: 'MIDI', value: 'MIDI' },
 ]},
 
 clearNVS: { items: [

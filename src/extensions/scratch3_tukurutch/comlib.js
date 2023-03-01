@@ -22,7 +22,7 @@ const BLEUUID = {
 };
 
 const TIMEOUT = 6000;
-const MidiDevName = 'Pico';
+const MidiDevNames = ['Pico','ESP32S3_DEV',];
 
 class comlib {
 	constructor(runtime, extName, SupportCamera) {
@@ -100,7 +100,7 @@ class comlib {
 			.then(midi => {
 				_this.midi = midi;
 				_this.midi.onstatechange = _this._onStateChange.bind(_this);
-				_this._onStateChange({port:{name:MidiDevName, manufacturer:'', state:'connected', type:''}});
+				_this._onStateChange({port:{name:MidiDevNames[0], manufacturer:'', state:'connected', type:''}});
 			}).catch(error => {
 				alert(error);
 			});
@@ -1106,7 +1106,7 @@ class comlib {
 	_onStateChange(event) {
 	//	console.log(event.port);
 		console.log(event.port.name +','+ event.port.manufacturer +','+ event.port.state +','+ event.port.type);
-		if(event.port.name != MidiDevName) return;
+		if(! MidiDevNames.includes(event.port.name)) return;
 
 		switch(event.port.state) {
 		case 'disconnected':
@@ -1125,7 +1125,7 @@ class comlib {
 			this.midi.inputs.forEach(input => {
 			//	console.log(input);
 			//	console.log('in:' + input.name);
-				if(input.name == MidiDevName) {
+				if(MidiDevNames.includes(input.name)) {
 					midiInput = input;
 				}
 			});
@@ -1133,7 +1133,7 @@ class comlib {
 			let midiOutput = null;
 			this.midi.outputs.forEach(output => {
 			//	console.log('out:' + output.name);
-				if(output.name == MidiDevName) {
+				if(MidiDevNames.includes(output.name)) {
 					midiOutput = output;
 				}
 			});

@@ -48,6 +48,7 @@ var ext = class {
 		this.flashList = [
 {name:'uno', type:'atmega328', baudrate:115200},
 {name:'uno32', type:'esp32', baudrate:921600},
+{name:'uno32s3.usb', type:'esp32s3u', baudrate:921600},
 		];
 
 		this._blocks = [
@@ -96,11 +97,11 @@ var ext = class {
 
 {blockType: BlockType.REPORTER, opcode: 'getAnalogAve', text: [
     'Sensor [ARG1] average [ARG2] times,discharge [ARG3]',
-    'センサ [ARG1] の [ARG2] 回平均 放電 [ARG3]',
+    'センサ [ARG1] の [ARG2] 回平均 放充電 [ARG3]',
 ][this._locale], arguments: {
     ARG1: { type: ArgumentType.STRING, type2:'B', defaultValue:'1', menu: 'sensor' },
     ARG2: { type: ArgumentType.NUMBER, type2:'S', defaultValue:4 },
-    ARG3: { type: ArgumentType.STRING, type2:'B', defaultValue:'0', menu: 'onoff' },
+    ARG3: { type: ArgumentType.NUMBER, type2:'B', defaultValue:4 },
 }},
 
 {blockType: BlockType.BOOLEAN, opcode: 'getSW', text: [
@@ -108,6 +109,14 @@ var ext = class {
     'スイッチ [ARG1]',
 ][this._locale], arguments: {
     ARG1: { type: ArgumentType.STRING, type2:'B', defaultValue:'1', menu: 'sw' },
+}},
+
+{blockType: BlockType.COMMAND, opcode: 'setNeoPixel', text: [
+    'set led color [ARG1] [ARG2]',
+    'LED 色 [ARG1] [ARG2]',
+][this._locale], arguments: {
+    ARG1: { type: ArgumentType.STRING, type2:'L', defaultValue:'16777215', menu: 'color' },
+    ARG2: { type: ArgumentType.NUMBER, type2:'B', defaultValue:10 },
 }},
 
 		];
@@ -150,6 +159,17 @@ beats: { acceptReporters: true, items: [
 { text: ['Double','倍全音符'][this._locale], value: '2000' },
 ]},
 
+color: { acceptReporters: true, items: [
+{ text: ['Black','黒'][this._locale], value: '0' },
+{ text: ['Red','赤'][this._locale], value: '16711680' },
+{ text: ['Green','緑'][this._locale], value: '65280' },
+{ text: ['Blue','青'][this._locale], value: '255' },
+{ text: ['Purple','紫'][this._locale], value: '16711935' },
+{ text: ['Yellow','黄'][this._locale], value: '16776960' },
+{ text: ['Lightblue','水色'][this._locale], value: '65535' },
+{ text: ['White','白'][this._locale], value: '16777215' },
+]},
+
 led: { acceptReporters: true, items: ['1','2','3','4','5','6',]},
 
 noteJ2: { acceptReporters: true, items: [
@@ -185,6 +205,7 @@ setLED(args,util) { return this.sendRecv('setLED', args); }
 BuzzerJ2(args,util) { return this.sendRecv('BuzzerJ2', args); }
 getAnalogAve(args,util) { return this.sendRecv('getAnalogAve', args); }
 getSW(args,util) { return this.sendRecv('getSW', args); }
+setNeoPixel(args,util) { return this.sendRecv('setNeoPixel', args); }
 
 	burnFlash(args) {
 	//	if(this.comlib.server=='http') return ['please access via https://','https:// でアクセスして下さい'][this._locale];
