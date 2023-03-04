@@ -102,11 +102,10 @@ class BLE extends JSONRPC {
      * @param {object} onCharacteristicChanged - callback for characteristic change notifications.
      * @return {Promise} - a promise from the remote startNotifications request.
      */
-    startNotifications (serviceId, characteristicId, onCharacteristicChanged = null, charConfigDesc = 1) {
+    startNotifications (serviceId, characteristicId, onCharacteristicChanged = null) {
         const params = {
             serviceId,
-            characteristicId,
-            charConfigDesc
+            characteristicId
         };
         this._characteristicDidChangeCallback = onCharacteristicChanged;
         return this.sendRemoteRequest('startNotifications', params)

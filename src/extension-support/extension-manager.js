@@ -34,6 +34,7 @@ const builtinExtensions = {
     M5Unified: () => require('../extensions/scratch3_tukurutch/M5Unified.js'),
     esp32camlcd: () => require('../extensions/scratch3_tukurutch/esp32camlcd.js'),
     bCore: () => require('../extensions/scratch3_tukurutch/bCore.js'),
+    bCore2: () => require('../extensions/scratch3_tukurutch/bCore2.js'),
 
     loadVMD: () => require('../extensions/scratch3_devices/loadVMD.js'),
     uiParts: () => require('../extensions/scratch3_devices/uiParts.js'),
