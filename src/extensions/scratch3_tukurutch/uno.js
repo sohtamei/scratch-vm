@@ -119,6 +119,12 @@ var ext = class {
     ARG2: { type: ArgumentType.NUMBER, type2:'B', defaultValue:10 },
 }},
 
+{blockType: BlockType.COMMAND, opcode: 'saveHist', text: [
+    'save hist',
+    '動作を記憶',
+][this._locale], arguments: {
+}},
+
 		];
 		this.blockOffset = 6;
 		for(let i = 0; i < this._blocks.length; i++) {
@@ -206,6 +212,7 @@ BuzzerJ2(args,util) { return this.sendRecv('BuzzerJ2', args); }
 getAnalogAve(args,util) { return this.sendRecv('getAnalogAve', args); }
 getSW(args,util) { return this.sendRecv('getSW', args); }
 setNeoPixel(args,util) { return this.sendRecv('setNeoPixel', args); }
+saveHist(args,util) { return this.sendRecv('saveHist', args); }
 
 	burnFlash(args) {
 	//	if(this.comlib.server=='http') return ['please access via https://','https:// でアクセスして下さい'][this._locale];

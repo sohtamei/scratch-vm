@@ -94,7 +94,7 @@ class comlib {
 		this.midiOutput = null;
 		this.midiResolve = null;
 
-		if(extName == 'uno') {	// tentative!
+		/*if(extName == 'uno')*/ {	// tentative!
 			const _this = this;
 			navigator.requestMIDIAccess({sysex: true })
 			.then(midi => {
@@ -151,7 +151,13 @@ class comlib {
 				}
 			}
 
-			if(updated) return ['Saved !', '保存しました'][_this._locale];
+			if(updated) {
+				if(_this.isConnected())
+					_this._runtime.emit(_this._runtime.constructor.PERIPHERAL_CONNECTED);
+				else
+					_this._runtime.emit(_this._runtime.constructor.PERIPHERAL_DISCONNECTED);
+				return ['Saved !', '保存しました'][_this._locale];
+			}
 
 			if(!connected) {
 				return _this.open()
@@ -633,7 +639,7 @@ class comlib {
 						hTimeout = setTimeout(reject3, TIMEOUT);
 						_this.wsResolve = resolve3;
 					}).then(result => {
-						console.log(result);
+					//	console.log(result);
 						clearTimeout(hTimeout);
 						loop();
 					}).catch(() => {
@@ -647,9 +653,38 @@ class comlib {
 			})
 			break;
 		case 'MIDI':
-			_this.midiOutput.send(_this.midiEncdata(data));
+		//	_this.midiOutput.send(_this.midiEncdata(data));
 			return new Promise((resolve2,reject2) => {
+				loop();
+				function loop() {
+					let size = Math.min(data.length - count, 105);	// 105->120
+					let hTimeout = null;
+					_this.midiOutput.send(_this.midiEncdata(data.slice(count, count+size)));
+					count += size;
+					if(count >= data.length) {
+						_this.wsResolve = resolve;
+						resolve2();
+						return;
+					}
+
+					return new Promise((resolve3, reject3) => {
+						hTimeout = setTimeout(reject3, TIMEOUT);
+						_this.midiResolve = resolve3;
+					}).then(result => {
+					//	console.log(result);
+						clearTimeout(hTimeout);
+						loop();
+					}).catch(() => {
+						console.log('timeout');
+						reject2();
+					})
+				} // loop
+			}).catch(() => {
+				console.log('');
+				resolve();
+			}).then(() => new Promise((resolve2,reject2) => {
 				let enc = new Uint8Array(293);
+				count = 0;
 				loop();
 				function loop() {
 					let hTimeout = null;
@@ -680,7 +715,7 @@ class comlib {
 						_this.checkCueue();
 					})
 				} // loop
-			}).catch(() => {
+			})).catch(() => {
 				console.log('');
 				resolve();
 			})
@@ -1114,7 +1149,10 @@ class comlib {
 				this.midiInput.onmidimessage = null;
 				this.midiInput = null;
 				this.midiOutput = null;
-				console.log('Midi Disconnected');
+				if(this.ifType == 'MIDI') {
+					console.log('Midi Disconnected');
+					this._runtime.emit(this._runtime.constructor.PERIPHERAL_DISCONNECTED);
+				}
 			}
 			break;
 
@@ -1142,7 +1180,10 @@ class comlib {
 				this.midiInput = midiInput;
 				this.midiOutput = midiOutput;
 				this.midiInput.onmidimessage = this._onMidiMessage.bind(this);
-				console.log('Midi Connected');
+				if(this.ifType == 'MIDI') {
+					console.log('Midi Connected');
+					this._runtime.emit(this._runtime.constructor.PERIPHERAL_CONNECTED);
+				}
 			}
 			break;
 		}
@@ -1157,8 +1198,7 @@ class comlib {
 		}
 	}
 
-	midiEncdata(data) {
-		const plain = data.slice(2);
+	midiEncdata(plain) {
 		const enc = new Uint8Array(2 + (plain.length*8+6)/7);
 		for(let i = 0; i < (enc.length-2)*7; i+=7) {
 			const shift = i % 8;
@@ -1176,20 +1216,18 @@ class comlib {
 	}
 
 	midiDecdata(data) {
+	//	console.log(this._dumpBuf(data));	// debug
 		const enc = data.slice(1, data.length-1);
-		const plain = new Uint8Array(2 + (enc.length*7)/8);
-		for(let i = 0; i < (plain.length-2)*8; i+=8) {
+		const plain = new Uint8Array((enc.length*7)/8);
+		for(let i = 0; i < plain.length*8; i+=8) {
 			const shift = i % 7;
 			const offset = (i-shift)/7;
 			let tmp2 = enc[offset];
 			if(offset+1 < enc.length) {
 				tmp2 += enc[offset+1] << 7;
 			}
-			plain[2+i/8] = (tmp2 >> shift) & 0xff;
+			plain[i/8] = (tmp2 >> shift) & 0xff;
 		}
-		plain[0] = 0xff;
-		plain[1] = 0x55;
-	//	console.log(this._dumpBuf(plain));	// debug
 		return plain;
 	}
 

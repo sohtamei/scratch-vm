@@ -101,8 +101,8 @@ var ext = class {
     ARG6: { type: ArgumentType.STRING, defaultValue:'0', menu: 'onoff' },
 }},
 
-{blockType: BlockType.COMMAND, opcode: 'getExtJs', text: 'update extension', arguments: {
-}},
+//{blockType: BlockType.COMMAND, opcode: 'getExtJs', text: 'update extension', arguments: {
+//}},
 '---',
 {blockType: BlockType.REPORTER, opcode: '_getLcdConfig', text: 'get config', arguments: {
 }, hideFromPalette:true},
@@ -163,9 +163,6 @@ var ext = class {
 {blockType: BlockType.COMMAND, opcode: 'setBrightness', text: 'set brightness [ARG1]', arguments: {
     ARG1: { type: ArgumentType.NUMBER, type2:'B', defaultValue:128 },
 }},
-
-{blockType: BlockType.REPORTER, opcode: '_getExtJs', text: '_update extension', arguments: {
-}, hideFromPalette:true},
 
 		];
 		this.blockOffset = 6;
@@ -292,7 +289,6 @@ drawString(args,util) { return this.sendRecv('drawString', args); }
 fillScreen(args,util) { return this.sendRecv('fillScreen', args); }
 drawJpg(args,util) { return this.sendRecv('drawJpg', args); }
 setBrightness(args,util) { return this.sendRecv('setBrightness', args); }
-_getExtJs(args,util) { return this.sendRecv('_getExtJs', args); }
 
 	getLcdConfig(args, util) {
 		const _this = this;
@@ -369,7 +365,7 @@ _getExtJs(args,util) { return this.sendRecv('_getExtJs', args); }
 
 		return this.sendRecv('drawJpg', args2);
 	}
-
+/*
 	getExtJs(args, util) {
 		const _this = this;
 		return this.sendRecv('_getExtJs', args)
@@ -382,6 +378,7 @@ _getExtJs(args,util) { return this.sendRecv('_getExtJs', args); }
 			_this.comlib.disconnect();
 		})
 	}
+*/
 
 	burnFlash(args) {
 	//	if(this.comlib.server=='http') return ['please access via https://','https:// でアクセスして下さい'][this._locale];
