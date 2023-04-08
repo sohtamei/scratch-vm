@@ -18,6 +18,8 @@ var ext = class {
 	constructor (runtime) {
 		runtime.dev = this;
 
+		this.uiNames = ['uno','ウノ'];
+
 		if(typeof SupportCamera === "undefined") SupportCamera = false;
 		this.comlib = new comlib(runtime, extName, SupportCamera);
 	}
@@ -72,10 +74,10 @@ var ext = class {
 {blockType: BlockType.COMMAND, opcode: 'connectWifi', text: ['connect','接続'][this._locale]+' ssid[ARG1] pass[ARG2]', arguments: {
 	ARG1: { type: ArgumentType.STRING, defaultValue: this.comlib.ssid },
 	ARG2: { type: ArgumentType.STRING, defaultValue: ' ' },
-}},
+}, hideFromPalette:true },
 
 {blockType: BlockType.REPORTER, opcode: 'statusWifi', text: ['WiFi status','WiFi接続状態'][this._locale], disableMonitor:true, arguments: {
-}},
+}, hideFromPalette:true },
 
 
 '---',
@@ -89,7 +91,7 @@ var ext = class {
 
 {blockType: BlockType.COMMAND, opcode: 'BuzzerJ2', text: [
     'play tone [ARG1] beat [ARG2]',
-    '[ARG1] を [ARG2] 鳴らす',
+    '[ARG1] を [ARG2] ならす',
 ][this._locale], arguments: {
     ARG1: { type: ArgumentType.STRING, type2:'S', defaultValue:'262', menu: 'noteJ2' },
     ARG2: { type: ArgumentType.STRING, type2:'S', defaultValue:'500', menu: 'beats' },
@@ -101,7 +103,7 @@ var ext = class {
 ][this._locale], arguments: {
     ARG1: { type: ArgumentType.STRING, type2:'B', defaultValue:'1', menu: 'sensor' },
     ARG2: { type: ArgumentType.NUMBER, type2:'S', defaultValue:4 },
-    ARG3: { type: ArgumentType.NUMBER, type2:'B', defaultValue:4 },
+    ARG3: { type: ArgumentType.NUMBER, type2:'B', defaultValue:8 },
 }},
 
 {blockType: BlockType.BOOLEAN, opcode: 'getSW', text: [
@@ -113,7 +115,7 @@ var ext = class {
 
 {blockType: BlockType.COMMAND, opcode: 'setNeoPixel', text: [
     'set led color [ARG1] [ARG2]',
-    'LED 色 [ARG1] [ARG2]',
+    'LED いろ [ARG1] [ARG2]',
 ][this._locale], arguments: {
     ARG1: { type: ArgumentType.STRING, type2:'L', defaultValue:'16777215', menu: 'color' },
     ARG2: { type: ArgumentType.NUMBER, type2:'B', defaultValue:10 },
@@ -121,7 +123,7 @@ var ext = class {
 
 {blockType: BlockType.COMMAND, opcode: 'saveHist', text: [
     'save hist',
-    '動作を記憶',
+    'きおく',
 ][this._locale], arguments: {
 }},
 
@@ -166,14 +168,14 @@ beats: { acceptReporters: true, items: [
 ]},
 
 color: { acceptReporters: true, items: [
-{ text: ['Black','黒'][this._locale], value: '0' },
-{ text: ['Red','赤'][this._locale], value: '16711680' },
-{ text: ['Green','緑'][this._locale], value: '65280' },
-{ text: ['Blue','青'][this._locale], value: '255' },
-{ text: ['Purple','紫'][this._locale], value: '16711935' },
-{ text: ['Yellow','黄'][this._locale], value: '16776960' },
-{ text: ['Lightblue','水色'][this._locale], value: '65535' },
-{ text: ['White','白'][this._locale], value: '16777215' },
+{ text: ['Black','けす'][this._locale], value: '0' },
+{ text: ['Red','あか'][this._locale], value: '16711680' },
+{ text: ['Green','みどり'][this._locale], value: '65280' },
+{ text: ['Blue','あお'][this._locale], value: '255' },
+{ text: ['Purple','むらさき'][this._locale], value: '16711935' },
+{ text: ['Yellow','きいろ'][this._locale], value: '16776960' },
+{ text: ['Lightblue','みずいろ'][this._locale], value: '65535' },
+{ text: ['White','しろ'][this._locale], value: '16777215' },
 ]},
 
 led: { acceptReporters: true, items: ['1','2','3','4','5','6',]},
@@ -193,6 +195,7 @@ noteJ2: { acceptReporters: true, items: [
 { text: ['G5','ソ5'][this._locale], value: '784' },
 { text: ['A5','ラ5'][this._locale], value: '880' },
 { text: ['B5','シ5'][this._locale], value: '988' },
+{ text: ['rest','休符'][this._locale], value: '0' },
 ]},
 
 onoff: { acceptReporters: true, items: [

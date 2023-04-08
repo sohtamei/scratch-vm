@@ -94,7 +94,7 @@ class comlib {
 		this.midiOutput = null;
 		this.midiResolve = null;
 
-		/*if(extName == 'uno')*/ {	// tentative!
+		if(this.ifType == 'MIDI') {	// tentative!
 			const _this = this;
 			navigator.requestMIDIAccess({sysex: true })
 			.then(midi => {
