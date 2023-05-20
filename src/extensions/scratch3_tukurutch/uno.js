@@ -74,12 +74,20 @@ var ext = class {
 {blockType: BlockType.COMMAND, opcode: 'connectWifi', text: ['connect','接続'][this._locale]+' ssid[ARG1] pass[ARG2]', arguments: {
 	ARG1: { type: ArgumentType.STRING, defaultValue: this.comlib.ssid },
 	ARG2: { type: ArgumentType.STRING, defaultValue: ' ' },
-}, hideFromPalette:true },
+}},
 
 {blockType: BlockType.REPORTER, opcode: 'statusWifi', text: ['WiFi status','WiFi接続状態'][this._locale], disableMonitor:true, arguments: {
-}, hideFromPalette:true },
+}},
 
 
+
+{blockType: BlockType.COMMAND, opcode: 'BuzzerJ1', func: 'BuzzerJ2', text: [
+    'play tone [ARG1] beat [ARG2]',
+    '[ARG1] を [ARG2] ならす',
+][this._locale], arguments: {
+    ARG1: { type: ArgumentType.STRING, type2:'S', defaultValue:'131', menu: 'noteJ1' },
+    ARG2: { type: ArgumentType.STRING, type2:'S', defaultValue:'500', menu: 'beats' },
+}},
 '---',
 {blockType: BlockType.COMMAND, opcode: 'setLED', text: [
     'set LED [ARG1] [ARG2]',
@@ -207,6 +215,24 @@ sensor: { acceptReporters: true, items: ['1','2','3','4',]},
 
 sw: { acceptReporters: true, items: ['1','2','3',]},
 
+
+noteJ1: { acceptReporters: true, items: [
+{ text: ['C2','ド2'][this._locale], value: '65' },
+{ text: ['D2','レ2'][this._locale], value: '73' },
+{ text: ['E2','ミ2'][this._locale], value: '82' },
+{ text: ['F2','ファ2'][this._locale], value: '87' },
+{ text: ['G2','ソ2'][this._locale], value: '98' },
+{ text: ['A2','ラ2'][this._locale], value: '110' },
+{ text: ['B2','シ2'][this._locale], value: '123' },
+{ text: ['C3','ド3'][this._locale], value: '131' },
+{ text: ['D3','レ3'][this._locale], value: '147' },
+{ text: ['E3','ミ3'][this._locale], value: '165' },
+{ text: ['F3','ファ3'][this._locale], value: '175' },
+{ text: ['G3','ソ3'][this._locale], value: '196' },
+{ text: ['A3','ラ3'][this._locale], value: '220' },
+{ text: ['B3','シ3'][this._locale], value: '247' },
+{ text: ['rest','休符'][this._locale], value: '0' },
+]},
 	  };
 	}
 

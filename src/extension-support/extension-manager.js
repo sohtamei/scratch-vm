@@ -32,6 +32,7 @@ const builtinExtensions = {
     usb2bt: () => require('../extensions/scratch3_tukurutch/usb2bt.js'),
     AtomMateForToio: () => require('../extensions/scratch3_tukurutch/AtomMateForToio.js'),
     M5Unified: () => require('../extensions/scratch3_tukurutch/M5Unified.js'),
+    M5CoreS3: () => require('../extensions/scratch3_tukurutch/M5CoreS3.js'),
     esp32camlcd: () => require('../extensions/scratch3_tukurutch/esp32camlcd.js'),
     bCore: () => require('../extensions/scratch3_tukurutch/bCore.js'),
     bCore2: () => require('../extensions/scratch3_tukurutch/bCore2.js'),
