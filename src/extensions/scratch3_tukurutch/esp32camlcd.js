@@ -51,6 +51,7 @@ var ext = class {
 	get_blocks() {
 		this.flashList = [
 {name:'SquareCam', type:'esp32s3u', baudrate:921600},
+{name:'xiao32S3sense', type:'esp32s3u', baudrate:921600},
 		];
 
 		this._blocks = [
@@ -96,14 +97,14 @@ var ext = class {
     ARG6: { type: ArgumentType.STRING, defaultValue:'0', menu: 'onoff' },
 }},
 
-{blockType: BlockType.COMMAND, opcode: 'getExtJs', text: 'update extension', arguments: {
-}},
+//{blockType: BlockType.COMMAND, opcode: 'getExtJs', text: 'update extension', arguments: {
+//}},
 '---',
 {blockType: BlockType.REPORTER, opcode: '_getLcdConfig', text: 'get config', arguments: {
 }, hideFromPalette:true},
 
 {blockType: BlockType.COMMAND, opcode: 'setLcdConfig', text: 'set config [ARG1] port=[ARG2]', arguments: {
-    ARG1: { type: ArgumentType.STRING, type2:'S', defaultValue:'25', menu: 'lcdType' },
+    ARG1: { type: ArgumentType.STRING, type2:'S', defaultValue:'33', menu: 'lcdType' },
     ARG2: { type: ArgumentType.STRING, type2:'b', defaultValue:' ' },
 }},
 
@@ -253,8 +254,12 @@ font: { acceptReporters: true, items: [
 ]},
 
 lcdType: { acceptReporters: true, items: [
-{ text: 'SQUARE', value: '25' },
+{ text: 'no-LCD', value: '0' },
+{ text: 'SQUARELCD', value: '33' },
 { text: 'ROUNDLCD', value: '7' },
+{ text: 'ROUNDXIAO', value: '24' },
+{ text: 'SQUAREXIAO', value: '25' },
+{ text: 'RoundTouchXIAO', value: '34' },
 ]},
 
 motorch: { acceptReporters: true, items: [

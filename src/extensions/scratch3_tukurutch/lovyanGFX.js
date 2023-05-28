@@ -56,6 +56,7 @@ var ext = class {
 {name:'lovyanGFX.esp32s3.usb', type:'esp32s3u', baudrate:921600},
 {name:'lovyanGFX.esp32c3.uart', type:'esp32c3', baudrate:921600},
 {name:'lovyanGFX.esp32c3.usb', type:'esp32c3u', baudrate:921600},
+{name:'lovyanGFX.pico', type:'pico', baudrate:921600},
 		];
 
 		this._blocks = [
@@ -257,14 +258,15 @@ lcdType: { acceptReporters: true, items: [
 { text: 'MSP3520_3521', value: '21' },
 { text: 'MSP4020_4021', value: '22' },
 { text: 'MSP4022_4023', value: '23' },
-{ text: '3248S035', value: '6' },
-{ text: '1732S019', value: '29' },
-{ text: 'ROUNDLCD', value: '7' },
 { text: 'ROUNDXIAO', value: '24' },
-{ text: 'SQUARE', value: '25' },
+{ text: 'SQUAREXIAO', value: '25' },
+{ text: 'RoundTouchXIAO', value: '34' },
+{ text: 'ROUNDLCD', value: '7' },
+{ text: 'SQUARELCD', value: '33' },
 { text: '128TFT', value: '26' },
+{ text: '3248S035', value: '6' },
 { text: 'TTGO_TDISP', value: '27' },
-{ text: 'ATM0177B3A', value: '9' },
+{ text: '1732S019', value: '29' },
 { text: 'RP2040LCD128', value: '30' },
 ]},
 
