@@ -50,8 +50,8 @@ var ext = class {
 	
 	get_blocks() {
 		this.flashList = [
-{name:'SquareCam', type:'esp32s3u', baudrate:921600},
 {name:'xiao32S3sense', type:'esp32s3u', baudrate:921600},
+{name:'SquareCam', type:'esp32s3u', baudrate:921600},
 		];
 
 		this._blocks = [
