@@ -184,7 +184,7 @@ class comlib {
 			this._runtime.ioDevices.video.enableVideo();
 			this._runtime.ioDevices.video.mirror = true;
 			break;
-		case 'on_flipped':
+		case 'on-flipped':
 			this._runtime.ioDevices.video.enableVideo();
 			this._runtime.ioDevices.video.mirror = false;
 			break;

@@ -193,7 +193,7 @@ clearNVS: { items: [
 { text: ['init NVS','NVS初期化'][this._locale], value: '1' },
 ]},
 
-videoState: { acceptReporters: true, items: ['off','on','on_flipped']},
+videoState: { acceptReporters: true, items: ['off','on','on-flipped']},
 
 flashList: { acceptReporters: true, items: this.flashItems },
 

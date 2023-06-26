@@ -257,7 +257,7 @@ ifType: { acceptReporters: true, items: [
 	{ text: 'WiFi', value: 'WLAN' },
 ]},
 
-videoState: { acceptReporters: true, items: ['off','on','on_flipped']},
+videoState: { acceptReporters: true, items: ['off','on','on-flipped']},
 
 flashList: { acceptReporters: true, items: this.flashItems },
 
