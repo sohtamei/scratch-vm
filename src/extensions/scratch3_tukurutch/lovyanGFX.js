@@ -101,9 +101,6 @@ var ext = class {
     ARG5: { type: ArgumentType.NUMBER, defaultValue:0 },
     ARG6: { type: ArgumentType.STRING, defaultValue:'0', menu: 'onoff' },
 }},
-
-//{blockType: BlockType.COMMAND, opcode: 'getExtJs', text: 'update extension', arguments: {
-//}},
 '---',
 {blockType: BlockType.REPORTER, opcode: '_getLcdConfig', text: 'get config', arguments: {
 }, hideFromPalette:true},
@@ -268,6 +265,8 @@ lcdType: { acceptReporters: true, items: [
 { text: 'TTGO_TDISP', value: '27' },
 { text: '1732S019', value: '29' },
 { text: 'RP2040LCD128', value: '30' },
+{ text: 'RP2040GEEK', value: '35' },
+{ text: 'ESP32C3_144', value: '36' },
 ]},
 
 onoff: { acceptReporters: true, items: [
@@ -367,20 +366,6 @@ setBrightness(args,util) { return this.sendRecv('setBrightness', args); }
 
 		return this.sendRecv('drawJpg', args2);
 	}
-/*
-	getExtJs(args, util) {
-		const _this = this;
-		return this.sendRecv('_getExtJs', args)
-		.then(result => new Promise(resolve => {
-			Zlib.gunzip(result, (err, _plain) => resolve(_plain));
-		})).then(result => {
-		//	const loadjs = String.fromCharCode.apply(null, result);
-			const loadjs = new TextDecoder('utf-8').decode(result);
-			_this.comlib._runtime.vm.extensionManager.loadExtensionData(loadjs);
-			_this.comlib.disconnect();
-		})
-	}
-*/
 
 	burnFlash(args) {
 	//	if(this.comlib.server=='http') return ['please access via https://','https:// でアクセスして下さい'][this._locale];

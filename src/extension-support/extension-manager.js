@@ -36,6 +36,7 @@ const builtinExtensions = {
     esp32camlcd: () => require('../extensions/scratch3_tukurutch/esp32camlcd.js'),
     bCore: () => require('../extensions/scratch3_tukurutch/bCore.js'),
     bCore2: () => require('../extensions/scratch3_tukurutch/bCore2.js'),
+    maBeee: () => require('../extensions/scratch3_tukurutch/maBeee.js'),
 
     loadVMD: () => require('../extensions/scratch3_devices/loadVMD.js'),
     uiParts: () => require('../extensions/scratch3_devices/uiParts.js'),
