@@ -121,6 +121,8 @@ class Video {
     }
 
     get element () {
+        if(this.provider.video.width  == 0) this.provider.video.width = 480;
+        if(this.provider.video.height == 0) this.provider.video.height = 360;
         return this.provider.video;
     }
 

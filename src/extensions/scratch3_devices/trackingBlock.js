@@ -42,6 +42,43 @@ class Scratch3Blocks {
 		this._detectY = 0;
 		this._detectWidth = 0;
 		this._detectHeight = 0;
+
+		this.Camera = {name:'esp32camera', ip:''};
+
+		const cookies_get = document.cookie.split(';');
+		for(let i = 0; i < cookies_get.length; i++) {
+			const tmp = cookies_get[i].trim().split('=');
+			switch(tmp[0]) {
+			case 'Camera_name': this.Camera.name = tmp[1]; break;
+			case 'Camera_ip':   this.Camera.ip = tmp[1];   break;
+			}
+		}
+		console.log('Camera:'+this.Camera.name+','+this.Camera.ip);
+
+		this.cameras = ['esp32camera'];
+		const _this = this;
+		navigator.mediaDevices.enumerateDevices()
+		.then(devices => {
+			for(let i = 0; i < devices.length; i++) {
+				if (devices[i].kind == "videoinput")
+					_this.cameras.push(devices[i].label);
+			}
+		});
+	}
+
+	selectCamera(args) {
+		const name = args.ARG1.trim();
+		const ip = args.ARG2.trim();
+		if(this.Camera.name != name || this.Camera.ip != ip) {
+			document.cookie = 'Camera_name=' + name + '; samesite=lax; expires=Tue, 31-Dec-2037 00:00:00 GMT;';
+			document.cookie = 'Camera_ip=' + ip + '; samesite=lax; expires=Tue, 31-Dec-2037 00:00:00 GMT;';
+			alert(['The condition of camera was updated, please reload screen.',
+				'カメラの設定を更新しました, プログラムを保存して画面を再読み込みして下さい.'][this._locale]);
+			this.Camera = {name:name, ip:ip};
+			return;
+		}
+		this.runtime.ioDevices.video.enableVideo();
+		this.runtime.ioDevices.video.mirror = false;
 	}
 
 	getInfo () {
@@ -119,6 +156,12 @@ class Scratch3Blocks {
 				ARG5: {type:ArgumentType.COLOR, defaultValue:'#00ff00'},
 				ARG6: {type:ArgumentType.NUMBER, defaultValue:50 },
 			}},
+
+			{blockType: BlockType.COMMAND, opcode: 'selectCamera', text: 'select camera [ARG1] ip [ARG2]',
+			arguments: {
+				ARG1: {type:ArgumentType.STRING, defaultValue: (this.Camera.name=='' ? 'esp32camera':this.Camera.name), menu: 'cameras'},
+				ARG2: {type:ArgumentType.STRING, defaultValue: (this.Camera.ip  =='' ? ' '          :this.Camera.ip)},
+			}},
 		];
 	}
 
@@ -128,7 +171,13 @@ class Scratch3Blocks {
 				{ text: ['normal','通常'][this._locale], value: '0' },
 				{ text: ['color detect','色検出'][this._locale], value: '1' },
 			]},
+
+			cameras: { acceptReporters: true, items: '_getCameraMenu'}
 		};
+	}
+
+	_getCameraMenu() {
+		return this.cameras;
 	}
 
 	startDetection(args, util) {
