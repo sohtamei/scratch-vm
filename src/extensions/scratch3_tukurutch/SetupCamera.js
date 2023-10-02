@@ -115,12 +115,13 @@ cameras: { acceptReporters: true, items: '_getCameraMenu'}
 
 	setConfig(args) {
 		const name = args.ARG1.trim();
-		const ip = args.ARG2.trim();
+		let   ip = args.ARG2.trim();
 		if(this.Camera_name != name || this.comlib.ipCamera != ip) {
-			if(name != 'Built-in camera') {
+			if(name == 'Built-in camera')
+				ip = '';
+			else
 				document.cookie = 'Camera_name=' + name + '; samesite=lax; expires=Tue, 31-Dec-2037 00:00:00 GMT;';
-				document.cookie = 'Camera_ip=' + ip + '; samesite=lax; expires=Tue, 31-Dec-2037 00:00:00 GMT;';
-			}
+			document.cookie = 'Camera_ip=' + ip + '; samesite=lax; expires=Tue, 31-Dec-2037 00:00:00 GMT;';
 			alert(['The condition of camera was updated, please reload screen.',
 				'カメラの設定を更新しました, プログラムを保存して画面を再読み込みして下さい.'][this._locale]);
 			this.Camera_name = name;
