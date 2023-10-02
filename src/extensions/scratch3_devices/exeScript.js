@@ -26,10 +26,13 @@ class Scratch3Blocks {
                     ARG2: { type: ArgumentType.STRING, defaultValue:'2' },
                     ARG3: { type: ArgumentType.STRING, defaultValue:'3' },
                 }},
-                {blockType: BlockType.REPORTER, opcode: 'exeScriptRep', text: 'funcMain([ARG1],[ARG2],[ARG3])', arguments: {
+                {blockType: BlockType.REPORTER, opcode: 'exeScriptRep', text: 'funcMain([ARG1],[ARG2],[ARG3],[ARG4],[ARG5],[ARG6])', arguments: {
                     ARG1: { type: ArgumentType.STRING, defaultValue:'1' },
                     ARG2: { type: ArgumentType.STRING, defaultValue:'2' },
                     ARG3: { type: ArgumentType.STRING, defaultValue:'3' },
+                    ARG4: { type: ArgumentType.STRING, defaultValue:'4' },
+                    ARG5: { type: ArgumentType.STRING, defaultValue:'5' },
+                    ARG6: { type: ArgumentType.STRING, defaultValue:'6' },
                 }},
             ],
 //          menus: [],    // メニュー定義
@@ -37,13 +40,15 @@ class Scratch3Blocks {
     }
 
     _exeScript(args, util, blockInfo) {
+        const chk = function(a) { return (a === undefined ? 0: a); }
+
         const comment = util.thread.target.blocks._blocks[args.blockid].comment;
         if(typeof comment === 'undefined') return 'no comment';
         console.log(util.thread.target.comments[comment].text);
         eval(util.thread.target.comments[comment].text);
         if(typeof funcMain !== 'function') return 'no funcMain function';
         funcMain = funcMain.bind(this);
-        return funcMain(args.ARG1,args.ARG2,args.ARG3);
+        return funcMain(chk(args.ARG1),chk(args.ARG2),chk(args.ARG3),chk(args.ARG4),chk(args.ARG5),chk(args.ARG6));
     }
 
     exeScriptCom(args, util, blockInfo) { return this._exeScript(args, util, blockInfo); }

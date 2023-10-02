@@ -31,54 +31,15 @@ class Scratch3Blocks {
 		this.areaX = [-240,240];
 		this.areaY = [-180,180];
 
-		this._targetRGB = [{r:0, g:0, b:0},{r:0, g:0, b:0},{r:0, g:0, b:0}];
+	//	this._targetRGB = [{r:0, g:0, b:0},{r:0, g:0, b:0},{r:0, g:0, b:0}];
+		this._targetHsv = [{h:0, s:0, v:0},{h:0, s:0, v:0},{h:0, s:0, v:0}];
 		this._tolerance = [100,100,100];
-		this._targetHsv = {h:0, s:0, v:0};
 
 		this._isDetected = false;
 		this._whenDetected = false;
 		this._lastDetectedJson = '';
-		this._detectX = 0;
-		this._detectY = 0;
-		this._detectWidth = 0;
-		this._detectHeight = 0;
-
-		this.Camera = {name:'esp32camera', ip:''};
-
-		const cookies_get = document.cookie.split(';');
-		for(let i = 0; i < cookies_get.length; i++) {
-			const tmp = cookies_get[i].trim().split('=');
-			switch(tmp[0]) {
-			case 'Camera_name': this.Camera.name = tmp[1]; break;
-			case 'Camera_ip':   this.Camera.ip = tmp[1];   break;
-			}
-		}
-		console.log('Camera:'+this.Camera.name+','+this.Camera.ip);
-
-		this.cameras = ['esp32camera'];
-		const _this = this;
-		navigator.mediaDevices.enumerateDevices()
-		.then(devices => {
-			for(let i = 0; i < devices.length; i++) {
-				if (devices[i].kind == "videoinput")
-					_this.cameras.push(devices[i].label);
-			}
-		});
-	}
-
-	selectCamera(args) {
-		const name = args.ARG1.trim();
-		const ip = args.ARG2.trim();
-		if(this.Camera.name != name || this.Camera.ip != ip) {
-			document.cookie = 'Camera_name=' + name + '; samesite=lax; expires=Tue, 31-Dec-2037 00:00:00 GMT;';
-			document.cookie = 'Camera_ip=' + ip + '; samesite=lax; expires=Tue, 31-Dec-2037 00:00:00 GMT;';
-			alert(['The condition of camera was updated, please reload screen.',
-				'カメラの設定を更新しました, プログラムを保存して画面を再読み込みして下さい.'][this._locale]);
-			this.Camera = {name:name, ip:ip};
-			return;
-		}
-		this.runtime.ioDevices.video.enableVideo();
-		this.runtime.ioDevices.video.mirror = false;
+		this._detect = [];
+		for(let i=0; i<8; i++) this._detect[i] = {x:0, y:0, width:0, height:0};
 	}
 
 	getInfo () {
@@ -102,14 +63,6 @@ class Scratch3Blocks {
 
 	get_blocks() {
 		return [
-			{blockType: BlockType.COMMAND, opcode: 'startDetection', text: [
-					'Start detection color[ARG1] tolerance[ARG2]',
-					'検出開始 色[ARG1] 誤差範囲[ARG2]'][this._locale],
-			arguments: {
-				ARG1: {type:ArgumentType.COLOR, defaultValue:'#ff0000'},
-				ARG2: {type:ArgumentType.NUMBER, defaultValue:50 },
-			}},
-
 			{blockType: BlockType.COMMAND, opcode: 'startDetection2', text: [
 					'Start detection color[ARG1] hue-delta[ARG2] saturation-min[ARG3] brightness-min[ARG4]',
 					'検出開始 色[ARG1] 色相誤差[ARG2] 彩度min[ARG3] 明度min[ARG4]'][this._locale],
@@ -132,36 +85,49 @@ class Scratch3Blocks {
 				ARG4: {type:ArgumentType.NUMBER, defaultValue: 180 },
 			}},
 
-			{blockType: BlockType.COMMAND, opcode: 'setCameraMode', text: [
-					'Set camera mode[ARG1] gain[ARG2]',
-					'カメラモード[ARG1] ゲイン[ARG2]'][this._locale],
-			arguments: {
-				ARG1: {type:ArgumentType.STRING, defaultValue:'1', menu: 'cameraMode' },
-				ARG2: {type:ArgumentType.NUMBER, defaultValue: 2 },
-			}},
-
 			{blockType: BlockType.BOOLEAN, opcode: 'isDetected', text: ['Is detected', '検出'][this._locale] },
 			{blockType: BlockType.HAT, opcode: 'whenDetected', text: ['When detected', '検出したとき'][this._locale] },
-			{blockType: BlockType.REPORTER, opcode: 'detectX', text: ['X axis', 'x座標'][this._locale] },
-			{blockType: BlockType.REPORTER, opcode: 'detectY', text: ['Y axis', 'y座標'][this._locale] },
-			{blockType: BlockType.REPORTER, opcode: 'detectWidth', text: ['Width', '幅'][this._locale] },
-			{blockType: BlockType.REPORTER, opcode: 'detectHeight', text: ['Height', '高さ'][this._locale] },
 
-			{blockType: BlockType.COMMAND, opcode: 'startDetectionMulti', text: 'Start detection[ARG1]/[ARG2], [ARG3]/[ARG4], [ARG5]/[ARG6]',
+			{blockType: BlockType.REPORTER, opcode: 'detectX', text: ['X axis', 'x座標'][this._locale]+'[ARG1]',
+			arguments: {
+				ARG1: {type:ArgumentType.NUMBER, defaultValue:1 },
+			}},
+
+			{blockType: BlockType.REPORTER, opcode: 'detectY', text: ['Y axis', 'y座標'][this._locale]+'[ARG1]',
+			arguments: {
+				ARG1: {type:ArgumentType.NUMBER, defaultValue:1 },
+			}},
+
+			{blockType: BlockType.REPORTER, opcode: 'detectWidth', text: ['Width', '幅'][this._locale]+'[ARG1]',
+			arguments: {
+				ARG1: {type:ArgumentType.NUMBER, defaultValue:1 },
+			}},
+
+			{blockType: BlockType.REPORTER, opcode: 'detectHeight', text: ['Height', '高さ'][this._locale]+'[ARG1]',
+			arguments: {
+				ARG1: {type:ArgumentType.NUMBER, defaultValue:1 },
+			}},
+
+			{blockType: BlockType.COMMAND, opcode: 'startDetectionMulti', text: [
+					'Start detection[ARG1] [ARG2] [ARG3] hue-delta[ARG4] saturation-min[ARG5] brightness-min[ARG6]',
+					'検出開始 色[ARG1] [ARG2] [ARG3] 色相誤差[ARG4] 彩度min[ARG5] 明度min[ARG6]'][this._locale],
+			arguments: {
+				ARG1: {type:ArgumentType.COLOR, defaultValue:'#ff0000'},
+				ARG2: {type:ArgumentType.COLOR, defaultValue:'#0000ff'},
+				ARG3: {type:ArgumentType.COLOR, defaultValue:'#00ff00'},
+				ARG4: {type:ArgumentType.NUMBER, defaultValue:5 },
+				ARG5: {type:ArgumentType.NUMBER, defaultValue:30 },
+				ARG6: {type:ArgumentType.NUMBER, defaultValue:50 },
+			}},
+/*
+			{blockType: BlockType.COMMAND, opcode: 'startDetection', text: [
+					'Start detection color[ARG1] tolerance[ARG2]',
+					'検出開始 色[ARG1] 誤差範囲[ARG2]'][this._locale],
 			arguments: {
 				ARG1: {type:ArgumentType.COLOR, defaultValue:'#ff0000'},
 				ARG2: {type:ArgumentType.NUMBER, defaultValue:50 },
-				ARG3: {type:ArgumentType.COLOR, defaultValue:'#0000ff'},
-				ARG4: {type:ArgumentType.NUMBER, defaultValue:50 },
-				ARG5: {type:ArgumentType.COLOR, defaultValue:'#00ff00'},
-				ARG6: {type:ArgumentType.NUMBER, defaultValue:50 },
 			}},
-
-			{blockType: BlockType.COMMAND, opcode: 'selectCamera', text: 'select camera [ARG1] ip [ARG2]',
-			arguments: {
-				ARG1: {type:ArgumentType.STRING, defaultValue: (this.Camera.name=='' ? 'esp32camera':this.Camera.name), menu: 'cameras'},
-				ARG2: {type:ArgumentType.STRING, defaultValue: (this.Camera.ip  =='' ? ' '          :this.Camera.ip)},
-			}},
+*/
 		];
 	}
 
@@ -171,15 +137,9 @@ class Scratch3Blocks {
 				{ text: ['normal','通常'][this._locale], value: '0' },
 				{ text: ['color detect','色検出'][this._locale], value: '1' },
 			]},
-
-			cameras: { acceptReporters: true, items: '_getCameraMenu'}
 		};
 	}
-
-	_getCameraMenu() {
-		return this.cameras;
-	}
-
+/*
 	startDetection(args, util) {
 		this._targetRGB[0] = Cast.toRgbColorObject(args.ARG1);
 		this._tolerance[0] = args.ARG2*1;
@@ -202,44 +162,16 @@ class Scratch3Blocks {
 		})
 	}
 
-	startDetectionMulti(args, util) {
-		this._targetRGB[0] = Cast.toRgbColorObject(args.ARG1);
-		this._tolerance[0] = args.ARG2*1;
-		this._targetRGB[1] = Cast.toRgbColorObject(args.ARG3);
-		this._tolerance[1] = args.ARG4*1;
-		this._targetRGB[2] = Cast.toRgbColorObject(args.ARG5);
-		this._tolerance[2] = args.ARG6*1;
-
-		const _this = this;
-
-		if(this.tracker) this.stopDetection(null);
-
-		this.runtime.ioDevices.video.enableVideo();
-		this.runtime.ioDevices.video.mirror = true;
-		return new Promise(resolve => setTimeout(resolve, 1000))
-		.then(() => {
-
-			window.tracking.ColorTracker.registerColor('color1', function (r, g, b) {return _this._checkDistance(0, r, g, b);});
-			window.tracking.ColorTracker.registerColor('color2', function (r, g, b) {return _this._checkDistance(1, r, g, b);});
-			window.tracking.ColorTracker.registerColor('color3', function (r, g, b) {return _this._checkDistance(2, r, g, b);});
-			_this.tracker = new window.tracking.ColorTracker(['color1','color2','color3']);
-			_this.tracker.minDimension = 5;
-			window.tracking.track(_this.runtime.ioDevices.video.element, _this.tracker);
-
-			_this.tracker.on('track', _this._detected.bind(_this));
-		})
-	}
-
 	_checkDistance(index, r, g, b) {
 		const distance =  ((this._targetRGB[index].r - r) ** 2)
 						+ ((this._targetRGB[index].g - g) ** 2)
 						+ ((this._targetRGB[index].b - b) ** 2);
 		return distance < (this._tolerance[index] ** 2);
 	}
-
+*/
 	startDetection2(args, util) {
 		const hsv = this.rgb2hsv(Cast.toRgbColorObject(args.ARG1));
-		this._targetHsv = {h:hsv.h, s:args.ARG3*1, v:args.ARG4*1};
+		this._targetHsv[0] = {h:hsv.h, s:args.ARG3*1, v:args.ARG4*1};
 		this._tolerance[0] = args.ARG2*1;
 
 		const _this = this;
@@ -251,7 +183,7 @@ class Scratch3Blocks {
 		return new Promise(resolve => setTimeout(resolve, 1000))
 		.then(() => {
 
-			window.tracking.ColorTracker.registerColor('color1', function (r, g, b) {return _this._checkDistance2(r, g, b);});
+			window.tracking.ColorTracker.registerColor('color1', function (r, g, b) {return _this._checkDistance2(0, r, g, b);});
 			_this.tracker = new window.tracking.ColorTracker(['color1']);
 			_this.tracker.minDimension = 5;
 			window.tracking.track(_this.runtime.ioDevices.video.element, _this.tracker);
@@ -260,17 +192,44 @@ class Scratch3Blocks {
 		})
 	}
 
-	_checkDistance2(r, g, b) {
+	startDetectionMulti(args, util) {
+		let hsv;
+		hsv = this.rgb2hsv(Cast.toRgbColorObject(args.ARG1)); this._targetHsv[0] = {h:hsv.h, s:args.ARG5*1, v:args.ARG6*1};
+		hsv = this.rgb2hsv(Cast.toRgbColorObject(args.ARG2)); this._targetHsv[1] = {h:hsv.h, s:args.ARG5*1, v:args.ARG6*1};
+		hsv = this.rgb2hsv(Cast.toRgbColorObject(args.ARG3)); this._targetHsv[2] = {h:hsv.h, s:args.ARG5*1, v:args.ARG6*1};
+		this._tolerance[0] = args.ARG4*1;
+
+		const _this = this;
+
+		if(this.tracker) this.stopDetection(null);
+
+		this.runtime.ioDevices.video.enableVideo();
+		this.runtime.ioDevices.video.mirror = true;
+		return new Promise(resolve => setTimeout(resolve, 1000))
+		.then(() => {
+
+			window.tracking.ColorTracker.registerColor('color1', function (r, g, b) {return _this._checkDistance2(0, r, g, b);});
+			window.tracking.ColorTracker.registerColor('color2', function (r, g, b) {return _this._checkDistance2(1, r, g, b);});
+			window.tracking.ColorTracker.registerColor('color3', function (r, g, b) {return _this._checkDistance2(2, r, g, b);});
+			_this.tracker = new window.tracking.ColorTracker(['color1','color2','color3']);
+			_this.tracker.minDimension = 5;
+			window.tracking.track(_this.runtime.ioDevices.video.element, _this.tracker);
+
+			_this.tracker.on('track', _this._detected.bind(_this));
+		})
+	}
+
+	_checkDistance2(index, r, g, b) {
 		let rgb = {r:r, g:g, b:b};
 		const hsv = this.rgb2hsv(rgb);
-		if(hsv.s < this._targetHsv.s) return false;
-		if(hsv.v < this._targetHsv.v) return false;
+		if(hsv.s < this._targetHsv[index].s) return false;
+		if(hsv.v < this._targetHsv[index].v) return false;
 
-		let hue = hsv.h - this._targetHsv.h;
+		let hue = hsv.h - this._targetHsv[index].h;
 		if(hue < -180) hue += 360;
 		if(hue >  180) hue -= 360;
 		if(Math.abs(hue) > this._tolerance[0]) return false;
-//console.log(rgb.r + " " + rgb.g + " " + rgb.b + " " + Math.round(hsv.h) + " " + Math.round(this._targetHsv.h) + " " + Math.round(hue));
+//console.log(rgb.r + " " + rgb.g + " " + rgb.b + " " + Math.round(hsv.h) + " " + Math.round(this._targetHsv[0].h) + " " + Math.round(hue));
 		return true;
 	}
 
@@ -330,44 +289,41 @@ class Scratch3Blocks {
 		this._isDetected = true;
 		this._whenDetected = true;
 
-		if(typeof this.runtime.tracking.detected !== 'undefined') {
+		if(this.runtime.tracking.detected !== undefined) {
 	//	if(this.runtime.tracking.detected) {
 			let ret = this.runtime.tracking.detected(event.data);
 			if(ret == false) return;
 		}
 
-		let maxIdx = -1;
-		let maxSize = 0;
 		let rect;
+		let maxSizeList = [];
 		for(let i = 0; i < event.data.length; i++) {
 			rect = event.data[i];
 			const x = 240 - (rect.x + rect.width/2);
 			const y = 180 - (rect.y + rect.height/2);
-			
+
 			if(this.areaEnabled()
 			&& (x < this.areaX[0] || x > this.areaX[1] || y < this.areaY[0] || y > this.areaY[1])) {
 				;
 			} else {
 			//	console.log(this.areaX[0], ',', this.areaX[1], ',', x, ',', this.areaY[0], ',', this.areaY[1], ',', y);
-				const xs = [240 - rect.x, 240 - (rect.x + rect.width)];
-				const ys = [180 - rect.y, 180 - (rect.y + rect.height)];
-				this.drawRect(xs, ys, colorGreen);
-
-				if(maxSize < rect.width+rect.height) {
-					maxSize = rect.width+rect.height;
-					maxIdx = i;
-				}
+				maxSizeList.push({index:i, size:rect.width+rect.height});
 			}
 		}
-		if(maxIdx != -1) {
-			rect = event.data[maxIdx];
+
+		if(maxSizeList.length == 0) return;
+
+		maxSizeList.sort((a, b) => (a.size > b.size ? -1 : 1));
+
+		for(let i = 0; i < Math.min(maxSizeList.length, 8); i++) {
+			rect = event.data[maxSizeList[i].index];
 			const xs = [240 - rect.x, 240 - (rect.x + rect.width)];
 			const ys = [180 - rect.y, 180 - (rect.y + rect.height)];
-			this.drawRect(xs, ys, colorRed);
-			this._detectX = (xs[0] + xs[1]) / 2;
-			this._detectY = (ys[0] + ys[1]) / 2;
-			this._detectWidth = rect.width;
-			this._detectHeight = rect.height;
+			this.drawRect(xs, ys, (i == 0) ? colorRed: colorGreen);
+
+			this._detect[i] = {x:(xs[0] + xs[1]) / 2,
+							   y:(ys[0] + ys[1]) / 2,
+							   width:rect.width, height:rect.height};
 		}
 	}
 
@@ -379,13 +335,6 @@ class Scratch3Blocks {
 
 		this._clearArea();
 	}
-
-	setCameraMode(args) {
-		const mode = args.ARG1*1;
-		const gain = args.ARG2*1;
-		return this.runtime.dev.comlib.setCameraMode(mode, gain);
-	}
-
 	isDetected(args)   {
 		const whenDetected = this._whenDetected;
 		this._whenDetected = false;
@@ -397,11 +346,16 @@ class Scratch3Blocks {
 		this._whenDetected = false;
 		return whenDetected;
 	}
-	detectX(args)      { return this._detectX; }
-	detectY(args)      { return this._detectY; }
-	detectWidth(args)  { return this._detectWidth; }
-	detectHeight(args) { return this._detectHeight; }
+	detectX(args)      { return this._detectArgs(args).x; }
+	detectY(args)      { return this._detectArgs(args).y; }
+	detectWidth(args)  { return this._detectArgs(args).width; }
+	detectHeight(args) { return this._detectArgs(args).height; }
 
+	_detectArgs(args) {
+		let index = (args.ARG1 === undefined)? 1: args.ARG1*1;
+		if(index < 1 || index > 8) index = 1;
+		return this._detect[index-1];
+	}
 
 	areaEnabled() {
 		if( this.areaX[0] == -240 && this.areaX[1] == 240

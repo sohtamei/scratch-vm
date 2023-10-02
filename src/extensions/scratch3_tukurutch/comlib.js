@@ -172,7 +172,7 @@ class comlib {
 	}
 
 	videoToggle(state) {
-		if(this.server=='https') return ['please access via http://','http:// でアクセスして下さい'][this._locale];
+	//	if(this.server=='https') return ['please access via http://','http:// でアクセスして下さい'][this._locale];
 
 		const stage = this._runtime.getTargetForStage();
 		if(stage) stage.videoState = state;
@@ -470,6 +470,7 @@ class comlib {
 		document.cookie = this.extName+'_ip=' + this.ipadrs + '; samesite=lax; expires=Tue, 31-Dec-2037 00:00:00 GMT;';
 		if(this.SupportCamera) {
 			this.ipCamera = ipadrs;
+			document.cookie = 'Camera_name=' + 'esp32camera' + '; samesite=lax; expires=Tue, 31-Dec-2037 00:00:00 GMT;';
 			document.cookie = 'Camera_ip=' + this.ipadrs + '; samesite=lax; expires=Tue, 31-Dec-2037 00:00:00 GMT;';
 		}
 		if(updateToolbox) {

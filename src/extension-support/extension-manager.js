@@ -37,6 +37,7 @@ const builtinExtensions = {
     bCore: () => require('../extensions/scratch3_tukurutch/bCore.js'),
     bCore2: () => require('../extensions/scratch3_tukurutch/bCore2.js'),
     maBeee: () => require('../extensions/scratch3_tukurutch/maBeee.js'),
+    SetupCamera: () => require('../extensions/scratch3_tukurutch/SetupCamera.js'),
 
     loadVMD: () => require('../extensions/scratch3_devices/loadVMD.js'),
     uiParts: () => require('../extensions/scratch3_devices/uiParts.js'),
