@@ -54,6 +54,7 @@ const builtinExtensions = {
     tracking: () => require('../extensions/scratch3_devices/trackingBlock.js'),
     i2cLCD: () => require('../extensions/scratch3_devices/i2cLCD.js'),
     envX: () => require('../extensions/scratch3_devices/envX.js'),
+    g2s: () => require('../extensions/xcx-g2s/index.js'),
 
     microbit: () => require('../extensions/scratch3_microbit/microbit.js'),
     microbitRadio: () => require('../extensions/scratch3_microbit/microbitRadio.js'),
