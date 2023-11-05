@@ -38,6 +38,7 @@ const builtinExtensions = {
     bCore2: () => require('../extensions/scratch3_tukurutch/bCore2.js'),
     maBeee: () => require('../extensions/scratch3_tukurutch/maBeee.js'),
     SetupCamera: () => require('../extensions/scratch3_tukurutch/SetupCamera.js'),
+    CrSDK: () => require('../extensions/scratch3_tukurutch/CrSDK.js'),
 
     loadVMD: () => require('../extensions/scratch3_devices/loadVMD.js'),
     uiParts: () => require('../extensions/scratch3_devices/uiParts.js'),
@@ -55,6 +56,9 @@ const builtinExtensions = {
     i2cLCD: () => require('../extensions/scratch3_devices/i2cLCD.js'),
     envX: () => require('../extensions/scratch3_devices/envX.js'),
     g2s: () => require('../extensions/xcx-g2s/index.js'),
+//  fetch: () => require('../extensions/TurboWarp/fetch.js'),
+//  files: () => require('../extensions/TurboWarp/files.js'),
+//  iframe: () => require('../extensions/TurboWarp/iframe.js'),
 
     microbit: () => require('../extensions/scratch3_microbit/microbit.js'),
     microbitRadio: () => require('../extensions/scratch3_microbit/microbitRadio.js'),
