@@ -244,6 +244,7 @@ class Scratch3Handpose2ScratchBlocks {
     constructor (runtime) {
         this.runtime = runtime;
 
+        this.detected = 0;
         this.landmarks = [];
         this.ratio = 1;
 /*
@@ -279,11 +280,16 @@ class Scratch3Handpose2ScratchBlocks {
             mirror: false,
             dimensions: Video.DIMENSIONS
         });
-        if (!frame) return;
+        if (!frame) {
+          this.detected = 0;
+          return;
+        }
 
         this.firstTrainingWarning();
+        const _this = this;
         this.model.estimateHands(frame)
         .then(hands => {
+          _this.detected = hands.length;
           hands.forEach(hand => {
             this.landmarks = hand.landmarks;
           });
@@ -297,6 +303,17 @@ class Scratch3Handpose2ScratchBlocks {
             id: 'handpose2scratch',
             name: 'Handpose2Scratch',
             blocks: [
+                {
+                  opcode: 'getDetected',
+                  blockType: BlockType.BOOLEAN,
+                  text: 'detected',
+                  arguments: {
+                      LANDMARK: {
+                          type: ArgumentType.NUMBER,
+                          defaultValue: 0
+                      }
+                  }
+                },
                 {
                     opcode: 'getX',
                     blockType: BlockType.REPORTER,
@@ -384,6 +401,11 @@ class Scratch3Handpose2ScratchBlocks {
         alert(Message.please_wait[this._locale]);
         this.firstTraining = false;
       }
+    }
+
+    getDetected(args) {
+
+      return this.detected;
     }
 
     getX (args) {

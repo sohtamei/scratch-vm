@@ -94,7 +94,7 @@ var ext = class {
 		this._blocks = [
 {blockType: BlockType.COMMAND, opcode: 'setConfig', text: ['con/discon','接続/切断'][this._locale] + ' IP=[ARG1][ARG2]', arguments: {
 	ARG1: { type: ArgumentType.STRING, defaultValue: this.ipadrs},
-	ARG2: { type: ArgumentType.STRING, defaultValue: (this.ipadrs == this.ipCamera ? ' ': this.ipCamera)},
+	ARG2: { type: ArgumentType.STRING, defaultValue: (this.ipadrs == this.ipCamera ? '': this.ipCamera) + ' '},
 }},
 
 {blockType: BlockType.COMMAND, opcode: 'videoToggle', text: 'liveview [ARG1]', arguments: {
@@ -102,6 +102,13 @@ var ext = class {
 }},
 
 {blockType: BlockType.COMMAND, opcode: 'afShutter', text: 'af shutter', arguments: {
+}},
+
+{blockType: BlockType.COMMAND, opcode: 'afShutter2', text: 'af shutter[ARG1]ms', arguments: {
+    ARG1: { type: ArgumentType.STRING, defaultValue:'500' },
+}},
+
+{blockType: BlockType.COMMAND, opcode: 'afHalfShutter', text: 'af half shutter', arguments: {
 }},
 
 {blockType: BlockType.REPORTER, opcode: 'operateParam', text: '[ARG1] [ARG2]   .', arguments: {
@@ -126,6 +133,10 @@ var ext = class {
     ARG1: { type: ArgumentType.STRING, defaultValue:'0x00000640', menu: 'isos' },
 }},
 
+{blockType: BlockType.COMMAND, opcode: 'setSaveInfo', text: 'set save info[ARG1]', arguments: {
+    ARG1: { type: ArgumentType.STRING, defaultValue:'prefix' },
+}},
+
 		];
 		return this._blocks;
 	}
@@ -137,7 +148,37 @@ var ext = class {
 videoState: { acceptReporters: true, items: ['off', 'on', 'on-flipped']},
 operates: { acceptReporters: true, items: ['get', 'inc', 'dec']},
 inc_dec: { acceptReporters: true, items: ['inc', 'dec']},
-params: { acceptReporters: true, items: ['aperture', 'shutterSpeed', 'iso', 'driveMode', 'exposureProgramMode', 'whiteBalance', 'focusMode']},
+params: { acceptReporters: true, items: [
+	'aperture',
+	'shutterSpeed',
+	'iso',
+	'driveMode',
+	'exposureProgramMode',
+	'whiteBalance',
+	'focusMode',
+
+	'focusArea',
+	'priorityKeySettings',
+	'liveView_Image_Quality',
+	'baseLookValue',
+	'movie_Recording_Setting',
+	'remocon_Zoom_Speed_Type',
+	'playbackMedia',
+	'gainBaseSensitivity',
+	'gainBaseIsoSensitivity',
+	'monitorLUTSetting',
+	'irisModeSetting',
+	'shutterModeSetting',
+	'gainControlSetting',
+	'exposureCtrlType',
+	'imageStabilizationSteadyShot',
+	'movie_ImageStabilizationSteadyShot',
+	'silentMode',
+	'silentModeApertureDriveInAF',
+	'silentModeShutterWhenPowerOff',
+	'silentModeAutoPixelMapping',
+	'shutterType',
+]},
 
 apertures: { acceptReporters: true, items: [
 	{ text:'F4', value:'400' },
@@ -338,6 +379,11 @@ isos: { acceptReporters: true, items: [
 	}
 
 	afShutter(args) {
+		this.afShutter2({ARG1:'500'});
+	}
+
+	afShutter2(args) {
+		const delay = args.ARG1*1;
 		this._runtime.ioDevices.video._renderPreviewFrame = null
 	//	this.videoToggle({ARG1:'off'});
 
@@ -354,7 +400,7 @@ isos: { acceptReporters: true, items: [
 		this._runtime.renderer.updateDrawableVisible(_drawable, true);
 
 		const _this = this;
-		const sendObj = {cmd:'afShutter'};
+		const sendObj = {cmd:'afShutter', delay:delay};
 		return this.sendRecv(sendObj)
 	//	.then(result => new Promise(resolve => setTimeout(() => {resolve(result);}, 30)))
 		.then(result => {
@@ -372,6 +418,15 @@ isos: { acceptReporters: true, items: [
 				_this._runtime.requestRedraw();
 			};
 		});
+	}
+
+	afHalfShutter(args) {
+		const _this = this;
+		const sendObj = {cmd:'afHalfShutter'};
+		return this.sendRecv(sendObj)
+		.then(result => {
+			return result;
+		})
 	}
 
 	operateParam(args) {
@@ -413,6 +468,15 @@ isos: { acceptReporters: true, items: [
 	setIso(args) {
 		const _this = this;
 		const sendObj = {cmd:'setIso', value:args.ARG1*1};
+		return this.sendRecv(sendObj)
+		.then(result => {
+			return result;
+		})
+	}
+
+	setSaveInfo(args) {
+		const _this = this;
+		const sendObj = {cmd:'setSaveInfo', prefix:args.ARG1};
 		return this.sendRecv(sendObj)
 		.then(result => {
 			return result;
