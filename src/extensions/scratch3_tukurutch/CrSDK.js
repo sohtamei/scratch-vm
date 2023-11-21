@@ -63,8 +63,7 @@ var ext = class {
 		this.bleRxResolve = null;
 		this.closeReq = false;
 
-		this.incrementable = {aperture:'none', shutterSpeed:'none', iso:'none', 
-				driveMode:'none', exposureProgramMode:'none', whiteBalance:'none', focusMode:'none'};
+		this.incrementable = {}; //{aperture:'none', shutterSpeed:'none', iso:'none', driveMode:'none', exposureProgramMode:'none', whiteBalance:'none', focusMode:'none'};
     }
 
 	getInfo () {
@@ -97,12 +96,15 @@ var ext = class {
 	ARG2: { type: ArgumentType.STRING, defaultValue: (this.ipadrs == this.ipCamera ? '': this.ipCamera) + ' '},
 }},
 
+{blockType: BlockType.COMMAND, opcode: 'disconnectCamera', text: 'disconnect SDK&Camera', arguments: {
+}},
+
 {blockType: BlockType.COMMAND, opcode: 'videoToggle', text: 'liveview [ARG1]', arguments: {
 	ARG1: { type: ArgumentType.STRING, defaultValue: 'on', menu: 'videoState' },
 }},
 
 {blockType: BlockType.COMMAND, opcode: 'afShutter', text: 'af shutter', arguments: {
-}},
+}, hideFromPalette:true},
 
 {blockType: BlockType.COMMAND, opcode: 'afShutter2', text: 'af shutter[ARG1]ms', arguments: {
     ARG1: { type: ArgumentType.STRING, defaultValue:'500' },
@@ -111,14 +113,18 @@ var ext = class {
 {blockType: BlockType.COMMAND, opcode: 'afHalfShutter', text: 'af half shutter', arguments: {
 }},
 
-{blockType: BlockType.REPORTER, opcode: 'operateParam', text: '[ARG1] [ARG2]   .', arguments: {
+{blockType: BlockType.COMMAND, opcode: 'updateProps', text: 'update Properties', arguments: {
+}},
+
+{blockType: BlockType.REPORTER, opcode: 'operateParam', text: '[ARG1] [ARG2] value[ARG3]', arguments: {
     ARG1: { type: ArgumentType.STRING, defaultValue:'get', menu: 'operates' },
-    ARG2: { type: ArgumentType.STRING, defaultValue:'aperture', menu: 'params' },
+    ARG2: { type: ArgumentType.STRING, defaultValue:'FNumber', menu: 'params' },
+    ARG3: { type: ArgumentType.STRING, defaultValue:' ' },
 }},
 
 {blockType: BlockType.REPORTER, opcode: 'buttonState', text: '[ARG1] [ARG2] is available ', arguments: {
     ARG1: { type: ArgumentType.STRING, defaultValue:'inc', menu: 'inc_dec' },
-    ARG2: { type: ArgumentType.STRING, defaultValue:'aperture', menu: 'params' },
+    ARG2: { type: ArgumentType.STRING, defaultValue:'FNumber', menu: 'params' },
 }},
 
 {blockType: BlockType.COMMAND, opcode: 'setAperture', text: 'set aperture[ARG1]', arguments: {
@@ -141,43 +147,82 @@ var ext = class {
 		return this._blocks;
 	}
 
+	disconnectCamera() {
+		this.videoToggle({ARG1:'off'});
+
+		const _this = this;
+		const sendObj = {cmd:'disconnect'};
+		return this.sendRecv(sendObj)
+		.then(result => {
+			_this.disconnect();
+			return 'Please re-open CrSDK';
+		});
+	}
+
+	updateProps() {
+		const _this = this;
+		const sendObj = {cmd:'getPropList'};
+		return this.sendRecv(sendObj)
+		.then(result => {
+			let menus = [];
+			Object.keys(result).forEach((key) => {
+				menus.push([key,key]);
+			});
+			menus.sort((a,b) => {
+				if (a[0] == b[0] ) return 0;
+				if (a[0] < b[0])   return -1;
+				if (a[0] > b[0])   return 1;
+			});
+			let targetBlock = Blockly.getMainWorkspace().getBlockById(extName+'_operateParam');
+			if(targetBlock) {
+				targetBlock.childBlocks_[1].inputList[0].fieldRow[0].menuGenerator_ = menus;
+			//	targetBlock.childBlocks_[1].inputList[0].fieldRow[0].setValue('IsoSensitivity');
+			}
+			targetBlock = Blockly.getMainWorkspace().getBlockById(extName+'_buttonState');
+			if(targetBlock) {
+				targetBlock.childBlocks_[1].inputList[0].fieldRow[0].menuGenerator_ = menus;
+			}
+		//	return result;
+		})
+}
+
 	get_menus() {
 
 	  return {
 
 videoState: { acceptReporters: true, items: ['off', 'on', 'on-flipped']},
-operates: { acceptReporters: true, items: ['get', 'inc', 'dec']},
+operates: { acceptReporters: true, items: ['get', 'info', 'inc', 'dec', 'set']},
 inc_dec: { acceptReporters: true, items: ['inc', 'dec']},
 params: { acceptReporters: true, items: [
-	'aperture',
-	'shutterSpeed',
-	'iso',
-	'driveMode',
-	'exposureProgramMode',
-	'whiteBalance',
-	'focusMode',
-
-	'focusArea',
-	'priorityKeySettings',
-	'liveView_Image_Quality',
-	'baseLookValue',
-	'movie_Recording_Setting',
-	'remocon_Zoom_Speed_Type',
-	'playbackMedia',
-	'gainBaseSensitivity',
-	'gainBaseIsoSensitivity',
-	'monitorLUTSetting',
-	'irisModeSetting',
-	'shutterModeSetting',
-	'gainControlSetting',
-	'exposureCtrlType',
-	'imageStabilizationSteadyShot',
-	'movie_ImageStabilizationSteadyShot',
-	'silentMode',
-	'silentModeApertureDriveInAF',
-	'silentModeShutterWhenPowerOff',
-	'silentModeAutoPixelMapping',
-	'shutterType',
+	'BaseLookValue',
+	'DriveMode',
+	'ExposureCtrlType',
+	'ExposureProgramMode',
+	'FNumber',
+	'FocusArea',
+	'FocusIndication',
+	'FocusMode',
+	'GainBaseIsoSensitivity',
+	'GainBaseSensitivity',
+	'GainControlSetting',
+	'ImageStabilizationSteadyShot',
+	'IrisModeSetting',
+	'IsoSensitivity',
+	'LiveView_Image_Quality',
+	'MonitorLUTSetting',
+	'Movie_ImageStabilizationSteadyShot',
+	'Movie_Recording_Setting',
+	'PlaybackMedia',
+	'PriorityKeySettings',
+	'Remocon_Zoom_Speed_Type',
+	'ShutterModeSetting',
+	'ShutterSpeed',
+	'ShutterType',
+	'SilentMode',
+	'SilentModeApertureDriveInAF',
+	'SilentModeAutoPixelMapping',
+	'SilentModeShutterWhenPowerOff',
+	'WhiteBalance',
 ]},
 
 apertures: { acceptReporters: true, items: [
@@ -246,16 +291,16 @@ shutterSpeeds: { acceptReporters: true, items: [
 	{ text:'1/500', value:'0x000101F4' },
 	{ text:'1/640', value:'0x00010280' },
 	{ text:'1/800', value:'0x00010320' },
-	{ text:'1/1,000', value:'0x000103E8' },
-	{ text:'1/1,250', value:'0x000104E2' },
-	{ text:'1/1,600', value:'0x00010640' },
-	{ text:'1/2,000', value:'0x000107D0' },
-	{ text:'1/2,500', value:'0x000109C4' },
-	{ text:'1/3,200', value:'0x00010C80' },
-	{ text:'1/4,000', value:'0x00010FA0' },
-	{ text:'1/5,000', value:'0x00011388' },
-	{ text:'1/6,400', value:'0x00011900' },
-	{ text:'1/8,000', value:'0x00011F40' },
+	{ text:'1/1000', value:'0x000103E8' },
+	{ text:'1/1250', value:'0x000104E2' },
+	{ text:'1/1600', value:'0x00010640' },
+	{ text:'1/2000', value:'0x000107D0' },
+	{ text:'1/2500', value:'0x000109C4' },
+	{ text:'1/3200', value:'0x00010C80' },
+	{ text:'1/4000', value:'0x00010FA0' },
+	{ text:'1/5000', value:'0x00011388' },
+	{ text:'1/6400', value:'0x00011900' },
+	{ text:'1/8000', value:'0x00011F40' },
 ]},
 
 isos: { acceptReporters: true, items: [
@@ -274,33 +319,33 @@ isos: { acceptReporters: true, items: [
 	{ text:'ISO 500', value:'0x000001F4' },
 	{ text:'ISO 640', value:'0x00000280' },
 	{ text:'ISO 800', value:'0x00000320' },
-	{ text:'ISO 1,000', value:'0x000003E8' },
-	{ text:'ISO 1,250', value:'0x000004E2' },
-	{ text:'ISO 1,600', value:'0x00000640' },
-	{ text:'ISO 2,000', value:'0x000007D0' },
-	{ text:'ISO 2,500', value:'0x000009C4' },
-	{ text:'ISO 3,200', value:'0x00000C80' },
-	{ text:'ISO 4,000', value:'0x00000FA0' },
-	{ text:'ISO 5,000', value:'0x00001388' },
-	{ text:'ISO 6,400', value:'0x00001900' },
-	{ text:'ISO 8,000', value:'0x00001F40' },
-	{ text:'ISO 10,000', value:'0x00002710' },
-	{ text:'ISO 12,800', value:'0x00003200' },
-	{ text:'ISO 16,000', value:'0x00003E80' },
-	{ text:'ISO 20,000', value:'0x00004E20' },
-	{ text:'ISO 25,600', value:'0x00006400' },
-	{ text:'ISO 32,000', value:'0x00007D00' },
-	{ text:'ISO 40,000', value:'0x00009C40' },
-	{ text:'ISO 51,200', value:'0x0000C800' },
-	{ text:'ISO 64,000', value:'0x0000FA00' },
-	{ text:'ISO 80,000', value:'0x00013880' },
-	{ text:'ISO 102,400', value:'0x00019000' },
-	{ text:'ISO 128,000', value:'0x1001F400' },
-	{ text:'ISO 160,000', value:'0x10027100' },
-	{ text:'ISO 204,800', value:'0x10032000' },
-	{ text:'ISO 256,000', value:'0x1003E800' },
-	{ text:'ISO 320,000', value:'0x1004E200' },
-	{ text:'ISO 409,600', value:'0x10064000' },
+	{ text:'ISO 1000', value:'0x000003E8' },
+	{ text:'ISO 1250', value:'0x000004E2' },
+	{ text:'ISO 1600', value:'0x00000640' },
+	{ text:'ISO 2000', value:'0x000007D0' },
+	{ text:'ISO 2500', value:'0x000009C4' },
+	{ text:'ISO 3200', value:'0x00000C80' },
+	{ text:'ISO 4000', value:'0x00000FA0' },
+	{ text:'ISO 5000', value:'0x00001388' },
+	{ text:'ISO 6400', value:'0x00001900' },
+	{ text:'ISO 8000', value:'0x00001F40' },
+	{ text:'ISO 10000', value:'0x00002710' },
+	{ text:'ISO 12800', value:'0x00003200' },
+	{ text:'ISO 16000', value:'0x00003E80' },
+	{ text:'ISO 20000', value:'0x00004E20' },
+	{ text:'ISO 25600', value:'0x00006400' },
+	{ text:'ISO 32000', value:'0x00007D00' },
+	{ text:'ISO 40000', value:'0x00009C40' },
+	{ text:'ISO 51200', value:'0x0000C800' },
+	{ text:'ISO 64000', value:'0x0000FA00' },
+	{ text:'ISO 80000', value:'0x00013880' },
+	{ text:'ISO 102400', value:'0x00019000' },
+	{ text:'ISO 128000', value:'0x1001F400' },
+	{ text:'ISO 160000', value:'0x10027100' },
+	{ text:'ISO 204800', value:'0x10032000' },
+	{ text:'ISO 256000', value:'0x1003E800' },
+	{ text:'ISO 320000', value:'0x1004E200' },
+	{ text:'ISO 409600', value:'0x10064000' },
 ]},
 	  };
 	}
@@ -432,10 +477,19 @@ isos: { acceptReporters: true, items: [
 	operateParam(args) {
 		const _this = this;
 		const sendObj = {cmd:args.ARG2, ope:args.ARG1};
+		if(sendObj.ope == 'set') {
+			if(isNaN(args.ARG3))
+				sendObj['text'] = args.ARG3.trim();
+			else
+				sendObj['value'] = Number(args.ARG3);
+		}
 		return this.sendRecv(sendObj)
 		.then(result => {
 			_this.incrementable[args.ARG2] = result.incrementable;
-			return result.current.text.replace('CrDrive_','');
+			if(ope == 'info')
+				return JSON.stringify(result);
+
+			return result.current.text;
 		})
 	}
 
@@ -508,22 +562,10 @@ isos: { acceptReporters: true, items: [
 		console.log('disconnect');
 		const _this = this;
 		if(this.ws) {
-			let hTimeout = null;
-			this.ws.send(new Uint8Array([0xff,0x55,0x01,0xff]));	// reset
-			return new Promise(resolve => setTimeout(resolve, 100))
-			.then(() => new Promise((resolve,reject) => {
-				hTimeout = setTimeout(reject, TIMEOUT);
-				_this.wsResolve = resolve;
-				_this.ws.close();
-			})).then(() => {
-				clearTimeout(hTimeout);
-			}).catch(() => {
-				console.log('timeout');
-				_this.ws = null;
-				_this.busy = false;
-				_this._runtime.emit(_this._runtime.constructor.PERIPHERAL_DISCONNECTED);
-				_this.wsResolve = null;
-			})
+			this.ws.close();
+			this.ws = null;
+			this.wsResolve = null;
+			this.busy = false;
 		}
 		this._runtime.emit(this._runtime.constructor.PERIPHERAL_DISCONNECTED);
 	}
