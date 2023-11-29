@@ -186,6 +186,8 @@ class Scratch3Blocks {
 			window.tracking.ColorTracker.registerColor('color1', function (r, g, b) {return _this._checkDistance2(0, r, g, b);});
 			_this.tracker = new window.tracking.ColorTracker(['color1']);
 			_this.tracker.minDimension = 5;
+			_this.runtime.ioDevices.video.element.width = WIDTH;
+			_this.runtime.ioDevices.video.element.height = HEIGHT;
 			window.tracking.track(_this.runtime.ioDevices.video.element, _this.tracker);
 
 			_this.tracker.on('track', _this._detected.bind(_this));
@@ -213,6 +215,8 @@ class Scratch3Blocks {
 			window.tracking.ColorTracker.registerColor('color3', function (r, g, b) {return _this._checkDistance2(2, r, g, b);});
 			_this.tracker = new window.tracking.ColorTracker(['color1','color2','color3']);
 			_this.tracker.minDimension = 5;
+			_this.runtime.ioDevices.video.element.width = WIDTH;
+			_this.runtime.ioDevices.video.element.height = HEIGHT;
 			window.tracking.track(_this.runtime.ioDevices.video.element, _this.tracker);
 
 			_this.tracker.on('track', _this._detected.bind(_this));

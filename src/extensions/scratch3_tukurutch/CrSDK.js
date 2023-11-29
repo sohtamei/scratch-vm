@@ -53,7 +53,10 @@ var ext = class {
 		// WS
 		this.ws = null;
 		this.wsResolve = null;
+		this.wsWaitObj = null;
 		this.wsError = null;
+
+		this.eventPropList = [];
 
 		this.uart = null;
 		this.ble = null;
@@ -130,6 +133,10 @@ var ext = class {
     ARG2: { type: ArgumentType.STRING, defaultValue:'FNumber', menu: 'paramItems' },
 }},
 
+{blockType: BlockType.COMMAND, opcode: 'sendCommand', text: 'send[ARG1]', arguments: {
+    ARG1: { type: ArgumentType.STRING, defaultValue:'Release', menu: 'commandItems' },
+}},
+
 {blockType: BlockType.COMMAND, opcode: 'setAperture', text: 'set aperture[ARG1]', arguments: {
     ARG1: { type: ArgumentType.STRING, defaultValue:'400', menu: 'apertures' },
 }},
@@ -144,6 +151,10 @@ var ext = class {
 
 {blockType: BlockType.COMMAND, opcode: 'setSaveInfo', text: 'set save info[ARG1]', arguments: {
     ARG1: { type: ArgumentType.STRING, defaultValue:'prefix' },
+}},
+
+{blockType: BlockType.HAT, opcode: 'eventProp', text: 'check [ARG1]', arguments: {
+	ARG1: { type: ArgumentType.STRING, defaultValue: 'FocusIndication', menu: 'eventProps' },
 }},
 
 		];
@@ -282,6 +293,34 @@ isos: { acceptReporters: true, items: [
 	{ text:'ISO_409600', value:'0x10064000' },
 ]},
 
+commandItems: { acceptReporters: true, items: [
+	'Release',
+	'MovieRecord',
+	'CancelShooting',
+	'MediaFormat',
+	'MediaQuickFormat',
+	'CancelMediaFormat',
+	'S1andRelease',
+	'CancelContentsTransfer',
+	'CameraSettingsReset',
+	'APS_C_or_Full_Switching',
+	'MovieRecButtonToggle',
+	'CancelRemoteTouchOperation',
+	'PixelMapping',
+	'TimeCodePresetReset',
+	'UserBitPresetReset',
+	'SensorCleaning',
+	'PictureProfileReset',
+	'CreativeLookReset',
+	'PowerOff',
+	'CancelFocusPosition',
+	'FlickerScan',
+]},
+
+eventProps: { acceptReporters: true, items: [
+	'FocusIndication',
+]},
+
 paramItems: { acceptReporters: true, items: '_getParamItems'},
 	  };
 	}
@@ -384,7 +423,7 @@ paramItems: { acceptReporters: true, items: '_getParamItems'},
 
 		const _this = this;
 		const sendObj = {cmd:'afShutter', delay:delay};
-		return this.sendRecv(sendObj)
+		return this.sendRecv(sendObj, {type:'object'})
 	//	.then(result => new Promise(resolve => setTimeout(() => {resolve(result);}, 30)))
 		.then(result => {
 			const canvas = _this._runtime.renderer._tempCanvas;
@@ -406,6 +445,15 @@ paramItems: { acceptReporters: true, items: '_getParamItems'},
 	afHalfShutter(args) {
 		const _this = this;
 		const sendObj = {cmd:'afHalfShutter'};
+		return this.sendRecv(sendObj)
+		.then(result => {
+			return result;
+		})
+	}
+
+	sendCommand(args) {
+		const _this = this;
+		const sendObj = {cmd:args.ARG1};
 		return this.sendRecv(sendObj)
 		.then(result => {
 			return result;
@@ -460,7 +508,7 @@ paramItems: { acceptReporters: true, items: '_getParamItems'},
 	setParam(args) {
 		const _this = this;
 		const sendObj = {cmd:args.ARG1, ope:'set', text:args.ARG2};
-		return this.sendRecv(sendObj)
+		return this.sendRecv(sendObj, {type:'json', code:sendObj.cmd})
 		.then(result => {
 			return result.current.text;
 		})
@@ -475,7 +523,7 @@ paramItems: { acceptReporters: true, items: '_getParamItems'},
 			else
 				sendObj['value'] = Number(args.ARG3);
 		}
-		return this.sendRecv(sendObj)
+		return this.sendRecv(sendObj, {type:'json', code:sendObj.cmd})
 		.then(result => {
 			_this.incrementable[args.ARG2] = result.incrementable;
 			if(sendObj.ope == 'info')
@@ -529,6 +577,16 @@ paramItems: { acceptReporters: true, items: '_getParamItems'},
 		})
 	}
 
+	eventProp(args) {
+		if(!this.eventPropList.hasOwnProperty(args.ARG1)) {
+			this.eventPropList[args.ARG1] = false;
+		}
+		
+		const result = this.eventPropList[args.ARG1];
+		this.eventPropList[args.ARG1] = false;
+		return result;
+	}
+
 	// for connect menu ---------------------------
 
 	isConnected() {
@@ -557,6 +615,7 @@ paramItems: { acceptReporters: true, items: '_getParamItems'},
 			this.ws.close();
 			this.ws = null;
 			this.wsResolve = null;
+			this.wsWaitObj = null;
 			this.busy = false;
 		}
 		this._runtime.emit(this._runtime.constructor.PERIPHERAL_DISCONNECTED);
@@ -564,7 +623,7 @@ paramItems: { acceptReporters: true, items: '_getParamItems'},
 
 	// sendRecv --------------------------------------------
 
-	sendRecv(sendObj) {
+	sendRecv(sendObj, waitObj=null) {
 		this.statusMessage.innerText = '';
 
 		const _this = this;
@@ -572,6 +631,7 @@ paramItems: { acceptReporters: true, items: '_getParamItems'},
 		.then(() => {
 			return new Promise((resolve,reject) => {
 				_this.wsResolve = resolve;
+				_this.wsWaitObj = waitObj;
 				const sendJson = JSON.stringify(sendObj);
 				console.log('W:'+sendJson);	// debug
 				_this.ws.send(sendJson);
@@ -592,6 +652,33 @@ paramItems: { acceptReporters: true, items: '_getParamItems'},
 		this.cueue = [];
 		this._runtime.emit(this._runtime.constructor.PERIPHERAL_DISCONNECTED);
 
+		checkResp = function(type, resp) {
+			if(this.wsResolve) {
+			//	console.log(this.wsWaitObj);
+			//	console.log(resp);
+				if(this.wsWaitObj && this.wsWaitObj.hasOwnProperty('type')) {
+					switch(this.wsWaitObj.type) {
+					case 'object':
+						if(type != 'object')
+							return;
+						break;
+					case 'json':
+						if(type != 'json')
+							return;
+						if(this.wsWaitObj.hasOwnProperty('code')) {
+							if(!resp.hasOwnProperty('code') || resp.code != this.wsWaitObj.code)
+								return;
+						}
+						break;
+					}
+				}
+				this.busy = false;
+				this.wsResolve(resp);
+				this.wsResolve = null;
+				this.wsWaitObj = null;
+			}
+		}.bind(this);
+
 		return new Promise((resolve,reject) => {
 			let path = _this.ipadrs;
 			if(path.indexOf(':') === -1) path += ':8080';
@@ -607,18 +694,22 @@ paramItems: { acceptReporters: true, items: '_getParamItems'},
 			}
 
 			ws.onmessage = function(event) {
-				let buf;
+				let resp;
 			//	console.log(event.data);
-				if(typeof(event.data) == 'object') {
-					buf = new Uint8Array(event.data);
-				} else if(typeof(event.data) == 'string') {
-					buf = JSON.parse(event.data);
+				let type = typeof(event.data);
+				if(type == 'object') {
+					resp = new Uint8Array(event.data);
+					console.log('R:bin('+resp.length+')');	// debug
+				} else if(type == 'string') {
+					resp = JSON.parse(event.data);
 					console.log('R:'+event.data);	// debug
+					type = 'json';
 				}
-				_this.busy = false;
-				if(_this.wsResolve) {
-					_this.wsResolve(buf);
-					_this.wsResolve = null;
+
+				checkResp(type, resp);
+
+				if(type == 'json' && resp.hasOwnProperty('code') && _this.eventPropList.hasOwnProperty(resp.code)) {
+					_this.eventPropList[resp.code] = true;
 				}
 				return;
 			}
@@ -635,6 +726,7 @@ paramItems: { acceptReporters: true, items: '_getParamItems'},
 				if(_this.wsResolve !== null) {
 					_this.wsResolve('error');
 					_this.wsResolve = null;
+					_this.wsWaitObj = null;
 				}
 			};
 
@@ -649,6 +741,7 @@ paramItems: { acceptReporters: true, items: '_getParamItems'},
 				if(_this.wsResolve !== null) {
 					_this.wsResolve(_this.statusMessage.innerText);
 					_this.wsResolve = null;
+					_this.wsWaitObj = null;
 				}
 			};
 		})
