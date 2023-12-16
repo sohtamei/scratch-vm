@@ -56,15 +56,13 @@ var ext = class {
 
 		this._locale = 0;
 		this.busy = false;
-		this.cueue = [];
+		//this.cueue = [];
 
 		// WS
 		this.ws = null;
 		this.wsResolve = null;
 		this.wsWaitObj = null;
 		this.wsError = null;
-
-		this.eventPropList = [];
 
 		this.faceX = 0;
 		this.faceY = 0;
@@ -76,7 +74,8 @@ var ext = class {
 		this.bleRxResolve = null;
 		this.closeReq = false;
 
-		this.incrementable = {}; //{aperture:'none', };
+		this.eventPropList = {};
+		this.incrementable = {};
 
 		this.paramItems_ = ['FNumber'];
     }
@@ -116,14 +115,14 @@ var ext = class {
 }},
 
 {blockType: BlockType.COMMAND, opcode: 'afShutter', text: 'af shutter', arguments: {
-}, hideFromPalette:true},
+}},
 
 {blockType: BlockType.COMMAND, opcode: 'afShutter2', text: 'af shutter[ARG1]ms', arguments: {
     ARG1: { type: ArgumentType.STRING, defaultValue:'500' },
-}},
+}, hideFromPalette:true},
 
 {blockType: BlockType.COMMAND, opcode: 'afHalfShutter', text: 'af half shutter', arguments: {
-}},
+}, hideFromPalette:true},
 
 {blockType: BlockType.COMMAND, opcode: 'updateProps', text: 'update Properties', arguments: {
 }},
@@ -148,24 +147,16 @@ var ext = class {
     ARG1: { type: ArgumentType.STRING, defaultValue:'Release', menu: 'commandItems' },
 }},
 
-{blockType: BlockType.COMMAND, opcode: 'setAperture', text: 'set aperture[ARG1]', arguments: {
-    ARG1: { type: ArgumentType.STRING, defaultValue:'400', menu: 'apertures' },
-}},
-
-{blockType: BlockType.COMMAND, opcode: 'setShutterSpeed', text: 'set shutter speed[ARG1]', arguments: {
-    ARG1: { type: ArgumentType.STRING, defaultValue:'0x00010028', menu: 'shutterSpeeds' },
-}},
-
-{blockType: BlockType.COMMAND, opcode: 'setIso', text: 'set ISO[ARG1]', arguments: {
-    ARG1: { type: ArgumentType.STRING, defaultValue:'0x00000640', menu: 'isos' },
-}},
-
 {blockType: BlockType.COMMAND, opcode: 'setSaveInfo', text: 'set save info[ARG1]', arguments: {
     ARG1: { type: ArgumentType.STRING, defaultValue:'prefix' },
 }},
 
-{blockType: BlockType.HAT, opcode: 'eventProp', text: 'check [ARG1]', arguments: {
-	ARG1: { type: ArgumentType.STRING, defaultValue: 'FocusIndication', menu: 'eventProps' },
+{blockType: BlockType.HAT, opcode: 'eventProp', text: '[ARG1]updated', arguments: {
+	ARG1: { type: ArgumentType.STRING, defaultValue: 'FNumber', menu: 'eventProps' },
+}},
+
+{blockType: BlockType.REPORTER, opcode: 'eventValue', text: '[ARG1]value', arguments: {
+	ARG1: { type: ArgumentType.STRING, defaultValue: 'FNumber', menu: 'eventProps' },
 }},
 
 {blockType: BlockType.COMMAND, opcode: 'clearStage', text: 'clear stage', arguments: {
@@ -188,129 +179,6 @@ videoState: { acceptReporters: true, items: ['off', 'on', 'on-flipped']},
 operates: { acceptReporters: true, items: ['get', 'info', 'inc', 'dec', 'set']},
 inc_dec: { acceptReporters: true, items: ['inc', 'dec']},
 dummy: { acceptReporters: true, items: ['']},
-
-apertures: { acceptReporters: true, items: [
-	{ text:'F4', value:'400' },
-	{ text:'F4.5', value:'450' },
-	{ text:'F5', value:'500' },
-	{ text:'F5.6', value:'560' },
-	{ text:'F6.3', value:'630' },
-	{ text:'F7.1', value:'710' },
-	{ text:'F8', value:'800' },
-	{ text:'F9', value:'900' },
-	{ text:'F10', value:'1000' },
-	{ text:'F11', value:'1100' },
-	{ text:'F13', value:'1300' },
-	{ text:'F14', value:'1400' },
-	{ text:'F16', value:'1600' },
-	{ text:'F18', value:'1800' },
-	{ text:'F20', value:'2000' },
-	{ text:'F22', value:'2200' },
-]},
-
-shutterSpeeds: { acceptReporters: true, items: [
-	{ text:'Bulb', value:'0x00000000' },
-	{ text:'30"', value:'0x012C000A' },
-	{ text:'25"', value:'0x00FA000A' },
-	{ text:'20"', value:'0x00C8000A' },
-	{ text:'15"', value:'0x0096000A' },
-	{ text:'13"', value:'0x0082000A' },
-	{ text:'10"', value:'0x0064000A' },
-	{ text:'8"', value:'0x0050000A' },
-	{ text:'6"', value:'0x003C000A' },
-	{ text:'5"', value:'0x0032000A' },
-	{ text:'4"', value:'0x0028000A' },
-	{ text:'3.2"', value:'0x0020000A' },
-	{ text:'2.5"', value:'0x0019000A' },
-	{ text:'2"', value:'0x0014000A' },
-	{ text:'1.6"', value:'0x0010000A' },
-	{ text:'1.3"', value:'0x000D000A' },
-	{ text:'1"', value:'0x000A000A' },
-	{ text:'0.8"', value:'0x0008000A' },
-	{ text:'0.6"', value:'0x0006000A' },
-	{ text:'0.5"', value:'0x0005000A' },
-	{ text:'0.4"', value:'0x0004000A' },
-	{ text:'1/3', value:'0x00010003' },
-	{ text:'1/4', value:'0x00010004' },
-	{ text:'1/5', value:'0x00010005' },
-	{ text:'1/6', value:'0x00010006' },
-	{ text:'1/8', value:'0x00010008' },
-	{ text:'1/10', value:'0x0001000A' },
-	{ text:'1/13', value:'0x0001000D' },
-	{ text:'1/15', value:'0x0001000F' },
-	{ text:'1/20', value:'0x00010014' },
-	{ text:'1/25', value:'0x00010019' },
-	{ text:'1/30', value:'0x0001001E' },
-	{ text:'1/40', value:'0x00010028' },
-	{ text:'1/50', value:'0x00010032' },
-	{ text:'1/60', value:'0x0001003C' },
-	{ text:'1/80', value:'0x00010050' },
-	{ text:'1/100', value:'0x00010064' },
-	{ text:'1/125', value:'0x0001007D' },
-	{ text:'1/160', value:'0x000100A0' },
-	{ text:'1/200', value:'0x000100C8' },
-	{ text:'1/250', value:'0x000100FA' },
-	{ text:'1/320', value:'0x00010140' },
-	{ text:'1/400', value:'0x00010190' },
-	{ text:'1/500', value:'0x000101F4' },
-	{ text:'1/640', value:'0x00010280' },
-	{ text:'1/800', value:'0x00010320' },
-	{ text:'1/1000', value:'0x000103E8' },
-	{ text:'1/1250', value:'0x000104E2' },
-	{ text:'1/1600', value:'0x00010640' },
-	{ text:'1/2000', value:'0x000107D0' },
-	{ text:'1/2500', value:'0x000109C4' },
-	{ text:'1/3200', value:'0x00010C80' },
-	{ text:'1/4000', value:'0x00010FA0' },
-	{ text:'1/5000', value:'0x00011388' },
-	{ text:'1/6400', value:'0x00011900' },
-	{ text:'1/8000', value:'0x00011F40' },
-]},
-
-isos: { acceptReporters: true, items: [
-	{ text:'ISO_AUTO', value:'0x00FFFFFF' },
-	{ text:'ISO_40', value:'0x10000028' },
-	{ text:'ISO_50', value:'0x10000032' },
-	{ text:'ISO_64', value:'0x10000040' },
-	{ text:'ISO_80', value:'0x00000050' },
-	{ text:'ISO_100', value:'0x00000064' },
-	{ text:'ISO_125', value:'0x0000007D' },
-	{ text:'ISO_160', value:'0x000000A0' },
-	{ text:'ISO_200', value:'0x000000C8' },
-	{ text:'ISO_250', value:'0x000000FA' },
-	{ text:'ISO_320', value:'0x00000140' },
-	{ text:'ISO_400', value:'0x00000190' },
-	{ text:'ISO_500', value:'0x000001F4' },
-	{ text:'ISO_640', value:'0x00000280' },
-	{ text:'ISO_800', value:'0x00000320' },
-	{ text:'ISO_1000', value:'0x000003E8' },
-	{ text:'ISO_1250', value:'0x000004E2' },
-	{ text:'ISO_1600', value:'0x00000640' },
-	{ text:'ISO_2000', value:'0x000007D0' },
-	{ text:'ISO_2500', value:'0x000009C4' },
-	{ text:'ISO_3200', value:'0x00000C80' },
-	{ text:'ISO_4000', value:'0x00000FA0' },
-	{ text:'ISO_5000', value:'0x00001388' },
-	{ text:'ISO_6400', value:'0x00001900' },
-	{ text:'ISO_8000', value:'0x00001F40' },
-	{ text:'ISO_10000', value:'0x00002710' },
-	{ text:'ISO_12800', value:'0x00003200' },
-	{ text:'ISO_16000', value:'0x00003E80' },
-	{ text:'ISO_20000', value:'0x00004E20' },
-	{ text:'ISO_25600', value:'0x00006400' },
-	{ text:'ISO_32000', value:'0x00007D00' },
-	{ text:'ISO_40000', value:'0x00009C40' },
-	{ text:'ISO_51200', value:'0x0000C800' },
-	{ text:'ISO_64000', value:'0x0000FA00' },
-	{ text:'ISO_80000', value:'0x00013880' },
-	{ text:'ISO_102400', value:'0x00019000' },
-	{ text:'ISO_128000', value:'0x1001F400' },
-	{ text:'ISO_160000', value:'0x10027100' },
-	{ text:'ISO_204800', value:'0x10032000' },
-	{ text:'ISO_256000', value:'0x1003E800' },
-	{ text:'ISO_320000', value:'0x1004E200' },
-	{ text:'ISO_409600', value:'0x10064000' },
-]},
 
 commandItems: { acceptReporters: true, items: [
 	'Release',
@@ -339,6 +207,9 @@ commandItems: { acceptReporters: true, items: [
 eventProps: { acceptReporters: true, items: [
 	'FocusIndication',
 	'FaceFrameInfo',
+	'FNumber',
+	'ShutterSpeed',
+	'IsoSensitivity',
 ]},
 
 paramItems: { acceptReporters: true, items: '_getParamItems'},
@@ -508,30 +379,39 @@ paramItems: { acceptReporters: true, items: '_getParamItems'},
 				const paramCode = targetBlock.childBlocks_[0].inputList[0].fieldRow[0].getValue();
 				let sendObj = {cmd:paramCode, ope:'info'};
 				return this.sendRecv(sendObj)
-				.then(result => {
-					if(result.hasOwnProperty('list')) {
+				.then(resp => {
+					if(resp.hasOwnProperty('list')) {
 						menus = [];
-						Object.keys(result.list).forEach((key) => {
-							menus.push([result.list[key].text, result.list[key].text]);
+						Object.keys(resp.list).forEach((key) => {
+							const item = resp.list[key].hasOwnProperty('text') ? resp.list[key].text: resp.list[key].value;
+							menus.push([item,item]);
 						});
 						targetBlock.childBlocks_[1].inputList[0].fieldRow[0].menuGenerator_ = menus;
-						targetBlock.childBlocks_[1].inputList[0].fieldRow[0].setValue(menus[0][0]);
+						targetBlock.childBlocks_[1].inputList[0].fieldRow[0].setValue(resp.current.value);
 						return '"set ' + paramCode + '" has been updated.';
-					} else if(result.hasOwnProperty('range')) {
-						return paramCode + ':min=' + result.range.min + ' max=' + result.range.max + ' step=' + result.range.step;
+					} else if(resp.hasOwnProperty('range')) {
+						return paramCode + ':min=' + resp.range.min + ' max=' + resp.range.max + ' step=' + resp.range.step;
 					}
 				})
 			}
-		//	return result;
+		//	return resp;
 		})
 	}
 
 	setParam(args) {
 		const _this = this;
-		const sendObj = {cmd:args.ARG1, ope:'set', text:args.ARG2};
+		let sendObj = {cmd:args.ARG1, ope:'set'};
+		if(isNaN(args.ARG2))
+			sendObj['text'] = args.ARG2.trim();
+		else
+			sendObj['value'] = Number(args.ARG2);
+
 		return this.sendRecv(sendObj, {type:'json', code:sendObj.cmd})
-		.then(result => {
-			return result.current.text;
+		.then(resp => {
+			if(resp.hasOwnProperty('current') && resp.current.hasOwnProperty('value'))
+				return resp.current.value;
+			else
+				return 'error';
 		})
 	}
 
@@ -545,12 +425,11 @@ paramItems: { acceptReporters: true, items: '_getParamItems'},
 				sendObj['value'] = Number(args.ARG3);
 		}
 		return this.sendRecv(sendObj, {type:'json', code:sendObj.cmd})
-		.then(result => {
-			_this.incrementable[args.ARG2] = result.incrementable;
+		.then(resp => {
 			if(sendObj.ope == 'info')
-				return JSON.stringify(result);
+				return JSON.stringify(resp);
 
-			return result.current.text;
+			return resp.current.value;
 		})
 	}
 
@@ -560,33 +439,6 @@ paramItems: { acceptReporters: true, items: '_getParamItems'},
 		if(state == 'inc' && args.ARG1 == 'inc') return true;
 		if(state == 'dec' && args.ARG1 == 'dec') return true;
 		return false;
-	}
-
-	setAperture(args) {
-		const _this = this;
-		const sendObj = {cmd:'setAperture', value:args.ARG1*1};
-		return this.sendRecv(sendObj)
-		.then(result => {
-			return result;
-		})
-	}
-
-	setShutterSpeed(args) {
-		const _this = this;
-		const sendObj = {cmd:'setShutterSpeed', value:args.ARG1*1};
-		return this.sendRecv(sendObj)
-		.then(result => {
-			return result;
-		})
-	}
-
-	setIso(args) {
-		const _this = this;
-		const sendObj = {cmd:'setIso', value:args.ARG1*1};
-		return this.sendRecv(sendObj)
-		.then(result => {
-			return result;
-		})
 	}
 
 	setSaveInfo(args) {
@@ -600,12 +452,19 @@ paramItems: { acceptReporters: true, items: '_getParamItems'},
 
 	eventProp(args) {
 		if(!this.eventPropList.hasOwnProperty(args.ARG1)) {
-			this.eventPropList[args.ARG1] = false;
+			this.eventPropList[args.ARG1] = {flag:false, value:0};
 		}
 		
-		const result = this.eventPropList[args.ARG1];
-		this.eventPropList[args.ARG1] = false;
+		const result = this.eventPropList[args.ARG1].flag;
+		this.eventPropList[args.ARG1].flag = false;
 		return result;
+	}
+
+	eventValue(args) {
+		if(!this.eventPropList.hasOwnProperty(args.ARG1)) {
+			return 0;
+		}
+		return this.eventPropList[args.ARG1].value;
 	}
 
 	clearStage(args) {
@@ -682,7 +541,7 @@ paramItems: { acceptReporters: true, items: '_getParamItems'},
 
 		const _this = this;
 		this.busy = false;
-		this.cueue = [];
+		//this.cueue = [];
 		this._runtime.emit(this._runtime.constructor.PERIPHERAL_DISCONNECTED);
 
 		checkResp = function(type, resp) {
@@ -690,18 +549,16 @@ paramItems: { acceptReporters: true, items: '_getParamItems'},
 			//	console.log(this.wsWaitObj);
 			//	console.log(resp);
 				if(this.wsWaitObj && this.wsWaitObj.hasOwnProperty('type')) {
-					switch(this.wsWaitObj.type) {
-					case 'object':
-						if(type != 'object')
-							return;
-						break;
+					if(type != this.wsWaitObj.type)
+						return;
+					switch(type) {
 					case 'json':
-						if(type != 'json')
-							return;
 						if(this.wsWaitObj.hasOwnProperty('code')) {
 							if(!resp.hasOwnProperty('code') || resp.code != this.wsWaitObj.code)
 								return;
 						}
+						break;
+					case 'object':
 						break;
 					}
 				}
@@ -737,14 +594,18 @@ paramItems: { acceptReporters: true, items: '_getParamItems'},
 					resp = JSON.parse(event.data);
 					console.log('R:'+event.data);	// debug
 					type = 'json';
+					if(resp.hasOwnProperty('current') && resp.current.hasOwnProperty('text')) {
+						resp.current.value = resp.current.text;
+					}
 				}
 
 				checkResp(type, resp);
 
 				if(type == 'json' && resp.hasOwnProperty('code')) {
+					_this.incrementable[resp.code] = resp.incrementable;
 					// for eventProp
 					if(_this.eventPropList.hasOwnProperty(resp.code)) {
-						_this.eventPropList[resp.code] = true;
+						_this.eventPropList[resp.code] = {flag:true, value:resp.current.value};
 					}
 
 					// for focus indicator
