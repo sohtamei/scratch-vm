@@ -10,7 +10,6 @@ const Base64Util = require('../../util/base64-util');
 const StubCodeBin   = require('!arraybuffer-loader!./STUB_CODE.bin');
 const StubCodeC3Bin = require('!arraybuffer-loader!./STUB_CODE_C3.bin');
 const StubCodeS3Bin = require('!arraybuffer-loader!./STUB_CODE_S3.bin');
-const BootloaderBin = require('!arraybuffer-loader!./bootloader_qio_80m.bin');
 const BootApp0Bin   = require('!arraybuffer-loader!./boot_app0.bin');
 
 //const WlanStatus = ['IDLE_STATUS','NO_SSID_AVAIL','SCAN_COMPLETED','CONNECTED','CONNECT_FAILED','CONNECTION_LOST','DISCONNECTED',],
@@ -1432,7 +1431,6 @@ class comlib {
 		const PARAM_SIZE = 0x6000;
 		const StubCode = new Uint8Array(StubCodeBin);
 		const BootApp0 = new Uint8Array(BootApp0Bin);
-		const Bootloader = new Uint8Array(BootloaderBin);
 		const UpdateMsg = ['burning ', '書き込み中 '][this._locale];
 		this.statusMessage.innerText = '';
 
@@ -1442,6 +1440,7 @@ class comlib {
 			this.uart.close();
 			this.uart = null;
 		}
+		let Bootloader = null;
 		let flashBinPart = null;
 		let flashBinImage = null;
 
@@ -1459,6 +1458,17 @@ class comlib {
 				let _reader = new FileReader();
 				_reader.onload = function(e){
 					flashBinPart = new Uint8Array(_reader.result);
+					resolve();
+				};
+				return _reader.readAsArrayBuffer(blob);
+			}))
+		}).then(() => {
+			return fetch('static/extensions/'+flashBin.name+'.boot.bin')
+			.then(response => response.blob())
+			.then(blob => new Promise(resolve => {
+				let _reader = new FileReader();
+				_reader.onload = function(e){
+					Bootloader = new Uint8Array(_reader.result);
 					resolve();
 				};
 				return _reader.readAsArrayBuffer(blob);
@@ -1598,7 +1608,6 @@ class comlib {
 		const PARAM_SIZE = 0x6000;
 		const StubCode = new Uint8Array(StubCodeC3Bin);
 		const BootApp0 = new Uint8Array(BootApp0Bin);
-	//	const Bootloader = new Uint8Array(BootloaderBin);
 		const UpdateMsg = ['burning ', '書き込み中 '][this._locale];
 		this.statusMessage.innerText = '';
 
@@ -1779,7 +1788,6 @@ class comlib {
 		const PARAM_SIZE = 0x6000;
 		const StubCode = new Uint8Array(StubCodeS3Bin);
 		const BootApp0 = new Uint8Array(BootApp0Bin);
-	//	const Bootloader = new Uint8Array(BootloaderBin);
 		const UpdateMsg = ['burning ', '書き込み中 '][this._locale];
 		this.statusMessage.innerText = '';
 
