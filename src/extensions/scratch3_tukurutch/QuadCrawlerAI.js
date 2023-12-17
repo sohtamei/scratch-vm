@@ -67,8 +67,11 @@ var ext = class {
 	ARG1: { type: ArgumentType.STRING, defaultValue: 'on', menu: 'videoState' },
 }, hideFromPalette: (SupportCamera==false)},
 
+{blockType: BlockType.COMMAND, opcode: 'scanWifi', text: 'Scan AP', arguments: {
+}},
+
 {blockType: BlockType.COMMAND, opcode: 'connectWifi', text: ['connect','接続'][this._locale]+' ssid[ARG1] pass[ARG2]', arguments: {
-	ARG1: { type: ArgumentType.STRING, defaultValue: this.comlib.ssid },
+	ARG1: { type: ArgumentType.STRING, defaultValue: this.comlib.ssid, menu: 'ssids' },
 	ARG2: { type: ArgumentType.STRING, defaultValue: ' ' },
 }},
 
@@ -208,7 +211,7 @@ var ext = class {
 }},
 
 		];
-		this.blockOffset = 6;
+		this.blockOffset = 7;
 		for(let i = 0; i < this._blocks.length; i++) {
 			if(this._blocks[i] == '---') {
 				this.blockOffset = i+1;
@@ -377,6 +380,8 @@ walkcmd: { acceptReporters: true, items: [
 { text: ['neutral','原点調整'][this._locale], value: '16' },
 ]},
 
+
+ssids: { acceptReporters: true, items: ["push 'Scan AP'"]},
 	  };
 	}
 
@@ -409,6 +414,10 @@ setSpeedXY(args,util) { return this.sendRecv('setSpeedXY', args); }
 		console.log(ret);
 		if(!ret) return;
 		return this.comlib.burnWlan(this.flashList[Number(args.ARG1)], Number(args.ARG2));
+	}
+
+	scanWifi(args) {
+		return this.comlib.scanWifi();
 	}
 
 	connectWifi(args) {

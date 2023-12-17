@@ -70,8 +70,11 @@ var ext = class {
 	ARG1: { type: ArgumentType.STRING, defaultValue: 'on', menu: 'videoState' },
 }, hideFromPalette: (SupportCamera==false)},
 
+{blockType: BlockType.COMMAND, opcode: 'scanWifi', text: 'Scan AP', arguments: {
+}},
+
 {blockType: BlockType.COMMAND, opcode: 'connectWifi', text: ['connect','接続'][this._locale]+' ssid[ARG1] pass[ARG2]', arguments: {
-	ARG1: { type: ArgumentType.STRING, defaultValue: this.comlib.ssid },
+	ARG1: { type: ArgumentType.STRING, defaultValue: this.comlib.ssid, menu: 'ssids' },
 	ARG2: { type: ArgumentType.STRING, defaultValue: ' ' },
 }},
 
@@ -90,7 +93,7 @@ var ext = class {
 }},
 
 		];
-		this.blockOffset = 6;
+		this.blockOffset = 7;
 		for(let i = 0; i < this._blocks.length; i++) {
 			if(this._blocks[i] == '---') {
 				this.blockOffset = i+1;
@@ -121,41 +124,8 @@ videoState: { acceptReporters: true, items: ['off','on','on-flipped']},
 
 flashList: { acceptReporters: true, items: this.flashItems },
 
-beats: { acceptReporters: true, items: [
-{ text: ['Half','2分音符'][this._locale], value: '500' },
-{ text: ['Quarter','4分音符'][this._locale], value: '250' },
-{ text: ['Eighth','8分音符'][this._locale], value: '125' },
-{ text: ['Whole','全音符'][this._locale], value: '1000' },
-{ text: ['Double','倍全音符'][this._locale], value: '2000' },
-]},
 
-digital: { acceptReporters: true, items: [
-{ text: 'HIGH', value: '1' },
-{ text: 'LOW', value: '0' },
-]},
-
-noteJ2: { acceptReporters: true, items: [
-{ text: ['C4','ド4'][this._locale], value: '262' },
-{ text: ['D4','レ4'][this._locale], value: '294' },
-{ text: ['E4','ミ4'][this._locale], value: '330' },
-{ text: ['F4','ファ4'][this._locale], value: '349' },
-{ text: ['G4','ソ4'][this._locale], value: '392' },
-{ text: ['A4','ラ4'][this._locale], value: '440' },
-{ text: ['B4','シ4'][this._locale], value: '494' },
-{ text: ['C5','ド5'][this._locale], value: '523' },
-{ text: ['D5','レ5'][this._locale], value: '587' },
-{ text: ['E5','ミ5'][this._locale], value: '659' },
-{ text: ['F5','ファ5'][this._locale], value: '698' },
-{ text: ['G5','ソ5'][this._locale], value: '784' },
-{ text: ['A5','ラ5'][this._locale], value: '880' },
-{ text: ['B5','シ5'][this._locale], value: '988' },
-]},
-
-onoff: { acceptReporters: true, items: [
-{ text: 'On', value: '1' },
-{ text: 'Off', value: '0' },
-]},
-
+ssids: { acceptReporters: true, items: ["push 'Scan AP'"]},
 	  };
 	}
 
@@ -168,6 +138,10 @@ showLED(args,util) { return this.sendRecv('showLED', args); }
 		console.log(ret);
 		if(!ret) return;
 		return this.comlib.burnWlan(this.flashList[Number(args.ARG1)], Number(args.ARG2));
+	}
+
+	scanWifi(args) {
+		return this.comlib.scanWifi();
 	}
 
 	connectWifi(args) {

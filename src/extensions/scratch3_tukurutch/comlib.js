@@ -416,9 +416,24 @@ class comlib {
 	}
 
 	scanWifi() {
+		const _this = this;
 		const _defs = {};
 		const _args = {};
-		return this.sendRecv(0xFC,_defs,_args).split('\t');
+		return this.sendRecv(0xFC,_defs,_args)
+		.then(result => {
+			const status = result.split('\t');
+
+			const targetBlock = Blockly.getMainWorkspace().getBlockById(_this.extName+'_connectWifi');
+			if(targetBlock) {
+				let menus = [];
+				for(let i = 0; i < status.length; i++) {
+					menus.push([status[i], status[i]]);
+				}
+				targetBlock.childBlocks_[0].inputList[0].fieldRow[0].menuGenerator_ = menus;
+				return 'Finished. Please select AP and enter password.';
+			}
+			return 'failed';
+		});
 	}
 
 	connectWifi(ssid, pass) {
