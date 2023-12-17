@@ -383,7 +383,7 @@ playTone(args,util) { return this.sendRecv('playTone', args); }
 						'M5StickCPlus', 'M5StackCoreInk', 'M5Paper', 'M5Tough',		// 4-7
 						'M5Station', 'M5StackCoreS3', 'M5AtomS3', 'M5Atom',			// 8-11
 						'M5AtomPsram', 'M5AtomU', 'M5StampPico', 'M5StampC3',		// 12-15
-						'M5StampC3U', 'M5AtomS3Lite',								// 16
+						'M5StampC3U', 'M5AtomS3Lite', 'M5StickCPlus2',				// 16
 						];
 
 		const _this = this;
