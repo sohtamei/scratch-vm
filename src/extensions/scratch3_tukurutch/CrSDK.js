@@ -167,6 +167,13 @@ var ext = class {
 
 {blockType: BlockType.REPORTER, opcode: 'getFaceY', text: 'face Y', arguments: {
 }},
+
+{blockType: BlockType.COMMAND, opcode: 'setParamXY', text: 'set[ARG1]x[ARG2]y[ARG3]', arguments: {
+    ARG1: { type: ArgumentType.STRING, defaultValue:'RemoteTouchOperation', menu: 'paramXY' },
+    ARG2: { type: ArgumentType.NUMBER, defaultValue:0},
+    ARG3: { type: ArgumentType.NUMBER, defaultValue:0},
+}},
+
 		];
 		return this._blocks;
 	}
@@ -210,9 +217,16 @@ eventProps: { acceptReporters: true, items: [
 	'FNumber',
 	'ShutterSpeed',
 	'IsoSensitivity',
+	'FollowFocusPositionCurrentValue',
 ]},
 
 paramItems: { acceptReporters: true, items: '_getParamItems'},
+
+paramXY: { acceptReporters: true, items: [
+	'RemoteTouchOperation',
+	'AF_Area_Position',
+	'CustomWB_Capture',
+]},
 	  };
 	}
 
@@ -479,6 +493,23 @@ paramItems: { acceptReporters: true, items: '_getParamItems'},
 		return this.faceY;
 	}
 
+	setParamXY(args) {
+		const _this = this;
+		let x = Number(args.ARG2);
+		let y = Number(args.ARG3);
+		x = ((x+240)/480) * 640;
+		y = ((180-y)/360) * 480;
+
+		let sendObj = {cmd:args.ARG1, ope:'set', value:((x<<16)|y)};
+		return this.sendRecv(sendObj, {type:'json', code:sendObj.cmd})
+		.then(resp => {
+			if(resp.hasOwnProperty('current') && resp.current.hasOwnProperty('value'))
+				return resp.current.value;
+			else
+				return 'error';
+		})
+	}
+
 	// for connect menu ---------------------------
 
 	isConnected() {
@@ -614,6 +645,8 @@ paramItems: { acceptReporters: true, items: '_getParamItems'},
 					case "FaceFrameInfo":
 						_this.faceX =  (info[0][6]/640)*480 - 240;
 						_this.faceY = -(info[0][7]/480)*360 + 180;
+					case "TrackingFrameInfo":
+				//	case "Magnifier_Position":
 					case "FocusFrameInfo":
 						_this._runtime.renderer.penClear(_this._penSkinId);
 						for(let i = 0; i < info.length; i++)
