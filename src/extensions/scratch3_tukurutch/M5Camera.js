@@ -52,6 +52,8 @@ var ext = class {
 {name:'ESP32S3cam.usb', type:'esp32s3u', baudrate:921600},
 {name:'ESP32_CAM', type:'esp32', baudrate:921600},
 {name:'UnitCam', type:'esp32', baudrate:921600},
+{name:'UnitCamS3.uart', type:'esp32s3', baudrate:921600},
+{name:'UnitCamS3.usb', type:'esp32s3u', baudrate:921600},
 {name:'testXclkIssue', type:'esp32', baudrate:115200},
 {name:'testXclkS3.uart', type:'esp32s3', baudrate:921600},
 		];
