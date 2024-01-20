@@ -297,14 +297,14 @@ class comlib {
   {'B','b','B'},	// 0x83:wire_writeRead (adrs, [DATA], readNum) ret:[DATA]-OK, NULL-ERROR
   {'B','B'},		// 0x84:wire_read      (adrs, readNum)         ret:[DATA]-OK, NULL-ERROR
   {},				// 0x85:wire_scan      ()                      ret:[LIST]
-  
+
   {'b'},			// 0x86:digiWrite      (LIST[port,data])
   {'B'},			// 0x87:digiRead       (port)                  ret:level
   {'B','S'},		// 0x88:anaRead        (port, count)           ret:level(int16)
   {'B','S','S'},	// 0x89:tone           (port,freq,ms)
   {'b'},			// 0x8a:setPwms        (LIST[port,data])
-  {},				// 0x8b:neoPixcel      ()
-  {'B','B'},		// 0x8c:setCameraMode  (mode,gain)
+  {'B','b'},		// 0x8b:neoPixels      (port,LIST[rgb])
+
   {'S','B','b'},	// 0x8d:setPwmsDur     (duration,mode,LIST[port,data])
 
   {},				// 0xFB:statusWifi     ()                      ret:wlanStatus SSID ip
@@ -394,10 +394,16 @@ class comlib {
 		}
 	}
 
-	setCameraMode(mode,gain) {
-		const _defs = {ARG1:{type2:'B'},ARG2:{type2:'B'}};
-		const _args = {ARG1:mode, ARG2:gain};
-		return this.sendRecv(0x8c,_defs,_args);
+	neoPixels(port, rgbs) {
+		let data = new Uint8Array(rgbs.length*3);
+		for(let i = 0; i < rgbs.length; i++) {
+			data[i*3+0] = (rgbs[i]>>16) & 0xFF;
+			data[i*3+1] = (rgbs[i]>>8) & 0xFF;
+			data[i*3+2] = (rgbs[i]>>0) & 0xFF;
+		}
+		const _defs = {ARG1:{type2:'B'},ARG2:{type2:'b'}};
+		const _args = {ARG1:port, ARG2:data};
+		return this.sendRecv(0x8B,_defs,_args);
 	}
 
 	statusWifi() {
@@ -1173,7 +1179,7 @@ class comlib {
 
 		case 'connected':
 			if(this.midiInput && this.midiOutput) break;
-		
+
 			let midiInput = null;
 			this.midi.inputs.forEach(input => {
 			//	console.log(input);
@@ -2016,7 +2022,7 @@ class comlib {
 			}
 		})
 	}
-	
+
 	_SendEspBurn(cmd, data, sumSize) {	// ret:[result, rcvParam]
 		let rcvParam;
 		let dataSize = data.length;

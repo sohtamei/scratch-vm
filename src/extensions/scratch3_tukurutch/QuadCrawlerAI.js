@@ -196,6 +196,26 @@ var ext = class {
     ARG1: { type: ArgumentType.STRING, type2:'b2', defaultValue:'0000ead3ead3ead3ead31d007fd37f7f7fd37f7f3b007fd37f7f7fd37f7f4a007f007f7f7f007f7f59007fa67f7f7fa67f7f5f007fa67f7f7fa67f7f68007fa67f7f7fa67f7f72007f007f7f7f007f7f7f007f2d7f7f7fa67f7f8b007fa67f7f7f2d7f7f98007fd37f7f7fa67f7f' },
 }},
 
+{blockType: BlockType.COMMAND, opcode: 'drawString', text: '［LCD］draw text [ARG1] ([ARG2] ,[ARG3] ) font=[ARG4]', arguments: {
+    ARG1: { type: ArgumentType.STRING, type2:'s', defaultValue:'test' },
+    ARG2: { type: ArgumentType.NUMBER, type2:'S', defaultValue:0 },
+    ARG3: { type: ArgumentType.NUMBER, type2:'S', defaultValue:0 },
+    ARG4: { type: ArgumentType.STRING, type2:'B', defaultValue:'10', menu: 'font' },
+}},
+
+{blockType: BlockType.COMMAND, opcode: 'fillScreen', text: '［LCD］fill screen with [ARG1]', arguments: {
+    ARG1: { type: ArgumentType.STRING, type2:'S', defaultValue:'0', menu: 'color_' },
+}},
+
+{blockType: BlockType.COMMAND, opcode: 'drawCircle', text: '［LCD］circle x [ARG1] y [ARG2] r [ARG3] ang [ARG4] - [ARG5] [ARG6]', arguments: {
+    ARG1: { type: ArgumentType.NUMBER, type2:'S', defaultValue:64 },
+    ARG2: { type: ArgumentType.NUMBER, type2:'S', defaultValue:32 },
+    ARG3: { type: ArgumentType.NUMBER, type2:'S', defaultValue:10 },
+    ARG4: { type: ArgumentType.NUMBER, type2:'S', defaultValue:0 },
+    ARG5: { type: ArgumentType.NUMBER, type2:'S', defaultValue:360 },
+    ARG6: { type: ArgumentType.STRING, type2:'S', defaultValue:'65535', menu: 'color_' },
+}},
+
 {blockType: BlockType.REPORTER, opcode: 'enumColor', text: '[ARG1] .', arguments: {
     ARG1: { type: ArgumentType.STRING, type2:'B', defaultValue:'1', menu: 'color' },
 }},
@@ -276,6 +296,12 @@ color: { acceptReporters: true, items: [
 { text: ['lightblue','水色'][this._locale], value: '6' },
 ]},
 
+color_: { acceptReporters: true, items: [
+{ text: 'BLACK', value: '0' },
+{ text: 'WHITE', value: '65535' },
+{ text: 'TRANSPARENT', value: '288' },
+]},
+
 crotchF: { acceptReporters: true, items: ['-70','0','60',]},
 
 crotchR: { acceptReporters: true, items: ['-90','0','45',]},
@@ -283,6 +309,17 @@ crotchR: { acceptReporters: true, items: ['-90','0','45',]},
 digital: { acceptReporters: true, items: [
 { text: 'HIGH', value: '1' },
 { text: 'LOW', value: '0' },
+]},
+
+font: { acceptReporters: true, items: [
+{ text: 'ascii8', value: '1' },
+{ text: 'ascii16', value: '2' },
+{ text: 'ascii26', value: '4' },
+{ text: 'num48', value: '6' },
+{ text: '7seg48', value: '7' },
+{ text: 'num75', value: '8' },
+{ text: 'monospace12', value: '10' },
+{ text: 'proportional12', value: '11' },
 ]},
 
 knee: { acceptReporters: true, items: ['-25','0','60','100',]},
@@ -403,6 +440,9 @@ getDigital(args,util) { return this.sendRecv('getDigital', args); }
 setPWM(args,util) { return this.sendRecv('setPWM', args); }
 setLED(args,util) { return this.sendRecv('setLED', args); }
 setMotion(args,util) { return this.sendRecv('setMotion', args); }
+drawString(args,util) { return this.sendRecv('drawString', args); }
+fillScreen(args,util) { return this.sendRecv('fillScreen', args); }
+drawCircle(args,util) { return this.sendRecv('drawCircle', args); }
 enumColor(args) { return args.ARG1; }
 enumWalkcmd(args) { return args.ARG1; }
 setSpeedXY(args,util) { return this.sendRecv('setSpeedXY', args); }

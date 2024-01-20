@@ -143,8 +143,9 @@ var ext = class {
     ARG2: { type: ArgumentType.STRING, defaultValue:'FNumber', menu: 'paramItems' },
 }},
 
-{blockType: BlockType.COMMAND, opcode: 'sendCommand', text: 'send[ARG1]', arguments: {
+{blockType: BlockType.COMMAND, opcode: 'sendCommand', text: 'send[ARG1] [ARG2]', arguments: {
     ARG1: { type: ArgumentType.STRING, defaultValue:'Release', menu: 'commandItems' },
+    ARG2: { type: ArgumentType.STRING, defaultValue:'DownUp', menu: 'commandParams' },
 }},
 
 {blockType: BlockType.COMMAND, opcode: 'setSaveInfo', text: 'set save info[ARG1]', arguments: {
@@ -209,6 +210,12 @@ commandItems: { acceptReporters: true, items: [
 	'PowerOff',
 	'CancelFocusPosition',
 	'FlickerScan',
+]},
+
+commandParams: { acceptReporters: true, items: [
+	'DownUp',
+	'Down',
+	'Up',
 ]},
 
 eventProps: { acceptReporters: true, items: [
@@ -358,7 +365,7 @@ paramXY: { acceptReporters: true, items: [
 
 	sendCommand(args) {
 		const _this = this;
-		const sendObj = {cmd:args.ARG1};
+		const sendObj = {cmd:args.ARG1,ope:args.ARG2};
 		return this.sendRecv(sendObj)
 		.then(result => {
 			return result;
@@ -639,7 +646,7 @@ paramXY: { acceptReporters: true, items: [
 						_this.eventPropList[resp.code] = {flag:true, value:resp.current.value};
 					}
 
-					// for focus indicator
+					// for frame info
 					const info = resp.info;
 					switch(resp.code) {
 					case "FaceFrameInfo":

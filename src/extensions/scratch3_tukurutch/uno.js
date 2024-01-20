@@ -51,6 +51,7 @@ var ext = class {
 {name:'uno', type:'atmega328', baudrate:115200},
 {name:'uno32', type:'esp32', baudrate:921600},
 {name:'uno32s3.usb', type:'esp32s3u', baudrate:921600},
+{name:'uno.pico', type:'pico', baudrate:921600},
 		];
 
 		this._blocks = [

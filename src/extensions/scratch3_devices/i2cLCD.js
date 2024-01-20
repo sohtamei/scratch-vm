@@ -124,7 +124,7 @@ var ext = class {
 					ARG1: { type: ArgumentType.STRING, defaultValue:'0x0000', menu: 'color' },
 				}},
 
-				{blockType: BlockType.COMMAND, opcode: 'drawStage', text: 'draw stage=([ARG1],[ARG2]) - ([ARG3],[ARG4]) rotete=[ARG5] [ARG6]', arguments: {
+				{blockType: BlockType.COMMAND, opcode: 'drawStage', text: 'draw stage=([ARG1],[ARG2]) - ([ARG3],[ARG4]) rotate=[ARG5] [ARG6]', arguments: {
 				    ARG1: { type: ArgumentType.NUMBER, defaultValue:-240 },
 				    ARG2: { type: ArgumentType.NUMBER, defaultValue:-180 },
 				    ARG3: { type: ArgumentType.NUMBER, defaultValue:240 },
@@ -132,7 +132,7 @@ var ext = class {
 				    ARG5: { type: ArgumentType.NUMBER, defaultValue:0 },
 					ARG6: { type: ArgumentType.STRING, defaultValue:'errorDiffusion', menu: 'conv' },
 				}},
-
+/*
 				{blockType: BlockType.COMMAND, opcode: 'sendCmd', text: 'sendCmd [ARG1]', arguments: {
 					ARG1: { type: ArgumentType.STRING, defaultValue:'FFFF' },
 				}},
@@ -140,6 +140,7 @@ var ext = class {
 				{blockType: BlockType.COMMAND, opcode: 'sendData', text: 'sendData [ARG1]', arguments: {
 					ARG1: { type: ArgumentType.STRING, defaultValue:'FFFF' },
 				}},
+*/
 			],
 
 			menus: {

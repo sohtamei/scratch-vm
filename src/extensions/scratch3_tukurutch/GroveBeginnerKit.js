@@ -104,10 +104,10 @@ var ext = class {
 {blockType: BlockType.COMMAND, opcode: 'oledClear', text: '［OLED］clear', arguments: {
 }},
 
-{blockType: BlockType.REPORTER, opcode: 'getDhtTemp', text: '［DHT11］get Temperature', arguments: {
+{blockType: BlockType.REPORTER, opcode: 'getDhtTemp', text: '［DHT］get Temperature', arguments: {
 }},
 
-{blockType: BlockType.REPORTER, opcode: 'getDhtHum', text: '［DHT11］get Humidity', arguments: {
+{blockType: BlockType.REPORTER, opcode: 'getDhtHum', text: '［DHT］get Humidity', arguments: {
 }},
 
 {blockType: BlockType.REPORTER, opcode: 'getBmpTemp', text: '［BMP280］get Temperature', arguments: {
