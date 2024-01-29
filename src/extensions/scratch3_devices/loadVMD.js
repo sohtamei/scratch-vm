@@ -3,8 +3,6 @@
 const ArgumentType = require('../../extension-support/argument-type');
 const BlockType = require('../../extension-support/block-type');
 const formatMessage = require('format-message');
-const Color = require('../../util/color');
-const StageLayering = require('../../engine/stage-layering');
 
 const IconURI = require('./tukurutch-small.png');
 
@@ -47,10 +45,6 @@ class Scratch3Blocks {
 				}},
 			],
 			menus: {
-				mouseEvent: { acceptReporters: true, items: [
-				{ text: ['down','下げ'][this._locale], value: 'down'},
-				{ text: ['up','上げ'][this._locale], value: 'up'},
-				]},
 			}
 		};
 	}

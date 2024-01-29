@@ -41,6 +41,7 @@ const builtinExtensions = {
     CrSDK: () => require('../extensions/scratch3_tukurutch/CrSDK.js'),
 
     loadVMD: () => require('../extensions/scratch3_devices/loadVMD.js'),
+    loadMID: () => require('../extensions/scratch3_devices/loadMID.js'),
     uiParts: () => require('../extensions/scratch3_devices/uiParts.js'),
     exeScript: () => require('../extensions/scratch3_devices/exeScript.js'),
     genericIO: () => require('../extensions/scratch3_devices/genericIO.js'),

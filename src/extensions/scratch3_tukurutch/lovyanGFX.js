@@ -96,7 +96,7 @@ var ext = class {
 {blockType: BlockType.COMMAND, opcode: 'drawStage', text: 'draw stage', arguments: {
 }},
 
-{blockType: BlockType.COMMAND, opcode: 'drawStage2', text: 'draw stage=([ARG1],[ARG2]) - ([ARG3],[ARG4]) rotete=[ARG5] video[ARG6]', arguments: {
+{blockType: BlockType.COMMAND, opcode: 'drawStage2', text: 'draw stage=([ARG1],[ARG2]) - ([ARG3],[ARG4]) rotate=[ARG5] video[ARG6]', arguments: {
     ARG1: { type: ArgumentType.NUMBER, defaultValue:-240 },
     ARG2: { type: ArgumentType.NUMBER, defaultValue:-180 },
     ARG3: { type: ArgumentType.NUMBER, defaultValue:240 },
