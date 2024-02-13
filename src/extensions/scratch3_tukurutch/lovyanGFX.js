@@ -104,6 +104,9 @@ var ext = class {
     ARG5: { type: ArgumentType.NUMBER, defaultValue:0 },
     ARG6: { type: ArgumentType.STRING, defaultValue:'0', menu: 'onoff' },
 }},
+
+{blockType: BlockType.COMMAND, opcode: 'getFilelist', text: '［SD］get file list', arguments: {
+}},
 '---',
 {blockType: BlockType.REPORTER, opcode: '_getLcdConfig', text: 'get config', arguments: {
 }, hideFromPalette:true},
@@ -165,6 +168,15 @@ var ext = class {
     ARG1: { type: ArgumentType.NUMBER, type2:'B', defaultValue:128 },
 }},
 
+{blockType: BlockType.COMMAND, opcode: 'drawFile', text: 'draw file [ARG1] ([ARG2] ,[ARG3] )', arguments: {
+    ARG1: { type: ArgumentType.STRING, type2:'s', defaultValue:'xx', menu: 'files' },
+    ARG2: { type: ArgumentType.NUMBER, type2:'S', defaultValue:0 },
+    ARG3: { type: ArgumentType.NUMBER, type2:'S', defaultValue:0 },
+}},
+
+{blockType: BlockType.REPORTER, opcode: '_getFilelist', text: 'get file list', arguments: {
+}, hideFromPalette:true},
+
 		];
 		this.blockOffset = 7;
 		for(let i = 0; i < this._blocks.length; i++) {
@@ -219,6 +231,8 @@ color: { acceptReporters: true, items: [
 { text: 'PINK', value: '65049' },
 { text: 'TRANSPARENT', value: '288' },
 ]},
+
+files: { acceptReporters: true, items: ['push <get file list>',]},
 
 font: { acceptReporters: true, items: [
 { text: 'ascii8', value: '1' },
@@ -295,6 +309,8 @@ drawString(args,util) { return this.sendRecv('drawString', args); }
 fillScreen(args,util) { return this.sendRecv('fillScreen', args); }
 drawJpg(args,util) { return this.sendRecv('drawJpg', args); }
 setBrightness(args,util) { return this.sendRecv('setBrightness', args); }
+drawFile(args,util) { return this.sendRecv('drawFile', args); }
+_getFilelist(args,util) { return this.sendRecv('_getFilelist', args); }
 
 	getLcdConfig(args, util) {
 		const _this = this;
@@ -370,6 +386,27 @@ setBrightness(args,util) { return this.sendRecv('setBrightness', args); }
 		console.log('size='+args2.ARG1.length);
 
 		return this.sendRecv('drawJpg', args2);
+	}
+
+	getFilelist(args,utiil) {
+		const _this = this;
+		return this.sendRecv('_getFilelist', args)
+		.then(result => {
+			if(typeof result !== 'string') return result;
+
+			const filelist = result.split('\t');
+			const targetBlock = Blockly.getMainWorkspace().getBlockById(extName+'_drawFile');
+			if(targetBlock) {
+				let menus = [];
+				for(let i = 0; i < filelist.length; i++) {
+					menus.push(['/'+filelist[i], '/'+filelist[i]]);
+				}
+				targetBlock.childBlocks_[0].inputList[0].fieldRow[0].menuGenerator_ = menus;
+				targetBlock.childBlocks_[0].inputList[0].fieldRow[0].setValue('/'+filelist[0]);
+				return 'list has been updated.';
+			}
+			return 'failed';
+		});
 	}
 
 	burnFlash(args) {

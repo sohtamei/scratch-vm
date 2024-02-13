@@ -20,7 +20,7 @@ const BLEUUID = {
 	rxChar: '6e400003-b5a3-f393-e0a9-e50e24dcca9e',	// BLENotify
 };
 
-const TIMEOUT = 6000;
+const TIMEOUT = 10000;	// 7.5sec for WLAN scan
 const MidiDevNames = ['Pico','ESP32S3_DEV',];
 
 class comlib {
@@ -826,7 +826,8 @@ class comlib {
 			case 3: tmp = tmp2.getInt32(4, true); break;
 			case 4: tmp = tmp2.getFloat32(4, true); break;
 			case 5: tmp = tmp2.getFloat64(4, true); break;
-			case 6: tmp = String.fromCharCode.apply(null, buf.slice(4)); break;
+			case 6: tmp = new TextDecoder('utf-8').decode(buf.slice(4)); break;
+//			case 6: tmp = String.fromCharCode.apply(null, buf.slice(4)); break;
 			case 7: tmp = buf.slice(5,5+buf[4]); break;
 			case 0x80: tmp = buf.slice(4); break;	// remote
 			}
