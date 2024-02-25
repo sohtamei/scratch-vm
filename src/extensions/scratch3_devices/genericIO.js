@@ -368,8 +368,8 @@ var ext = class {
 	colorHSV(args) {
 		const rgb = Color.hsvToRgb({
 			h: Number(args.ARG1)*3.6,
-			s: Number(args.ARG2),
-			v: Number(args.ARG3)
+			s: Number(args.ARG2)/100.0,
+			v: Number(args.ARG3)/100.0
 		});
 		return this.colorRGB({ARG1:rgb.r,ARG2:rgb.g,ARG3:rgb.b});
 	}
