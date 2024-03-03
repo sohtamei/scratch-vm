@@ -302,6 +302,8 @@ lcdType: { acceptReporters: true, items: [
 { text: 'RP2040LCD128', value: '30' },
 { text: 'RP2040GEEK', value: '35' },
 { text: 'ESP32C3_144', value: '36' },
+{ text: 'ESP32S3GEEK', value: '37' },
+{ text: 'PICO_CAMA', value: '38' },
 ]},
 
 onoff: { acceptReporters: true, items: [

@@ -120,6 +120,13 @@ var ext = class {
 					ARG3: { type: ArgumentType.NUMBER, defaultValue:127 },
 				}},
 
+				{blockType: BlockType.COMMAND, opcode: 'initLCD2', text: 'init [ARG1] I2C=[ARG2][ARG3] brightness[ARG4]', arguments: {
+					ARG1: { type: ArgumentType.STRING, defaultValue:'SSD1306', menu: 'lcdType' },
+					ARG2: { type: ArgumentType.NUMBER, defaultValue:0 },
+					ARG3: { type: ArgumentType.NUMBER, defaultValue:0 },
+					ARG4: { type: ArgumentType.NUMBER, defaultValue:127 },
+				}},
+
 				{blockType: BlockType.COMMAND, opcode: 'fillScreen', text: 'fill screen with [ARG1]', arguments: {
 					ARG1: { type: ArgumentType.STRING, defaultValue:'0x0000', menu: 'color' },
 				}},
@@ -160,6 +167,8 @@ var ext = class {
 				lcdType: { acceptReporters: true, items: [
 					{ text: 'SSD1306', value: 'SSD1306', },
 					{ text: 'SSD1306_32', value: 'SSD1306_32', },
+					{ text: 'SSD1306_6432', value: 'SSD1306_6432', },
+					{ text: 'SSD1306_7240', value: 'SSD1306_7240', },
 					{ text: 'SSD1315', value: 'SSD1315', },
 				]},
 				color: { acceptReporters: true, items: [
@@ -199,13 +208,12 @@ var ext = class {
 
 	initLCD(args, util, blockInfo) {
 		this.port = args.ARG2.split('_');
+		return this.initLCD_SSD1306(args.ARG1, Number(args.ARG3));
+	}
 
-		switch(args.ARG1) {
-		case 'SSD1306':
-		case 'SSD1306_32':
-		case 'SSD1315':
-			return this.initLCD_SSD1306(args.ARG1, Number(args.ARG3));
-		}
+	initLCD2(args, util, blockInfo) {
+		this.port = [Number(args.ARG2), Number(args.ARG3), 128];
+		return this.initLCD_SSD1306(args.ARG1, Number(args.ARG4));
 	}
 
 	initLCD_SSD1306(type, brightness) {
@@ -213,6 +221,12 @@ var ext = class {
 		if(type=='SSD1306_32') {
 			this.size = [128, 32];
 			this.rowNum = 4;
+		} else if(type=='SSD1306_6432') {
+			this.size = [128, 32];
+			this.rowNum = 4;
+		} else if(type=='SSD1306_7240') {
+			this.size = [128, 40];
+			this.rowNum = 5;
 		} else {
 			this.size = [128, 64];
 			this.rowNum = 8;
