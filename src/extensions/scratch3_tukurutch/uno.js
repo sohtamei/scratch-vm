@@ -260,12 +260,13 @@ saveHist(args,util) { return this.sendRecv('saveHist', args); }
 setMelody(args,util) { return this.sendRecv('setMelody', args); }
 
 	downloadMIDI(args,util) {
+		if(!this.comlib.isConnected()) return "please connect";
+
 		const _this = this;
 		return loadMidLib.loadMID().then(result => {
 			console.log(result);
-			const args2 = {ARG1:result};
-			_this.setMelody(args2, util);
-		})
+			return _this.setMelody({ARG1:result}, util);
+		}).then(() => _this.comlib.disconnect());
 	}
 
 	burnFlash(args) {
