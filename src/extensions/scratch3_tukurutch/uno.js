@@ -72,7 +72,7 @@ var ext = class {
 {blockType: BlockType.COMMAND, opcode: 'videoToggle', text: 'turn video [ARG1]', arguments: {
 	ARG1: { type: ArgumentType.STRING, defaultValue: 'on', menu: 'videoState' },
 }, hideFromPalette: (SupportCamera==false)},
-
+/*
 {blockType: BlockType.COMMAND, opcode: 'scanWifi', text: 'Scan AP', arguments: {
 }},
 
@@ -83,7 +83,7 @@ var ext = class {
 
 {blockType: BlockType.REPORTER, opcode: 'statusWifi', text: ['WiFi status','WiFi接続状態'][this._locale], disableMonitor:true, arguments: {
 }},
-
+*/
 
 
 {blockType: BlockType.COMMAND, opcode: 'BuzzerJ1', func: 'BuzzerJ2', text: [
@@ -94,7 +94,7 @@ var ext = class {
     ARG2: { type: ArgumentType.STRING, type2:'S', defaultValue:'500', menu: 'beats' },
 }},
 
-{blockType: BlockType.COMMAND, opcode: 'downloadMIDI', text: 'download MIDI', arguments: {
+{blockType: BlockType.COMMAND, opcode: 'downloadMIDI', text: ['download MIDI','MIDIダウンロード'][this._locale], arguments: {
 }},
 
 '---',
@@ -264,6 +264,7 @@ setMelody(args,util) { return this.sendRecv('setMelody', args); }
 
 		const _this = this;
 		return loadMidLib.loadMID().then(result => {
+			result = result.slice(0,(4096-2)*2);
 			console.log(result);
 			return _this.setMelody({ARG1:result}, util);
 		}).then(() => _this.comlib.disconnect());
