@@ -30,18 +30,6 @@ class comlib {
 		this.SupportCamera = SupportCamera;
 		this._runtime.registerPeripheralExtension(extName, this);
 
-		let href = location.href.split(':');
-		console.log(href);
-		if(href[1].slice(0,11) == '//localhost' || href[0] == 'file') {
-			this.server = 'local';
-		//	this.server = 'https';		// for test
-		//	this.server = 'http';		// for test
-		} else if(href[0] == 'https') {
-			this.server = 'https';
-		} else {
-			this.server = 'http';
-		}
-
 		this.ipadrs = '192.168.1.xx';
 		this.ipCamera = '';
 		this.ifType = (extName=='microbit') ? 'BLE':'UART';
@@ -68,7 +56,22 @@ class comlib {
 			}
 		}
 
-	//	if(this.server=='http' && this.ifType=='UART') this.ifType = 'WLAN';
+		const href = location.href.split(':');
+		console.log(href);
+		if(!isNaN(href[1].slice(2,3))) {  // first character is numeric
+			const href2 = href[1].slice(2).split('/');
+			this.server = 'http';
+			this.ipadrs = href2[0];
+			this.ipCamera = href2[0];
+			this.ifType = 'WLAN';
+		} else if(href[1].slice(0,11) == '//localhost' || href[0] == 'file') {
+			this.server = 'local';
+		} else if(href[0] == 'https') {
+			this.server = 'https';
+		} else {
+			this.server = 'http';
+		}
+
 		if(this.server=='https' && this.ifType=='WLAN') this.ifType = 'UART';
 
 		this._locale = 0;
@@ -2002,7 +2005,7 @@ class comlib {
 				_this.recvTimeout = null;
 				_this.recvResolve = null;
 				reject1();
-			}, 8000);
+			}, 16000);
 
 			_this.recvResolve = (rcvParam) => {
 			//	console.log(rcvParam);	// debug

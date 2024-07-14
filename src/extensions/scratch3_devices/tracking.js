@@ -142,7 +142,7 @@
       case 'canvas':
         return this.trackCanvas_(element, tracker, opt_options);
       case 'img':
-//        return this.trackImg_(element, tracker, opt_options);
+        return this.trackImg_(element, tracker, opt_options);
       case 'video':
         if (opt_options) {
           if (opt_options.camera) {
@@ -187,7 +187,7 @@
   tracking.trackCanvasInternal_ = function(element, tracker) {
     var width = element.width;
     var height = element.height;
-    var context = element.getContext('2d');
+    var context = element.getContext('2d',{willReadFrequently:true});
     var imageData = context.getImageData(0, 0, width, height);
     tracker.track(imageData.data, width, height);
   };

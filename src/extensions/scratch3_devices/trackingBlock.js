@@ -182,15 +182,13 @@ class Scratch3Blocks {
 		this.runtime.ioDevices.video.mirror = true;
 		return new Promise(resolve => setTimeout(resolve, 1000))
 		.then(() => {
-
 			window.tracking.ColorTracker.registerColor('color1', function (r, g, b) {return _this._checkDistance2(0, r, g, b);});
 			_this.tracker = new window.tracking.ColorTracker(['color1']);
 			_this.tracker.minDimension = 5;
-			_this.runtime.ioDevices.video.element.width = WIDTH;
-			_this.runtime.ioDevices.video.element.height = HEIGHT;
-			window.tracking.track(_this.runtime.ioDevices.video.element, _this.tracker);
-
 			_this.tracker.on('track', _this._detected.bind(_this));
+			_this.runtime.ioDevices.video.element.onUpdated = function(canvas) {
+				window.tracking.track(canvas, _this.tracker);
+			};
 		})
 	}
 
@@ -209,17 +207,15 @@ class Scratch3Blocks {
 		this.runtime.ioDevices.video.mirror = true;
 		return new Promise(resolve => setTimeout(resolve, 1000))
 		.then(() => {
-
 			window.tracking.ColorTracker.registerColor('color1', function (r, g, b) {return _this._checkDistance2(0, r, g, b);});
 			window.tracking.ColorTracker.registerColor('color2', function (r, g, b) {return _this._checkDistance2(1, r, g, b);});
 			window.tracking.ColorTracker.registerColor('color3', function (r, g, b) {return _this._checkDistance2(2, r, g, b);});
 			_this.tracker = new window.tracking.ColorTracker(['color1','color2','color3']);
 			_this.tracker.minDimension = 5;
-			_this.runtime.ioDevices.video.element.width = WIDTH;
-			_this.runtime.ioDevices.video.element.height = HEIGHT;
-			window.tracking.track(_this.runtime.ioDevices.video.element, _this.tracker);
-
 			_this.tracker.on('track', _this._detected.bind(_this));
+			_this.runtime.ioDevices.video.element.onUpdated = function(canvas) {
+				window.tracking.track(canvas, _this.tracker);
+			};
 		})
 	}
 
@@ -238,6 +234,8 @@ class Scratch3Blocks {
 	}
 
 	stopDetection(args) {
+		this.runtime.ioDevices.video.element.onUpdated = null;
+
 		if(!this.tracker) return;
 		this._clearArea();
 		this.tracker.removeAllListeners();
@@ -303,8 +301,8 @@ class Scratch3Blocks {
 		let maxSizeList = [];
 		for(let i = 0; i < event.data.length; i++) {
 			rect = event.data[i];
-			const x = 240 - (rect.x + rect.width/2);
-			const y = 180 - (rect.y + rect.height/2);
+			const x = -240 + (rect.x + rect.width/2);
+			const y =  180 - (rect.y + rect.height/2);
 
 			if(this.areaEnabled()
 			&& (x < this.areaX[0] || x > this.areaX[1] || y < this.areaY[0] || y > this.areaY[1])) {
@@ -321,8 +319,8 @@ class Scratch3Blocks {
 
 		for(let i = 0; i < Math.min(maxSizeList.length, 8); i++) {
 			rect = event.data[maxSizeList[i].index];
-			const xs = [240 - rect.x, 240 - (rect.x + rect.width)];
-			const ys = [180 - rect.y, 180 - (rect.y + rect.height)];
+			const xs = [-240 + rect.x, -240 + (rect.x + rect.width)];
+			const ys = [ 180 - rect.y,  180 - (rect.y + rect.height)];
 			this.drawRect(xs, ys, (i == 0) ? colorRed: colorGreen);
 
 			this._detect[i] = {x:(xs[0] + xs[1]) / 2,
