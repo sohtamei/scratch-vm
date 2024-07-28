@@ -65,7 +65,8 @@ const builtinExtensions = {
     microbitRadio: () => require('../extensions/scratch3_microbit/microbitRadio.js'),
 
 //  ml2scratch: () => require('../extensions/scratch3_ml2scratch'),
-    facemesh2scratch: () => require('../extensions/scratch3_facemesh2scratch'),
+    facemesh2scratch: () => require('../extensions/scratch3_facemesh2scratch/index.js'),
+    facemesh: () => require('../extensions/scratch3_facemesh2scratch/facemesh.js'),
     handpose2scratch: () => require('../extensions/scratch3_handpose2scratch'),
     mesh: () => require('../extensions/scratch3_mesh/meshBlocks.js'),
     toio: () => require('../extensions/scratch3_toio/'),

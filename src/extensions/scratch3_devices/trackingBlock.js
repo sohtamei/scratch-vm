@@ -37,7 +37,6 @@ class Scratch3Blocks {
 
 		this._isDetected = false;
 		this._whenDetected = false;
-		this._lastDetectedJson = '';
 		this._detect = [];
 		for(let i=0; i<8; i++) this._detect[i] = {x:0, y:0, width:0, height:0};
 	}
@@ -53,7 +52,7 @@ class Scratch3Blocks {
 
 		return {
 			id: extName,
-			name: ['tracking.js', 'tracking.js'][this._locale],
+			name: 'tracking.js',
 			//blockIconURI: IconURI,
 			menuIconURI: IconURI,
 			blocks: this.get_blocks(),
@@ -119,15 +118,6 @@ class Scratch3Blocks {
 				ARG5: {type:ArgumentType.NUMBER, defaultValue:30 },
 				ARG6: {type:ArgumentType.NUMBER, defaultValue:50 },
 			}},
-/*
-			{blockType: BlockType.COMMAND, opcode: 'startDetection', text: [
-					'Start detection color[ARG1] tolerance[ARG2]',
-					'検出開始 色[ARG1] 誤差範囲[ARG2]'][this._locale],
-			arguments: {
-				ARG1: {type:ArgumentType.COLOR, defaultValue:'#ff0000'},
-				ARG2: {type:ArgumentType.NUMBER, defaultValue:50 },
-			}},
-*/
 		];
 	}
 
@@ -139,36 +129,7 @@ class Scratch3Blocks {
 			]},
 		};
 	}
-/*
-	startDetection(args, util) {
-		this._targetRGB[0] = Cast.toRgbColorObject(args.ARG1);
-		this._tolerance[0] = args.ARG2*1;
 
-		const _this = this;
-
-		if(this.tracker) this.stopDetection(null);
-
-		this.runtime.ioDevices.video.enableVideo();
-		this.runtime.ioDevices.video.mirror = true;
-		return new Promise(resolve => setTimeout(resolve, 1000))
-		.then(() => {
-
-			window.tracking.ColorTracker.registerColor('color1', function (r, g, b) {return _this._checkDistance(0, r, g, b);});
-			_this.tracker = new window.tracking.ColorTracker(['color1']);
-			_this.tracker.minDimension = 5;
-			window.tracking.track(_this.runtime.ioDevices.video.element, _this.tracker);
-
-			_this.tracker.on('track', _this._detected.bind(_this));
-		})
-	}
-
-	_checkDistance(index, r, g, b) {
-		const distance =  ((this._targetRGB[index].r - r) ** 2)
-						+ ((this._targetRGB[index].g - g) ** 2)
-						+ ((this._targetRGB[index].b - b) ** 2);
-		return distance < (this._tolerance[index] ** 2);
-	}
-*/
 	startDetection2(args, util) {
 		const hsv = this.rgb2hsv(Cast.toRgbColorObject(args.ARG1));
 		this._targetHsv[0] = {h:hsv.h, s:args.ARG3*1, v:args.ARG4*1};
@@ -178,8 +139,10 @@ class Scratch3Blocks {
 
 		if(this.tracker) this.stopDetection(null);
 
-		this.runtime.ioDevices.video.enableVideo();
-		this.runtime.ioDevices.video.mirror = true;
+		if(!this.runtime.ioDevices.video.videoReady) {
+			this.runtime.ioDevices.video.enableVideo();
+			this.runtime.ioDevices.video.mirror = true;
+		}
 		return new Promise(resolve => setTimeout(resolve, 1000))
 		.then(() => {
 			window.tracking.ColorTracker.registerColor('color1', function (r, g, b) {return _this._checkDistance2(0, r, g, b);});
@@ -203,8 +166,10 @@ class Scratch3Blocks {
 
 		if(this.tracker) this.stopDetection(null);
 
-		this.runtime.ioDevices.video.enableVideo();
-		this.runtime.ioDevices.video.mirror = true;
+		if(!this.runtime.ioDevices.video.videoReady) {
+			this.runtime.ioDevices.video.enableVideo();
+			this.runtime.ioDevices.video.mirror = true;
+		}
 		return new Promise(resolve => setTimeout(resolve, 1000))
 		.then(() => {
 			window.tracking.ColorTracker.registerColor('color1', function (r, g, b) {return _this._checkDistance2(0, r, g, b);});
@@ -280,12 +245,6 @@ class Scratch3Blocks {
 			this._whenDetected = false;
 			return;
 		}
-
-		const detectedJson = JSON.stringify(event.data);
-		if(this._lastDetectedJson == detectedJson) {
-			return;
-		}
-		this._lastDetectedJson = detectedJson;
 
 		this._clearArea();
 		this._isDetected = true;
