@@ -193,6 +193,15 @@ class comlib {
 		}
 	}
 
+	openWin() {
+		const _this = this;
+		return this.disconnect()
+		.then(() => window.stop())
+		.then(() => {
+			window.location = 'http://' + _this.ipadrs + '/' + ['listE.html', 'list.html'][_this._locale];
+		});
+	}
+
 	// for connect menu ---------------------------
 
 	isConnected() {
@@ -429,19 +438,23 @@ class comlib {
 		const _defs = {};
 		const _args = {};
 		return this.sendRecv(0xFC,_defs,_args)
+		.catch(err => {
+			console.log(err);
+			return err;		// throwだとblockが完了しない
+		})
 		.then(result => {
-			const status = result.split('\t');
+			if(typeof result !== 'string' || result == 'timeout') return result;
 
 			const targetBlock = Blockly.getMainWorkspace().getBlockById(_this.extName+'_connectWifi');
-			if(targetBlock) {
-				let menus = [];
-				for(let i = 0; i < status.length; i++) {
-					menus.push([status[i], status[i]]);
-				}
-				targetBlock.childBlocks_[0].inputList[0].fieldRow[0].menuGenerator_ = menus;
-				return 'Finished. Please select AP and enter password.';
+			if(!targetBlock) return 'failed';
+
+			const status = result.split('\t');
+			let menus = [];
+			for(let i = 0; i < status.length; i++) {
+				menus.push([status[i], status[i]]);
 			}
-			return 'failed';
+			targetBlock.childBlocks_[0].inputList[0].fieldRow[0].menuGenerator_ = menus;
+			return 'Finished. Please select AP and enter password.';
 		});
 	}
 

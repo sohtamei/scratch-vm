@@ -75,6 +75,9 @@ var ext = class {
 	ARG2: { type: ArgumentType.STRING, defaultValue: ' ' },
 }},
 
+{blockType: BlockType.COMMAND, opcode: 'openWin', text: 'open window', arguments: {
+}, hideFromPalette: (SupportCamera==false)},
+
 {blockType: BlockType.REPORTER, opcode: 'statusWifi', text: ['WiFi status','WiFi接続状態'][this._locale], disableMonitor:true, arguments: {
 }},
 
@@ -211,7 +214,7 @@ var ext = class {
 }},
 
 		];
-		this.blockOffset = 7;
+		this.blockOffset = 7+1;
 		for(let i = 0; i < this._blocks.length; i++) {
 			if(this._blocks[i] == '---') {
 				this.blockOffset = i+1;
@@ -428,6 +431,10 @@ setSpeedXY(args,util) { return this.sendRecv('setSpeedXY', args); }
 
 	statusWifi(args) {
 		return this.comlib.statusWifi();
+	}
+
+	openWin(args) {
+		return this.comlib.openWin();
 	}
 
 	setConfig(args) {
