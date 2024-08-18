@@ -74,6 +74,13 @@ class comlib {
 
 		if(this.server=='https' && this.ifType=='WLAN') this.ifType = 'UART';
 
+		if(this.server=='http' && this.ifType=='WLAN' && this.SupportCamera) {
+			if(this.ipadrs != this.ipCamera) {
+				console.log('update cameraip');
+				this._updateIp(this.ipadrs);
+			}
+		}
+
 		this._locale = 0;
 		this.busy = false;
 		this.cueue = [];
