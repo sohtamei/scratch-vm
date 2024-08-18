@@ -72,19 +72,19 @@ var ext = class {
 	ARG2: { type: ArgumentType.STRING, defaultValue:'0', menu: 'clearNVS' },
 }},
 
-{blockType: BlockType.COMMAND, opcode: 'videoToggle', text: 'turn video [ARG1]', arguments: {
-	ARG1: { type: ArgumentType.STRING, defaultValue: 'on', menu: 'videoState' },
-}, hideFromPalette: (SupportCamera==false)},
-
-{blockType: BlockType.COMMAND, opcode: 'scanWifi', text: 'Scan AP', arguments: {
+{blockType: BlockType.COMMAND, opcode: 'scanWifi', text: ['Scan WiFi','WiFiスキャン'][this._locale], arguments: {
 }},
 
-{blockType: BlockType.COMMAND, opcode: 'connectWifi', text: ['connect','接続'][this._locale]+' ssid[ARG1] pass[ARG2]', arguments: {
+{blockType: BlockType.COMMAND, opcode: 'connectWifi', text: ['connect WiFi','WiFi設定'][this._locale]+' [ARG1] pass[ARG2]', arguments: {
 	ARG1: { type: ArgumentType.STRING, defaultValue: this.comlib.ssid, menu: 'ssids' },
 	ARG2: { type: ArgumentType.STRING, defaultValue: ' ' },
 }},
 
-{blockType: BlockType.COMMAND, opcode: 'openWin', text: 'open window', arguments: {
+{blockType: BlockType.COMMAND, opcode: 'openWin', text: ['switch connection','接続モード USB→WiFi'][this._locale], arguments: {
+}, hideFromPalette: (SupportCamera==false)},
+
+{blockType: BlockType.COMMAND, opcode: 'videoToggle', text: 'turn video [ARG1]', arguments: {
+	ARG1: { type: ArgumentType.STRING, defaultValue: 'on', menu: 'videoState' },
 }, hideFromPalette: (SupportCamera==false)},
 
 {blockType: BlockType.REPORTER, opcode: 'statusWifi', text: ['WiFi status','WiFi接続状態'][this._locale], disableMonitor:true, arguments: {
@@ -145,7 +145,7 @@ onoff: { acceptReporters: true, items: [
 ]},
 
 
-ssids: { acceptReporters: true, items: ["push 'Scan AP'"]},
+ssids: { acceptReporters: true, items: [['push "Scan WiFi"','"WiFiスキャン" を押して下さい'][this._locale]]},
 	  };
 	}
 

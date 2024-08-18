@@ -452,6 +452,8 @@ class comlib {
 	}
 
 	scanWifi() {
+		if(this.ifType != 'UART') return ['select USB connection!','"接続切替" をUSBにして押して下さい'][this._locale];
+
 		const _this = this;
 		const _defs = {};
 		const _args = {};
@@ -461,7 +463,9 @@ class comlib {
 			return err;		// throwだとblockが完了しない
 		})
 		.then(result => {
-			if(typeof result !== 'string' || result == 'timeout') return result;
+			console.log(result);
+			if(typeof result === 'undefined' || result == 'timeout') return 'Error, please retry';
+			if(typeof result !== 'string') return result;
 
 			const targetBlock = Blockly.getMainWorkspace().getBlockById(_this.extName+'_connectWifi');
 			if(!targetBlock) return 'failed';
@@ -472,11 +476,13 @@ class comlib {
 				menus.push([status[i], status[i]]);
 			}
 			targetBlock.childBlocks_[0].inputList[0].fieldRow[0].menuGenerator_ = menus;
-			return 'Finished. Please select AP and enter password.';
+			return ['Finished. Please select AP and enter password.','OK, "WiFi設定" でAPを選択、"pass" にパスワードを入力して押して下さい'][_this._locale];
 		});
 	}
 
 	connectWifi(ssid, pass) {
+		if(this.ifType != 'UART') return ['select USB connection!','"接続切替" をUSBにして押して下さい'][this._locale];
+
 		ssid = ssid.trim();
 		pass = pass.trim();
 		if(ssid=='') return ['enter ssid and password','SSIDとパスワードを入力して下さい'][this._locale];
@@ -498,7 +504,7 @@ class comlib {
 			if(status[0] != 3) return ['Failed', '失敗しました'][_this._locale];
 
 			_this._updateIp(status[2], true);
-			return ['connected','接続しました'][_this._locale] + ' ('+status[2]+')';
+			return ['connected','OK'][_this._locale] + ' ('+status[2]+')' + (_this.SupportCamera ? ['. push "switch connection"','　"接続モード" を押してください'][_this._locale]: '');
 		})
 	}
 
@@ -972,7 +978,7 @@ class comlib {
 		this._closeUart();
 		this._runtime.emit(this._runtime.constructor.PERIPHERAL_DISCONNECTED);
 		alert(['USB disconnected, please reload screen.',
-			'USBが切断されました, プログラムを保存して画面を再読み込みして下さい.\n(USBを抜く前に接続/切断ボタンで切断してください)'][this._locale]);
+			'USBが切断されました, プログラムを保存して画面を再読み込みして下さい. (USBを抜く前に接続/切断ボタンで切断してください)'][this._locale]);
 		//	this.statusMessage.innerText = ['Disconnected, please reload screen.','USB切断, 画面を再読み込みして下さい'][this._locale];
 	}
 
