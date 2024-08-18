@@ -118,7 +118,8 @@ class comlib {
 
 	setLocale(locale) {
 		this._locale = locale;
-		this.statusMessage = document.body.querySelector('#StatusMessage');
+		const element = document.body.querySelector('#StatusMessage');
+		if(element) this.statusMessage = element;
 	}
 
 	getConfig() {
@@ -178,19 +179,29 @@ class comlib {
 
 		const stage = this._runtime.getTargetForStage();
 		if(stage) stage.videoState = state;
-		switch(state) {
-		case 'off':
-			this._runtime.ioDevices.video.disableVideo();
-			break;
-		case 'on':
-			this._runtime.ioDevices.video.enableVideo();
-			this._runtime.ioDevices.video.mirror = true;
-			break;
-		case 'on-flipped':
-			this._runtime.ioDevices.video.enableVideo();
-			this._runtime.ioDevices.video.mirror = false;
-			break;
-		}
+
+		const _this = this;
+		let hTimeout = null;
+		return Promise.resolve().then(() => {
+			if(state == 'off') {
+				_this._runtime.ioDevices.video.disableVideo();
+				return;
+			}
+
+			return _this._runtime.ioDevices.video.enableVideo()
+			.then(() => new Promise((resolve,reject) => {
+				hTimeout = setTimeout(reject, TIMEOUT);
+				_this._runtime.ioDevices.video.element.onUpdated = resolve;
+			})).then(() => {
+				clearTimeout(hTimeout);
+				_this._runtime.ioDevices.video.element.onUpdated = null;
+				_this._runtime.ioDevices.video.mirror = (state == 'on-flipped') ? false: true;
+			}).catch(() => {
+				_this._runtime.ioDevices.video.element.onUpdated = null;
+				console.log('timeout');
+				return 'timeout';
+			})
+		})
 	}
 
 	openWin() {
