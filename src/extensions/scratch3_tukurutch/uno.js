@@ -23,6 +23,7 @@ var ext = class {
 
 		if(typeof SupportCamera === "undefined") SupportCamera = false;
 		this.comlib = new comlib(runtime, extName, SupportCamera);
+		this.neopixelIndex = 0;
 	}
 
 	getInfo () {
@@ -94,6 +95,14 @@ var ext = class {
     ARG2: { type: ArgumentType.STRING, type2:'S', defaultValue:'500', menu: 'beats' },
 }},
 
+{blockType: BlockType.COMMAND, opcode: 'setNeoPixel', text: [
+    'set led color [ARG1] [ARG2]',
+    'LED いろ [ARG1] [ARG2]',
+][this._locale], arguments: {
+    ARG1: { type: ArgumentType.STRING, defaultValue:'16777216', menu: 'color' },
+    ARG2: { type: ArgumentType.NUMBER, defaultValue:10 },
+}},
+
 {blockType: BlockType.COMMAND, opcode: 'downloadMIDI', text: ['download MIDI','MIDIダウンロード'][this._locale], arguments: {
 }},
 
@@ -130,13 +139,13 @@ var ext = class {
     ARG1: { type: ArgumentType.STRING, type2:'B', defaultValue:'1', menu: 'sw' },
 }},
 
-{blockType: BlockType.COMMAND, opcode: 'setNeoPixel', text: [
+{blockType: BlockType.COMMAND, opcode: 'setNeoPixel0', text: [
     'set led color [ARG1] [ARG2]',
     'LED いろ [ARG1] [ARG2]',
 ][this._locale], arguments: {
     ARG1: { type: ArgumentType.STRING, type2:'L', defaultValue:'16777215', menu: 'color' },
     ARG2: { type: ArgumentType.NUMBER, type2:'B', defaultValue:10 },
-}},
+}, hideFromPalette:true},
 
 {blockType: BlockType.COMMAND, opcode: 'saveHist', text: [
     'save hist',
@@ -197,6 +206,7 @@ color: { acceptReporters: true, items: [
 { text: ['Yellow','きいろ'][this._locale], value: '16776960' },
 { text: ['Lightblue','みずいろ'][this._locale], value: '65535' },
 { text: ['White','しろ'][this._locale], value: '16777215' },
+{ text: ['Next','つぎのいろ'][this._locale], value: '16777216' },
 ]},
 
 led: { acceptReporters: true, items: ['1','2','3','4','5','6',]},
@@ -255,7 +265,7 @@ setLED(args,util) { return this.sendRecv('setLED', args); }
 BuzzerJ2(args,util) { return this.sendRecv('BuzzerJ2', args); }
 getAnalogAve(args,util) { return this.sendRecv('getAnalogAve', args); }
 getSW(args,util) { return this.sendRecv('getSW', args); }
-setNeoPixel(args,util) { return this.sendRecv('setNeoPixel', args); }
+setNeoPixel0(args,util) { return this.sendRecv('setNeoPixel0', args); }
 saveHist(args,util) { return this.sendRecv('saveHist', args); }
 setMelody(args,util) { return this.sendRecv('setMelody', args); }
 
@@ -268,6 +278,24 @@ setMelody(args,util) { return this.sendRecv('setMelody', args); }
 			console.log(result);
 			return _this.setMelody({ARG1:result}, util);
 		}).then(() => _this.comlib.disconnect());
+	}
+
+	setNeoPixel(args,util) {
+		const items = this.get_menus().color.items;
+		if(args.ARG1 != '16777216') {
+			for(let i = 0; i < items.length-1; i++) {
+				if(args.ARG1 == items[i].value) {
+					this.neopixelIndex = i;
+					break;
+				}
+			}
+			return this.sendRecv('setNeoPixel0', args);
+		}
+		this.neopixelIndex = this.neopixelIndex+1;
+		if(this.neopixelIndex >= items.length-1) this.neopixelIndex = 1;
+
+		const args2 = { ARG1:items[this.neopixelIndex].value, ARG2:args.ARG2 };
+		return this.sendRecv('setNeoPixel0', args2);
 	}
 
 	burnFlash(args) {
