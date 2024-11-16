@@ -933,7 +933,7 @@ class comlib {
 				return;
 			}
 
-			return _this._sendRecvUart2(new Uint8Array([0x00,0xff,0x55,0x01,0xfe]), 3000, (buf, count) => {
+			return _this._sendRecvUart2(new Uint8Array([0x00,0xff,0x55,0x01,0xfe]), 5000, (buf, count) => {
 				if(buf[count-1] == 0x0a) {
 					return {status:'finish', result2:buf.slice(0,count)};
 				}
