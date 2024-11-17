@@ -2,12 +2,7 @@ const dispatch = require('../dispatch/central-dispatch');
 const log = require('../util/log');
 const maybeFormatMessage = require('../util/maybe-format-message');
 
-const ArgumentType = require('./argument-type');
 const BlockType = require('./block-type');
-const Base64Util = require('../util/base64-util');
-const formatMessage = require('format-message');
-const Zlib = require('zlib');
-const comlib = require('../extensions/scratch3_tukurutch/comlib.js');
 
 // These extensions are currently built into the VM repository but should not be loaded at startup.
 // TODO: move these out into a separate repository?
@@ -18,73 +13,17 @@ const builtinExtensions = {
     // but serves as a reference for loading core blocks as extensions.
     coreExample: () => require('../blocks/scratch3_core_example'),
     // These are the non-core built-in extensions.
-    M5Series: () => require('../extensions/scratch3_tukurutch/M5Series.js'),
-    M5Camera: () => require('../extensions/scratch3_tukurutch/M5Camera.js'),
-    M5CameraCar: () => require('../extensions/scratch3_tukurutch/M5CameraCar.js'),
-    uno: () => require('../extensions/scratch3_tukurutch/uno.js'),
-    GroveBeginnerKit: () => require('../extensions/scratch3_tukurutch/GroveBeginnerKit.js'),
-    cameratch32: () => require('../extensions/scratch3_tukurutch/cameratch32.js'),
-    QuadCrawlerAI: () => require('../extensions/scratch3_tukurutch/QuadCrawlerAI.js'),
-    RemoconRobo: () => require('../extensions/scratch3_tukurutch/RemoconRobo_.js'),
-    QuadCrawler: () => require('../extensions/scratch3_tukurutch/QuadCrawler.js'),
-    DevkitC: () => require('../extensions/scratch3_tukurutch/DevkitC.js'),
-    lovyanGFX: () => require('../extensions/scratch3_tukurutch/lovyanGFX.js'),
-    usb2bt: () => require('../extensions/scratch3_tukurutch/usb2bt.js'),
-    AtomMateForToio: () => require('../extensions/scratch3_tukurutch/AtomMateForToio.js'),
-    M5Unified: () => require('../extensions/scratch3_tukurutch/M5Unified.js'),
-    M5CoreS3: () => require('../extensions/scratch3_tukurutch/M5CoreS3.js'),
-    esp32camlcd: () => require('../extensions/scratch3_tukurutch/esp32camlcd.js'),
-    bCore: () => require('../extensions/scratch3_tukurutch/bCore.js'),
-    bCore2: () => require('../extensions/scratch3_tukurutch/bCore2.js'),
-    maBeee: () => require('../extensions/scratch3_tukurutch/maBeee.js'),
-    SetupCamera: () => require('../extensions/scratch3_tukurutch/SetupCamera.js'),
-    CrSDK: () => require('../extensions/scratch3_tukurutch/CrSDK.js'),
-
-    loadVMD: () => require('../extensions/scratch3_devices/loadVMD.js'),
-    loadMID: () => require('../extensions/scratch3_devices/loadMID.js'),
-    uiParts: () => require('../extensions/scratch3_devices/uiParts.js'),
-    exeScript: () => require('../extensions/scratch3_devices/exeScript.js'),
-    genericIO: () => require('../extensions/scratch3_devices/genericIO.js'),
-    TempHumSht3x: () => require('../extensions/scratch3_devices/TempHumSht3x.js'),
-    BMP280: () => require('../extensions/scratch3_devices/BMP280.js'),
-    servoCar: () => require('../extensions/scratch3_devices/servoCar.js'),
-    motorCar: () => require('../extensions/scratch3_devices/motorCar.js'),
-    M5RoverC: () => require('../extensions/scratch3_devices/M5RoverC.js'),
-    maqueen: () => require('../extensions/scratch3_devices/maqueen.js'),
-    folo: () => require('../extensions/scratch3_devices/folo.js'),
-    foloCamera: () => require('../extensions/scratch3_devices/foloCamera.js'),
-    tracking: () => require('../extensions/scratch3_devices/trackingBlock.js'),
-    i2cLCD: () => require('../extensions/scratch3_devices/i2cLCD.js'),
-    envX: () => require('../extensions/scratch3_devices/envX.js'),
-    g2s: () => require('../extensions/xcx-g2s/index.js'),
-//  fetch: () => require('../extensions/TurboWarp/fetch.js'),
-//  files: () => require('../extensions/TurboWarp/files.js'),
-//  iframe: () => require('../extensions/TurboWarp/iframe.js'),
-
-    microbit: () => require('../extensions/scratch3_microbit/microbit.js'),
-    microbitRadio: () => require('../extensions/scratch3_microbit/microbitRadio.js'),
-
-//  ml2scratch: () => require('../extensions/scratch3_ml2scratch'),
-    facemesh2scratch: () => require('../extensions/scratch3_facemesh2scratch/index.js'),
-    facemesh: () => require('../extensions/scratch3_facemesh2scratch/facemesh.js'),
-    handpose2scratch: () => require('../extensions/scratch3_handpose2scratch'),
-    mesh: () => require('../extensions/scratch3_mesh/meshBlocks.js'),
-    toio: () => require('../extensions/scratch3_toio/'),
-//  ikimono: () => require('../extensions/ikimono_extension'),
-//  konashi: () => require('../extensions/konashi_extension'),
-    qrcode: () => require('../extensions/scratch3_qrcode'),
-    WebMidi: () => require('../extensions/scratch3_webmidi/'),
-
     pen: () => require('../extensions/scratch3_pen'),
     wedo2: () => require('../extensions/scratch3_wedo2'),
     music: () => require('../extensions/scratch3_music'),
+    microbit: () => require('../extensions/scratch3_microbit'),
     text2speech: () => require('../extensions/scratch3_text2speech'),
     translate: () => require('../extensions/scratch3_translate'),
     videoSensing: () => require('../extensions/scratch3_video_sensing'),
     ev3: () => require('../extensions/scratch3_ev3'),
     makeymakey: () => require('../extensions/scratch3_makeymakey'),
     boost: () => require('../extensions/scratch3_boost'),
-    gdxfor: () => require('../extensions/scratch3_gdx_for'),
+    gdxfor: () => require('../extensions/scratch3_gdx_for')
 };
 
 /**
@@ -177,29 +116,12 @@ class ExtensionManager {
      * @param {string} extensionId - the ID of an internal extension
      */
     loadExtensionIdSync (extensionId) {
-        if (!builtinExtensions.hasOwnProperty(extensionId)) {
+        if (!Object.prototype.hasOwnProperty.call(builtinExtensions, extensionId)) {
             log.warn(`Could not find extension ${extensionId} in the built in extensions.`);
             return;
         }
 
         /** @TODO dupe handling for non-builtin extensions. See commit 670e51d33580e8a2e852b3b038bb3afc282f81b9 */
-        if (this.isExtensionLoaded(extensionId)) {
-            const message = `Rejecting attempt to load a second extension with ID ${extensionId}`;
-            log.warn(message);
-            return;
-        }
-
-        const extension = builtinExtensions[extensionId]();
-        const extensionInstance = new extension(this.runtime);
-        const serviceName = this._registerInternalExtension(extensionInstance);
-        this._loadedExtensions.set(extensionId, serviceName);
-    }
-
-    loadExtensionData(text) {
-		eval(text);   // var ext = class { ..
-		const extensionId = extName;
-		builtinExtensions[extensionId] = function() { return ext };
-
         if (this.isExtensionLoaded(extensionId)) {
             const message = `Rejecting attempt to load a second extension with ID ${extensionId}`;
             log.warn(message);
@@ -218,85 +140,28 @@ class ExtensionManager {
      * @returns {Promise} resolved once the extension is loaded and initialized or rejected on failure
      */
     loadExtensionURL (extensionURL) {
-        //let _extensionURL = extensionURL.replace(/[\/\.<"&]/g, '_');
-        const _this = this;
-        return new Promise((resolve, reject) => {
-            if (builtinExtensions.hasOwnProperty(extensionURL) && extensionURL != 'loadExt') {
-                resolve();
-                return;
-            }
-
-			let width = 480;
-			let height = 100;
-			let left = window.innerWidth / 2;
-			let top = window.innerHeight / 2;
-			let x = left - (width / 2);
-			let y = top - (height / 2);
-			uploadWindow = window.open('', null, 'top=' + y + ',left=' + x + ',width=' + width + ',height=' + height);
-			uploadWindow.document.open();
-			uploadWindow.document.write('<html><head><title>Load extension file</title></head><body>'
-										+'<p>Please select extension file.</p>'
-										+'<input type="file" id="upload-files">'
-										+'<input type="button" value="load" id="upload-button">'
-										+'</body></html>');
-			uploadWindow.document.close();
-			uploadWindow.document.getElementById("upload-button").onclick = function() {
-				let files = uploadWindow.document.getElementById('upload-files').files;
-				if (files.length <= 0) {
-					alert('Please select extension file.');
-					reject();
-				}
-
-				let fr = new FileReader();
-				fr.onload = function(e) {
-					eval(e.target.result);   // var ext = class { ..
-					extensionURL = extName;
-					builtinExtensions[extensionURL] = function() { return ext };
-					resolve();
-				}
-
-				fr.onloadend = function(e) {
-					uploadWindow.document.getElementById('upload-files').value = "";
-				}
-
-				fr.readAsText(files.item(0));
-				uploadWindow.close();
-			}
-/*
-            return fetch(extensionURL, {mode: 'cors'})
-            .then(response => response.text())
-            .then(text => {
-                eval(text);   // var ext = class { ..
-                builtinExtensions[extensionURL] = function() { return ext };
-                resolve();
-			}).catch(err => {
-				console.log(err);
-				reject(err);
-			})
-*/
-		}).then(() =>{
+        if (Object.prototype.hasOwnProperty.call(builtinExtensions, extensionURL)) {
             /** @TODO dupe handling for non-builtin extensions. See commit 670e51d33580e8a2e852b3b038bb3afc282f81b9 */
-            if (_this.isExtensionLoaded(extensionURL)) {
+            if (this.isExtensionLoaded(extensionURL)) {
                 const message = `Rejecting attempt to load a second extension with ID ${extensionURL}`;
                 log.warn(message);
-                return;
+                return Promise.resolve();
             }
 
             const extension = builtinExtensions[extensionURL]();
-            const extensionInstance = new extension(_this.runtime);
-            const serviceName = _this._registerInternalExtension(extensionInstance);
-            _this._loadedExtensions.set(extensionURL, serviceName);
-            return;
-        })
-/*
+            const extensionInstance = new extension(this.runtime);
+            const serviceName = this._registerInternalExtension(extensionInstance);
+            this._loadedExtensions.set(extensionURL, serviceName);
+            return Promise.resolve();
+        }
+
         return new Promise((resolve, reject) => {
             // If we `require` this at the global level it breaks non-webpack targets, including tests
-            const ExtensionWorker = require('worker-loader?name=extension-worker.js!./extension-worker');
+            const worker = new Worker('./extension-worker.js');
 
             this.pendingExtensions.push({extensionURL, resolve, reject});
-            dispatch.addWorker(new ExtensionWorker());
+            dispatch.addWorker(worker);
         });
-*/
     }
 
     /**
@@ -406,7 +271,7 @@ class ExtensionManager {
     _prepareExtensionInfo (serviceName, extensionInfo) {
         extensionInfo = Object.assign({}, extensionInfo);
         if (!/^[a-z0-9]+$/i.test(extensionInfo.id)) {
-            throw new Error('Invalid extension id. Id should be a-z and 0-9');
+            throw new Error('Invalid extension id');
         }
         extensionInfo.name = extensionInfo.name || extensionInfo.id;
         extensionInfo.blocks = extensionInfo.blocks || [];
