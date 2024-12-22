@@ -42,11 +42,11 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-var ArgumentType = require("scratch-vm/src/extension-support/argument-type");
+var ArgumentType = require("../../../extension-support/argument-type");
 
-var BlockType = require("scratch-vm/src/extension-support/block-type");
+var BlockType = require("../../../extension-support/block-type");
 
-var Cast = require("scratch-vm/src/util/cast");
+var Cast = require("../../../util/cast");
 
 var formatMessage = require("format-message");
 

@@ -111,7 +111,7 @@ var ext = class {
 	_setServo360(portLevels, duration) {
 		let i = 0;
 		for(i = 0; i < portLevels.length; i++) {
-			speed = Math.min(100, Math.max(-100, portLevels[i].level));
+			let speed = Math.min(100, Math.max(-100, portLevels[i].level));
 			let level = 0;
 			if(speed) {
 				const srvZero = 307;		// 1.5ms/20ms*4096 = 307.2

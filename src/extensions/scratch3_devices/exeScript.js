@@ -44,6 +44,7 @@ class Scratch3Blocks {
 
         const comment = util.thread.target.blocks._blocks[args.blockid].comment;
         if(typeof comment === 'undefined') return 'no comment';
+        var funcMain;
         console.log(util.thread.target.comments[comment].text);
         eval(util.thread.target.comments[comment].text);
         if(typeof funcMain !== 'function') return 'no funcMain function';

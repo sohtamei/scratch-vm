@@ -42,7 +42,7 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-var BlockType = require("scratch-vm/src/extension-support/block-type");
+var BlockType = require("../../../extension-support/block-type");
 
 var formatMessage = require("format-message");
 

@@ -2,9 +2,6 @@ const ArgumentType = require('../../extension-support/argument-type');
 const BlockType = require('../../extension-support/block-type');
 const Cast = require('../../util/cast');
 const formatMessage = require('format-message');
-require('@tensorflow/tfjs-core');
-require('@tensorflow/tfjs-converter');
-require('@tensorflow/tfjs-backend-webgl');
 const handpose = require('@tensorflow-models/handpose');
 const Video = require('../../io/video');
 
@@ -171,7 +168,7 @@ const AvailableLocales = ['en', 'ja', 'ja-Hira'];
 
 class Scratch3Handpose2ScratchBlocks {
     get LANDMARK_MENU () {
-      landmark_menu = [];
+      let landmark_menu = [];
       for (let i = 1; i <= 21; i++) {
         landmark_menu.push({text: `${Message.landmarks[i - 1][this._locale]} (${i})`, value: String(i)})
       }

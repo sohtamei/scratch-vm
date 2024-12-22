@@ -36,7 +36,6 @@ const CORE_EXTENSIONS = [
     // 'operators',
     // 'variables',
     // 'myBlocks'
-//       'microbit',
 ];
 
 /**

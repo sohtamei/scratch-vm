@@ -3,9 +3,6 @@ var extName = 'facemesh';
 const ArgumentType = require('../../extension-support/argument-type');
 const BlockType = require('../../extension-support/block-type');
 const formatMessage = require('format-message');
-require('@tensorflow/tfjs-core');
-require('@tensorflow/tfjs-converter');
-require('@tensorflow/tfjs-backend-webgl');
 const facemesh = require('@tensorflow-models/facemesh');
 const Video = require('../../io/video');
 

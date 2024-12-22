@@ -16,9 +16,9 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-var BLE = require("scratch-vm/src/io/ble");
+var BLE = require("../../io/ble");
 
-var Base64Util = require("scratch-vm/src/util/base64-util");
+var Base64Util = require("../../util/base64-util");
 
 var watchdog_1 = __importDefault(require("./watchdog"));
 

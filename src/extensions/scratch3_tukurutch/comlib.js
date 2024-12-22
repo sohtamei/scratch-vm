@@ -568,8 +568,10 @@ class comlib {
 			ofs = 4;
 
 			for(let i = 1; ; i++) {
-				eval("var param = args.ARG"+i);
-				eval("var def = argsDef.ARG"+i);
+				var param;
+				var def;
+				eval("param = args.ARG"+i);
+				eval("def = argsDef.ARG"+i);
 			//	console.log(i,param, def);
 				if(typeof param === 'undefined') break;
 				switch(def.type2) {

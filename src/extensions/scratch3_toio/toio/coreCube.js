@@ -215,7 +215,7 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-var Base64Util = require("scratch-vm/src/util/base64-util");
+var Base64Util = require("../../../util/base64-util");
 
 var formatMessage = require("format-message");
 
