@@ -110,8 +110,8 @@ var ext = class {
 			{port:this.port.R_in2, level:((speedR<0) ? 1: 0)},
 		];
 		let pwms = [
-			{port:this.port.L_en, level:speedL*0xFFF/100},
-			{port:this.port.R_en, level:speedR*0xFFF/100},
+			{port:this.port.L_en, level:Math.abs(speedL)*0xFFF/100},
+			{port:this.port.R_en, level:Math.abs(speedR)*0xFFF/100},
 		];
 
 		const _this = this;
